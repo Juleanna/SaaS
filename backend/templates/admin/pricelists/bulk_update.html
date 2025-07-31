@@ -1,0 +1,186 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_modify %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label='pricelists' %}">Прайс-листи</a>
+&rsaquo; <a href="{% url 'admin:pricelists_pricelist_changelist' %}">Прайс-листи</a>
+&rsaquo; <a href="{% url 'admin:pricelists_pricelist_change' price_list.pk %}">{{ price_list.name }}</a>
+&rsaquo; {{ title }}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto p-6">
+    <div class="bg-white shadow-sm rounded-lg">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h1 class="text-xl font-semibold text-gray-900">{{ title }}</h1>
+            <p class="mt-1 text-sm text-gray-600">
+                Масове оновлення цін для прайс-листа "{{ price_list.name }}"
+            </p>
+        </div>
+
+        <div class="p-6">
+            <!-- Попередження -->
+            <div class="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-yellow-800">Увага!</h3>
+                        <div class="mt-2 text-sm text-yellow-700">
+                            <p>Масове оновлення змінить ціни для всіх товарів у прайс-листі відповідно до вибраних фільтрів. Ця дія незворотна.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Форма масового оновлення -->
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <!-- Тип коригування -->
+                    <div>
+                        <label for="adjustment_type" class="block text-sm font-medium text-gray-700 mb-2">
+                            Тип коригування
+                        </label>
+                        <select id="adjustment_type" name="adjustment_type" required
+                                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                            <option value="percentage">Збільшити на відсоток</option>
+                            <option value="fixed_amount">Додати фіксовану суму</option>
+                            <option value="set_markup">Встановити націнку</option>
+                        </select>
+                    </div>
+
+                    <!-- Значення коригування -->
+                    <div>
+                        <label for="adjustment_value" class="block text-sm font-medium text-gray-700 mb-2">
+                            Значення
+                        </label>
+                        <div class="mt-1 relative rounded-md shadow-sm">
+                            <input type="number" id="adjustment_value" name="adjustment_value" 
+                                   step="0.01" min="0" required
+                                   class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pr-12 sm:text-sm border-gray-300 rounded-md"
+                                   placeholder="0.00">
+                            <div class="absolute inset-y-0 right-0 flex items-center">
+                                <span id="value_unit" class="text-gray-500 sm:text-sm pr-3">%</span>
+                            </div>
+                        </div>
+                        <p class="mt-2 text-sm text-gray-500">
+                            <span id="adjustment_help">Збільшити поточну націнку на вказаний відсоток</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Фільтри -->
+                <div class="border-t border-gray-200 pt-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Фільтри (необов'язково)</h3>
+                    
+                    {% if categories %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Категорії товарів
+                        </label>
+                        <div class="mt-1 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+                            {% for category in categories %}
+                            <div class="flex items-center">
+                                <input id="category_{{ category.id }}" name="categories" type="checkbox" 
+                                       value="{{ category.id }}"
+                                       class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                <label for="category_{{ category.id }}" class="ml-2 block text-sm text-gray-900">
+                                    {{ category.name }}
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <p class="mt-2 text-sm text-gray-500">
+                            Якщо не обрано жодної категорії, оновлення застосується до всіх товарів
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Кнопки -->
+                <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                    <a href="{% url 'admin:pricelists_pricelist_change' price_list.pk %}" 
+                       class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Скасувати
+                    </a>
+                    <button type="submit" id="submit_btn"
+                            class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                        ⚡ Застосувати масове оновлення
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Динамічне оновлення підказок і одиниць
+document.getElementById('adjustment_type').addEventListener('change', function() {
+    const adjustmentType = this.value;
+    const valueUnit = document.getElementById('value_unit');
+    const adjustmentHelp = document.getElementById('adjustment_help');
+    const submitBtn = document.getElementById('submit_btn');
+    
+    switch(adjustmentType) {
+        case 'percentage':
+            valueUnit.textContent = '%';
+            adjustmentHelp.textContent = 'Збільшити поточну націнку на вказаний відсоток';
+            submitBtn.className = submitBtn.className.replace('bg-red-600 hover:bg-red-700', 'bg-indigo-600 hover:bg-indigo-700');
+            break;
+        case 'fixed_amount':
+            valueUnit.textContent = '₴';
+            adjustmentHelp.textContent = 'Додати фіксовану суму до поточної націнки';
+            submitBtn.className = submitBtn.className.replace('bg-red-600 hover:bg-red-700', 'bg-indigo-600 hover:bg-indigo-700');
+            break;
+        case 'set_markup':
+            valueUnit.textContent = '%';
+            adjustmentHelp.textContent = 'Встановити нове значення націнки (замінить поточну)';
+            submitBtn.className = submitBtn.className.replace('bg-indigo-600 hover:bg-indigo-700', 'bg-red-600 hover:bg-red-700');
+            break;
+    }
+});
+
+// Підтвердження перед відправкою
+document.querySelector('form').addEventListener('submit', function(e) {
+    const adjustmentType = document.getElementById('adjustment_type').value;
+    const adjustmentValue = document.getElementById('adjustment_value').value;
+    const selectedCategories = document.querySelectorAll('input[name="categories"]:checked').length;
+    
+    let message = `Ви збираєтесь `;
+    
+    switch(adjustmentType) {
+        case 'percentage':
+            message += `збільшити націнку на ${adjustmentValue}%`;
+            break;
+        case 'fixed_amount':
+            message += `додати ${adjustmentValue} ₴ до націнки`;
+            break;
+        case 'set_markup':
+            message += `встановити націнку ${adjustmentValue}%`;
+            break;
+    }
+    
+    if (selectedCategories > 0) {
+        message += ` для товарів обраних категорій`;
+    } else {
+        message += ` для всіх товарів у прайс-листі`;
+    }
+    
+    message += `.\n\nЦя дія незворотна. Продовжити?`;
+    
+    if (!confirm(message)) {
+        e.preventDefault();
+    }
+});
+</script>
+{% endblock %}

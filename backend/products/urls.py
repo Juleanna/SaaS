@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from .views import (
     CategoryListCreateView, CategoryDetailView,
     ProductListCreateView, ProductDetailView, ProductPublicView,
@@ -28,4 +28,7 @@ urlpatterns = [
     # Публічні URL
     path('public/stores/<slug:store_slug>/products/', store_products, name='store-products'),
     path('public/stores/<slug:store_slug>/products/<slug:product_slug>/', product_by_slug, name='product-by-slug'),
+    
+    # API для роботи з кодами
+    path('api/', include('products.api.urls')),
 ] 

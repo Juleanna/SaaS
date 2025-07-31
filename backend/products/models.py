@@ -1,8 +1,13 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import MinValueValidator
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 from decimal import Decimal
+import random
+import string
+import uuid
+import re
 from stores.models import Store
 
 
@@ -43,28 +48,12 @@ class Product(models.Model):
     description = models.TextField(verbose_name=_('Опис'))
     short_description = models.CharField(max_length=300, blank=True, verbose_name=_('Короткий опис'))
     
-    # Ціноутворення
-    base_cost = models.DecimalField(
-        _('Базова собівартість'),
-        max_digits=10,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        validators=[MinValueValidator(Decimal('0.01'))],
-        help_text=_('Орієнтовна собівартість для розрахунків (якщо не використовується автоматичний розрахунок)')
-    )
-    markup_percentage = models.DecimalField(
-        _('Націнка (%)'),
-        max_digits=5,
-        decimal_places=2,
-        default=Decimal('0'),
-        validators=[MinValueValidator(Decimal('0'))],
-        help_text=_('Відсоток націнки до собівартості')
-    )
+    # Ціноутворення (базові поля, детальне управління через прайс-листи)
     price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        verbose_name=_('Ціна продажу')
+        verbose_name=_('Ціна продажу'),
+        help_text=_('Поточна ціна продажу (синхронізується з прайс-листів)')
     )
     sale_price = models.DecimalField(
         max_digits=10,
@@ -75,22 +64,15 @@ class Product(models.Model):
     )
     currency = models.CharField(max_length=3, default='UAH', verbose_name=_('Валюта'))
     
-    # Автоматичне ціноутворення
-    auto_pricing = models.BooleanField(
-        _('Автоматичне ціноутворення'),
-        default=False,
-        help_text=_('Автоматично розраховувати ціну на основі собівартості та націнки')
-    )
-    price_update_frequency = models.CharField(
-        _('Частота оновлення ціни'),
-        max_length=20,
-        choices=[
-            ('manual', _('Вручну')),
-            ('daily', _('Щодня')),
-            ('weekly', _('Щотижня')),
-            ('on_cost_change', _('При зміні собівартості')),
-        ],
-        default='manual'
+    # Базова собівартість (для резервних розрахунків)
+    base_cost = models.DecimalField(
+        _('Базова собівартість'),
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal('0.01'))],
+        help_text=_('Резервна собівартість (основний розрахунок через warehouse та прайс-листи)')
     )
     
     # Управління запасами
@@ -117,34 +99,6 @@ class Product(models.Model):
         help_text=_('Дозволити замовлення при відсутності на складі')
     )
     
-    # Пороги для попереджень
-    low_stock_threshold = models.DecimalField(
-        _('Поріг малих залишків'),
-        max_digits=10,
-        decimal_places=3,
-        null=True,
-        blank=True,
-        validators=[MinValueValidator(Decimal('0'))],
-        help_text=_('Мінімальна кількість для попередження про малі залишки')
-    )
-    critical_stock_threshold = models.DecimalField(
-        _('Критичний поріг залишків'),
-        max_digits=10,
-        decimal_places=3,
-        null=True,
-        blank=True,
-        validators=[MinValueValidator(Decimal('0'))],
-        help_text=_('Критична кількість для терміновго поповнення')
-    )
-    optimal_stock_level = models.DecimalField(
-        _('Оптимальний рівень запасів'),
-        max_digits=10,
-        decimal_places=3,
-        null=True,
-        blank=True,
-        validators=[MinValueValidator(Decimal('0'))],
-        help_text=_('Цільова кількість для підтримки на складі')
-    )
     
     # Собівартість та методи розрахунку  
     costing_method = models.ForeignKey(
@@ -155,11 +109,6 @@ class Product(models.Model):
         related_name='products',
         verbose_name=_('Метод розрахунку собівартості'),
         help_text=_('Якщо не вказано, використовується метод за замовчуванням')
-    )
-    last_cost_update = models.DateTimeField(
-        _('Останнє оновлення собівартості'),
-        null=True,
-        blank=True
     )
     
     # Налаштування продажу
@@ -197,6 +146,39 @@ class Product(models.Model):
     weight = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True, verbose_name=_('Вага (кг)'))
     dimensions = models.CharField(max_length=50, blank=True, verbose_name=_('Розміри'))
     sku = models.CharField(max_length=50, blank=True, verbose_name=_('SKU'))
+    
+    # Тип товару для штрихкодування
+    PRODUCT_TYPE_CHOICES = [
+        ('piece', _('Поштучний товар')),
+        ('weight', _('Ваговий товар')),
+    ]
+    product_type = models.CharField(
+        max_length=10,
+        choices=PRODUCT_TYPE_CHOICES,
+        default='piece',
+        verbose_name=_('Тип товару')
+    )
+    
+    # Штрихкоди та QR коди
+    barcode = models.CharField(
+        max_length=13,
+        blank=True,
+        unique=True,
+        verbose_name=_('Штрихкод'),
+        help_text=_('13 цифр для поштучного товару, 7 цифр для вагового')
+    )
+    qr_code = models.CharField(
+        max_length=100,
+        blank=True,
+        unique=True,
+        verbose_name=_('QR код'),
+        help_text=_('Унікальний QR код товару')
+    )
+    auto_generate_codes = models.BooleanField(
+        default=True,
+        verbose_name=_('Автогенерація кодів'),
+        help_text=_('Автоматично генерувати штрихкод і QR код')
+    )
     
     # Дати
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Дата створення'))
@@ -291,27 +273,37 @@ class Product(models.Model):
         
         return service.calculate_average_cost(warehouse, self, packaging)
     
-    def calculate_suggested_price(self, warehouse=None):
-        """Розрахувати рекомендовану ціну на основі собівартості та націнки"""
-        cost = self.get_average_cost(warehouse)
-        if not cost:
-            cost = self.base_cost or Decimal('0')
+    def get_current_price_from_pricelist(self, store=None):
+        """Отримати поточну ціну з активного прайс-листа"""
+        from pricelists.models import PriceList, PriceListItem
         
-        if cost and self.markup_percentage:
-            markup_amount = cost * (self.markup_percentage / 100)
-            return cost + markup_amount
+        if not store:
+            store = self.store
         
-        return cost
-    
-    def update_price_from_cost(self, warehouse=None, save=True):
-        """Оновити ціну на основі собівартості та націнки"""
-        if self.auto_pricing:
-            suggested_price = self.calculate_suggested_price(warehouse)
-            if suggested_price:
-                self.price = suggested_price
-                self.last_cost_update = timezone.now()
-                if save:
-                    self.save(update_fields=['price', 'last_cost_update'])
+        # Шукаємо активний прайс-лист за замовчуванням
+        default_pricelist = PriceList.objects.filter(
+            store=store,
+            is_active=True,
+            is_default=True
+        ).first()
+        
+        if not default_pricelist:
+            # Якщо немає за замовчуванням, беремо будь-який активний
+            default_pricelist = PriceList.objects.filter(
+                store=store,
+                is_active=True
+            ).first()
+        
+        if default_pricelist:
+            price_item = PriceListItem.objects.filter(
+                price_list=default_pricelist,
+                product=self
+            ).first()
+            
+            if price_item:
+                return price_item.final_price
+        
+        # Якщо не знайдено в прайс-листах, повертаємо поточну ціну
         return self.price
     
     def get_stock_status_display_data(self):
@@ -334,7 +326,15 @@ class Product(models.Model):
                 'message': 'Немає в наявності'
             }
         
-        if self.critical_stock_threshold and total_stock <= self.critical_stock_threshold:
+        # Пороги залишків тепер управляються через warehouse систему
+        from warehouse.models import Stock
+        
+        # Перевіряємо критичні залишки через warehouse настройки
+        stocks = Stock.objects.filter(product=self)
+        critical_stocks = [s for s in stocks if s.is_critical_level()]
+        low_stocks = [s for s in stocks if s.is_low_level() and not s.is_critical_level()]
+        
+        if critical_stocks:
             return {
                 'status': 'critical',
                 'color': 'red',
@@ -342,7 +342,7 @@ class Product(models.Model):
                 'message': f'Критично мало: {total_stock}'
             }
         
-        if self.low_stock_threshold and total_stock <= self.low_stock_threshold:
+        if low_stocks:
             return {
                 'status': 'low',
                 'color': 'orange',
@@ -393,10 +393,58 @@ class Product(models.Model):
         
         return available_stock
     
+    def clean(self):
+        """Валідація полів товару"""
+        super().clean()
+        
+        # Валідація штрихкоду
+        if self.barcode:
+            if not re.match(r'^\d+$', self.barcode):
+                raise ValidationError({
+                    'barcode': _('Штрихкод повинен містити тільки цифри')
+                })
+            
+            if self.product_type == 'piece' and len(self.barcode) != 13:
+                raise ValidationError({
+                    'barcode': _('Штрихкод для поштучного товару повинен містити 13 цифр')
+                })
+            elif self.product_type == 'weight' and len(self.barcode) != 7:
+                raise ValidationError({
+                    'barcode': _('Штрихкод для вагового товару повинен містити 7 цифр')
+                })
+    
+    def generate_barcode(self):
+        """Генерація штрихкоду"""
+        if self.product_type == 'piece':
+            # Генеруємо 13-значний штрихкод для поштучного товару
+            while True:
+                barcode = ''.join([str(random.randint(0, 9)) for _ in range(13)])
+                if not Product.objects.filter(barcode=barcode).exists():
+                    return barcode
+        else:
+            # Генеруємо 7-значний штрихкод для вагового товару
+            while True:
+                barcode = ''.join([str(random.randint(0, 9)) for _ in range(7)])
+                if not Product.objects.filter(barcode=barcode).exists():
+                    return barcode
+    
+    def generate_qr_code(self):
+        """Генерація QR коду"""
+        while True:
+            qr_code = str(uuid.uuid4()).replace('-', '').upper()[:12]
+            if not Product.objects.filter(qr_code=qr_code).exists():
+                return qr_code
+    
     def save(self, *args, **kwargs):
-        # Автоматичне оновлення ціни при збереженні
-        if self.auto_pricing and self.base_cost and self.markup_percentage:
-            self.price = self.calculate_suggested_price()
+        # Автоматична генерація кодів
+        if self.auto_generate_codes:
+            if not self.barcode:
+                self.barcode = self.generate_barcode()
+            if not self.qr_code:
+                self.qr_code = self.generate_qr_code()
+        
+        # Валідація перед збереженням
+        self.full_clean()
         
         super().save(*args, **kwargs)
 

@@ -685,6 +685,30 @@ class InventoryItem(models.Model):
         verbose_name=_('Підраховано користувачем')
     )
     counted_at = models.DateTimeField(_('Час підрахунку'), null=True, blank=True)
+    
+    # Поля для роботи зі сканером
+    scanned_barcode = models.CharField(
+        _('Відсканований штрихкод'),
+        max_length=13,
+        blank=True,
+        help_text=_('Штрихкод, який був відсканований під час інвентаризації')
+    )
+    scanned_qr_code = models.CharField(
+        _('Відсканований QR код'),
+        max_length=100,
+        blank=True,
+        help_text=_('QR код, який був відсканований під час інвентаризації')
+    )
+    scan_method = models.CharField(
+        _('Метод сканування'),
+        max_length=20,
+        choices=[
+            ('manual', _('Ручне введення')),
+            ('barcode', _('Штрихкод')),
+            ('qr_code', _('QR код')),
+        ],
+        default='manual'
+    )
 
     class Meta:
         verbose_name = _('Позиція інвентаризації')
@@ -733,6 +757,27 @@ class InventoryItem(models.Model):
         elif self.surplus_quantity > 0:
             return 'surplus'
         return 'none'
+    
+    def calculate_discrepancies(self):
+        """Розрахунок розбіжностей"""
+        if self.actual_quantity is not None:
+            difference = self.actual_quantity - self.expected_quantity
+            if difference > 0:
+                self.surplus_quantity = difference
+                self.shortage_quantity = 0
+            elif difference < 0:
+                self.shortage_quantity = abs(difference)
+                self.surplus_quantity = 0
+            else:
+                self.surplus_quantity = 0
+                self.shortage_quantity = 0
+
+            # Розрахунок суми розбіжності
+            if self.unit_cost:
+                discrepancy_qty = self.surplus_quantity - self.shortage_quantity
+                self.discrepancy_amount = discrepancy_qty * self.unit_cost
+            
+            self.save()
 
 
 class CostingMethod(models.Model):

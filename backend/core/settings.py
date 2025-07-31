@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'accounts',
     'stores',
     'products',
+    'pricelists',
     'orders',
     'payments',
     'notifications',
@@ -405,6 +406,32 @@ UNFOLD = {
                         "title": "Фасування",
                         "icon": "inventory_2",
                         "link": lambda request: reverse_lazy("admin:warehouse_packaging_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": "Прайс-листи та ціноутворення",
+                "separator": True,
+                "items": [
+                    {
+                        "title": "Прайс-листи",
+                        "icon": "receipt_long",
+                        "link": lambda request: reverse_lazy("admin:pricelists_pricelist_changelist"),
+                    },
+                    {
+                        "title": "Позиції прайс-листів",
+                        "icon": "format_list_numbered",
+                        "link": lambda request: reverse_lazy("admin:pricelists_pricelistitem_changelist"),
+                    },
+                    {
+                        "title": "Масові оновлення цін",
+                        "icon": "update",
+                        "link": lambda request: reverse_lazy("admin:pricelists_bulkpriceupdate_changelist"),
+                    },
+                    {
+                        "title": "Історія зміни цін",
+                        "icon": "history",
+                        "link": lambda request: reverse_lazy("admin:pricelists_pricehistory_changelist"),
                     },
                 ],
             },

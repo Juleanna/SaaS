@@ -138,16 +138,16 @@ class ProductAdmin(ModelAdmin):
     list_filter = (
         'is_active', 
         'is_featured', 
-        'auto_pricing',
+        'product_type',
         'track_stock',
         'stock_status',
         'category',
         'store',
         ('created_at', RangeDateFilter)
     )
-    search_fields = ('name', 'description', 'sku', 'store__name', 'store__owner__email')
+    search_fields = ('name', 'description', 'sku', 'barcode', 'qr_code', 'store__name', 'store__owner__email')
     prepopulated_fields = {'slug': ('name',)}
-    readonly_fields = ('created_at', 'updated_at', 'current_price', 'last_cost_update')
+    readonly_fields = ('created_at', 'updated_at', 'current_price')
     list_per_page = 20
     inlines = [ProductImageInline, ProductVariantInline]
     
@@ -158,19 +158,19 @@ class ProductAdmin(ModelAdmin):
             'description': 'Базова інформація про продукт'
         }),
         ('Ціноутворення', {
-            'fields': ('base_cost', 'markup_percentage', 'price', 'sale_price', 'current_price', 'currency'),
+            'fields': ('base_cost', 'price', 'sale_price', 'current_price', 'currency'),
             'classes': ('tab',),
-            'description': 'Налаштування цін та собівартості'
+            'description': 'Основні ціни (детальне управління через прайс-листи)'
         }),
-        ('Автоматичне ціноутворення', {
-            'fields': ('auto_pricing', 'price_update_frequency', 'costing_method', 'last_cost_update'),
+        ('Розрахунок собівартості', {
+            'fields': ('costing_method',),
             'classes': ('tab',),
-            'description': 'Автоматичний розрахунок цін на основі собівартості'
+            'description': 'Метод розрахунку собівартості для warehouse'
         }),
         ('Управління запасами', {
-            'fields': ('track_stock', 'stock_status', 'allow_backorders', 'low_stock_threshold', 'critical_stock_threshold', 'optimal_stock_level'),
+            'fields': ('track_stock', 'stock_status', 'allow_backorders'),
             'classes': ('tab',),
-            'description': 'Налаштування обліку залишків та порогів'
+            'description': 'Основні налаштування обліку залишків (пороги управляються через warehouse)'
         }),
         ('Налаштування продажу', {
             'fields': ('minimum_order_quantity', 'maximum_order_quantity', 'order_increment'),
@@ -183,9 +183,14 @@ class ProductAdmin(ModelAdmin):
             'description': 'Налаштування для пошукових систем'
         }),
         ('Характеристики', {
-            'fields': ('weight', 'dimensions', 'sku'),
+            'fields': ('product_type', 'weight', 'dimensions', 'sku'),
             'classes': ('tab',),
             'description': 'Фізичні характеристики та артикул'
+        }),
+        ('Штрихкоди та QR коди', {
+            'fields': ('barcode', 'qr_code', 'auto_generate_codes'),
+            'classes': ('tab',),
+            'description': 'Штрихкоди та QR коди для ідентифікації товару'
         }),
         ('Статус та налаштування', {
             'fields': ('is_featured', 'is_active'),
@@ -245,6 +250,48 @@ class ProductAdmin(ModelAdmin):
                 primary_image.image.url
             )
         return "Немає"
+    
+    actions = ['print_barcodes', 'print_qr_codes']
+    
+    def print_barcodes(self, request, queryset):
+        """Масовий друк штрихкодів"""
+        from django.http import HttpResponse
+        from django.template.loader import render_to_string
+        
+        products_with_barcodes = queryset.filter(barcode__isnull=False).exclude(barcode='')
+        
+        if not products_with_barcodes.exists():
+            self.message_user(request, 'Серед обраних товарів немає штрихкодів для друку.', level='warning')
+            return
+        
+        html_content = render_to_string('admin/products/print_barcodes_bulk.html', {
+            'products': products_with_barcodes
+        })
+        
+        response = HttpResponse(html_content, content_type='text/html')
+        response['Content-Disposition'] = 'inline; filename="barcodes_bulk.html"'
+        return response
+    print_barcodes.short_description = "Надрукувати штрихкоди обраних товарів"
+    
+    def print_qr_codes(self, request, queryset):
+        """Масовий друк QR кодів"""
+        from django.http import HttpResponse
+        from django.template.loader import render_to_string
+        
+        products_with_qr = queryset.filter(qr_code__isnull=False).exclude(qr_code='')
+        
+        if not products_with_qr.exists():
+            self.message_user(request, 'Серед обраних товарів немає QR кодів для друку.', level='warning')
+            return
+        
+        html_content = render_to_string('admin/products/print_qr_bulk.html', {
+            'products': products_with_qr
+        })
+        
+        response = HttpResponse(html_content, content_type='text/html')
+        response['Content-Disposition'] = 'inline; filename="qr_codes_bulk.html"'
+        return response
+    print_qr_codes.short_description = "Надрукувати QR коди обраних товарів"
 
 
 @admin.register(ProductImage)
