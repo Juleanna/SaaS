@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'orders',
     'payments',
     'notifications',
+    'warehouse',
     'telegram_bot',
 ]
 
@@ -227,6 +228,12 @@ UNFOLD = {
     "SHOW_VIEW_ON_SITE": True,  # Show "View on site" button
     "ENVIRONMENT": "core.settings.environment_callback",
     "DASHBOARD_CALLBACK": "core.admin.dashboard_callback",
+    "STYLES": [
+        lambda request: "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.css",
+    ],
+    "SCRIPTS": [
+        lambda request: "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js",
+    ],
     "LOGIN": {
         "image": lambda request: static("login-bg.jpg"),  # Optional
         "redirect_after": lambda request: reverse_lazy("admin:index"),
@@ -272,6 +279,11 @@ UNFOLD = {
                         "title": "Панель управління",
                         "icon": "dashboard",
                         "link": lambda request: reverse_lazy("admin:index"),
+                    },
+                    {
+                        "title": "Інтерактивний дашборд",
+                        "icon": "analytics",
+                        "link": lambda request: "/admin/dashboard/",
                     },
                 ],
             },
@@ -342,6 +354,88 @@ UNFOLD = {
                         "title": "Сповіщення",
                         "icon": "notifications",
                         "link": lambda request: reverse_lazy("admin:notifications_notification_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": "Складський облік",
+                "separator": True,
+                "items": [
+                    {
+                        "title": "Склади",
+                        "icon": "warehouse",
+                        "link": lambda request: reverse_lazy("admin:warehouse_warehouse_changelist"),
+                    },
+                    {
+                        "title": "Залишки",
+                        "icon": "inventory",
+                        "link": lambda request: reverse_lazy("admin:warehouse_stock_changelist"),
+                    },
+                    {
+                        "title": "Постачальники",
+                        "icon": "business",
+                        "link": lambda request: reverse_lazy("admin:warehouse_supplier_changelist"),
+                    },
+                    {
+                        "title": "Постачання",
+                        "icon": "local_shipping",
+                        "link": lambda request: reverse_lazy("admin:warehouse_supply_changelist"),
+                    },
+                    {
+                        "title": "Переміщення",
+                        "icon": "swap_horiz",
+                        "link": lambda request: reverse_lazy("admin:warehouse_movement_changelist"),
+                    },
+                    {
+                        "title": "Списання",
+                        "icon": "delete_sweep",
+                        "link": lambda request: reverse_lazy("admin:warehouse_writeoff_changelist"),
+                    },
+                    {
+                        "title": "Інвентаризація",
+                        "icon": "fact_check",
+                        "link": lambda request: reverse_lazy("admin:warehouse_inventory_changelist"),
+                    },
+                    {
+                        "title": "Одиниці вимірювання",
+                        "icon": "straighten",
+                        "link": lambda request: reverse_lazy("admin:warehouse_unit_changelist"),
+                    },
+                    {
+                        "title": "Фасування",
+                        "icon": "inventory_2",
+                        "link": lambda request: reverse_lazy("admin:warehouse_packaging_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": "Облік собівартості",
+                "separator": True,
+                "items": [
+                    {
+                        "title": "Методи розрахунку",
+                        "icon": "calculate",
+                        "link": lambda request: reverse_lazy("admin:warehouse_costingmethod_changelist"),
+                    },
+                    {
+                        "title": "Правила розрахунку",
+                        "icon": "rule",
+                        "link": lambda request: reverse_lazy("admin:warehouse_costingrule_changelist"),
+                    },
+                    {
+                        "title": "Партії товарів",
+                        "icon": "inventory_2",
+                        "link": lambda request: reverse_lazy("admin:warehouse_stockbatch_changelist"),
+                    },
+                    {
+                        "title": "Рух товарів",
+                        "icon": "timeline",
+                        "link": lambda request: reverse_lazy("admin:warehouse_stockmovement_changelist"),
+                    },
+                    {
+                        "title": "Розрахунки собівартості",
+                        "icon": "assessment",
+                        "link": lambda request: reverse_lazy("admin:warehouse_costcalculation_changelist"),
                     },
                 ],
             },

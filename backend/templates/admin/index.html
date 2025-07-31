@@ -1,0 +1,39 @@
+{% extends "admin/index.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block content %}
+<div style="margin-bottom: 30px;">
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                color: white; 
+                padding: 20px; 
+                border-radius: 12px; 
+                text-align: center;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                margin-bottom: 20px;">
+        <h2 style="margin: 0 0 10px 0; font-size: 1.5rem;">🚀 SaaS Platform Dashboard</h2>
+        <p style="margin: 0 0 15px 0; opacity: 0.9;">Керуйте своєю платформою з повним контролем</p>
+        <a href="/admin/dashboard/" 
+           style="display: inline-block;
+                  background: rgba(255,255,255,0.2);
+                  color: white;
+                  padding: 10px 20px;
+                  text-decoration: none;
+                  border-radius: 25px;
+                  font-weight: 600;
+                  transition: all 0.3s;
+                  border: 2px solid rgba(255,255,255,0.3);">
+            📊 Відкрити інтерактивний дашборд
+        </a>
+    </div>
+</div>
+
+{{ block.super }}
+
+<style>
+    .dashboard-link:hover {
+        background: rgba(255,255,255,0.3) !important;
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}

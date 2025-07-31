@@ -16,37 +16,138 @@ class ProductImageInline(TabularInline):
 class ProductVariantInline(TabularInline):
     model = ProductVariant
     extra = 0
-    fields = ('name', 'value', 'price_adjustment', 'stock_quantity', 'is_active')
+    fields = ('name', 'value', 'price_adjustment', 'cost_adjustment', 'sku_suffix', 'is_active')
+
+
+class CategoryProductInline(TabularInline):
+    """Інлайн продукти в категорії"""
+    model = Product
+    extra = 0
+    fields = ('name', 'price', 'sale_price', 'get_stock_display', 'is_active', 'is_featured')
+    readonly_fields = ('name', 'get_stock_display')
+    can_delete = False
+    max_num = 10
+    
+    def get_stock_display(self, obj):
+        if not obj.track_stock:
+            return "Не відстежується"
+        
+        total_stock = obj.get_stock_quantity()
+        if total_stock is None or total_stock <= 0:
+            return "Немає в наявності"
+        
+        return f"{total_stock} од."
+    get_stock_display.short_description = "Залишки"
+    
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Category)
 class CategoryAdmin(ModelAdmin):
-    list_display = ('name', 'store', 'order', 'products_count', 'is_active')
-    list_filter = ('is_active', 'store')
+    list_display = ('get_category_preview', 'name', 'store_name_short', 'order', 'products_count', 'is_active')
+    list_filter = ('is_active', 'store', 'store__owner')
     search_fields = ('name', 'description', 'store__name', 'store__owner__email')
     prepopulated_fields = {'slug': ('name',)}
-    ordering = ('store', 'order')
+    ordering = ('store', 'order', 'name')
     list_per_page = 25
+    list_editable = ('is_active', 'order')
+    actions = ['make_active', 'make_inactive', 'duplicate_category']
+    inlines = [CategoryProductInline]
     
-    @display(description="Кількість продуктів")
+    fieldsets = (
+        ('Основна інформація', {
+            'fields': ('store', 'name', 'slug', 'description'),
+            'classes': ('wide',),
+            'description': 'Базова інформація про категорію'
+        }),
+        ('Зображення та оформлення', {
+            'fields': ('image',),
+            'classes': ('wide',),
+            'description': 'Візуальне оформлення категорії'
+        }),
+        ('Налаштування відображення', {
+            'fields': ('order', 'is_active'),
+            'classes': ('wide',),
+            'description': 'Порядок сортування та статус'
+        }),
+    )
+    
+    @display(description="Категорія", ordering="name")
+    def get_category_preview(self, obj):
+        if obj.image:
+            return format_html(
+                '<div style="display: flex; align-items: center; gap: 10px;">'
+                '<img src="{}" width="40" height="40" style="border-radius: 6px; object-fit: cover;" />'
+                '<strong>{}</strong>'
+                '</div>',
+                obj.image.url,
+                obj.name
+            )
+        return format_html(
+            '<div style="display: flex; align-items: center; gap: 10px;">'
+            '<div style="width: 40px; height: 40px; background: #f3f4f6; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #9ca3af;">📦</div>'
+            '<strong>{}</strong>'
+            '</div>',
+            obj.name
+        )
+    
+    @display(description="Продукти", ordering="products__count")
     def products_count(self, obj):
-        return obj.products.count()
+        count = obj.products.count()
+        active_count = obj.products.filter(is_active=True).count()
+        if count > 0:
+            return format_html(
+                '<span style="color: #059669; font-weight: 600;">{}</span> / <span style="color: #6b7280;">{}</span>',
+                active_count, count
+            )
+        return format_html('<span style="color: #9ca3af;">0</span>')
+    
+    @display(description="Магазин", ordering="store__name")
+    def store_name_short(self, obj):
+        return obj.store.name
+    
+    def make_active(self, request, queryset):
+        """Активувати категорії"""
+        updated = queryset.update(is_active=True)
+        self.message_user(request, f'Активовано {updated} категорій.')
+    make_active.short_description = "Активувати вибрані категорії"
+    
+    def make_inactive(self, request, queryset):
+        """Деактивувати категорії"""
+        updated = queryset.update(is_active=False)
+        self.message_user(request, f'Деактивовано {updated} категорій.')
+    make_inactive.short_description = "Деактивувати вибрані категорії"
+    
+    def duplicate_category(self, request, queryset):
+        """Дублювати категорії"""
+        duplicated = 0
+        for category in queryset:
+            category.pk = None
+            category.name = f"{category.name} (копія)"
+            category.slug = f"{category.slug}-copy"
+            category.save()
+            duplicated += 1
+        self.message_user(request, f'Створено {duplicated} копій категорій.')
+    duplicate_category.short_description = "Дублювати вибрані категорії"
 
 
 @admin.register(Product)
 class ProductAdmin(ModelAdmin):
-    list_display = ('name', 'store', 'category', 'get_price_display', 'get_image_preview', 'stock_quantity', 'is_active', 'is_featured')
+    list_display = ('name', 'store', 'category', 'get_price_display', 'get_stock_status', 'get_image_preview', 'is_active', 'is_featured')
     list_filter = (
         'is_active', 
         'is_featured', 
-        'is_in_stock',
+        'auto_pricing',
+        'track_stock',
+        'stock_status',
         'category',
         'store',
         ('created_at', RangeDateFilter)
     )
     search_fields = ('name', 'description', 'sku', 'store__name', 'store__owner__email')
     prepopulated_fields = {'slug': ('name',)}
-    readonly_fields = ('created_at', 'updated_at', 'current_price')
+    readonly_fields = ('created_at', 'updated_at', 'current_price', 'last_cost_update')
     list_per_page = 20
     inlines = [ProductImageInline, ProductVariantInline]
     
@@ -56,10 +157,25 @@ class ProductAdmin(ModelAdmin):
             'classes': ('tab',),
             'description': 'Базова інформація про продукт'
         }),
-        ('Ціни та наявність', {
-            'fields': ('price', 'sale_price', 'current_price', 'currency', 'stock_quantity', 'is_in_stock', 'allow_backorders'),
+        ('Ціноутворення', {
+            'fields': ('base_cost', 'markup_percentage', 'price', 'sale_price', 'current_price', 'currency'),
             'classes': ('tab',),
-            'description': 'Ціноутворення та управління запасами'
+            'description': 'Налаштування цін та собівартості'
+        }),
+        ('Автоматичне ціноутворення', {
+            'fields': ('auto_pricing', 'price_update_frequency', 'costing_method', 'last_cost_update'),
+            'classes': ('tab',),
+            'description': 'Автоматичний розрахунок цін на основі собівартості'
+        }),
+        ('Управління запасами', {
+            'fields': ('track_stock', 'stock_status', 'allow_backorders', 'low_stock_threshold', 'critical_stock_threshold', 'optimal_stock_level'),
+            'classes': ('tab',),
+            'description': 'Налаштування обліку залишків та порогів'
+        }),
+        ('Налаштування продажу', {
+            'fields': ('minimum_order_quantity', 'maximum_order_quantity', 'order_increment'),
+            'classes': ('tab',),
+            'description': 'Обмеження кількості при замовленні'
         }),
         ('SEO налаштування', {
             'fields': ('meta_title', 'meta_description'),
@@ -94,6 +210,32 @@ class ProductAdmin(ModelAdmin):
             )
         return f"{obj.price} {obj.currency}"
     
+    @display(description="Статус запасів")
+    def get_stock_status(self, obj):
+        if not obj.track_stock:
+            return format_html(
+                '<span style="display: inline-flex; align-items: center; gap: 4px; color: #6b7280;">'
+                '<span class="material-symbols-outlined" style="font-size: 16px;">visibility_off</span> Не відстежується'
+                '</span>'
+            )
+        
+        stock_data = obj.get_stock_status_display_data()
+        color_map = {
+            'green': '#059669',
+            'orange': '#ea580c', 
+            'red': '#dc2626',
+            'gray': '#6b7280',
+        }
+        
+        return format_html(
+            '<span style="display: inline-flex; align-items: center; gap: 4px; color: {};">'
+            '<span class="material-symbols-outlined" style="font-size: 16px;">{}</span> {}'
+            '</span>',
+            color_map.get(stock_data['color'], '#6b7280'),
+            stock_data['icon'],
+            stock_data['message']
+        )
+    
     @display(description="Зображення")
     def get_image_preview(self, obj):
         primary_image = obj.images.filter(is_primary=True).first()
@@ -125,9 +267,9 @@ class ProductImageAdmin(ModelAdmin):
 
 @admin.register(ProductVariant)
 class ProductVariantAdmin(ModelAdmin):
-    list_display = ('product', 'name', 'value', 'get_price_adjustment', 'stock_quantity', 'is_active')
+    list_display = ('product', 'name', 'value', 'get_price_adjustment', 'get_cost_adjustment', 'full_sku', 'is_active')
     list_filter = ('is_active', 'product__store')
-    search_fields = ('name', 'value', 'product__name', 'product__store__name')
+    search_fields = ('name', 'value', 'sku_suffix', 'product__name', 'product__store__name')
     list_per_page = 25
     
     @display(description="Зміна ціни", ordering="price_adjustment")
@@ -138,5 +280,16 @@ class ProductVariantAdmin(ModelAdmin):
             return format_html(
                 '<span style="color: {}; font-weight: 600;">{}{} ₴</span>',
                 color, symbol, obj.price_adjustment
+            )
+        return "0 ₴"
+    
+    @display(description="Зміна собівартості", ordering="cost_adjustment")
+    def get_cost_adjustment(self, obj):
+        if obj.cost_adjustment:
+            color = "#dc2626" if obj.cost_adjustment > 0 else "#16a34a"
+            symbol = "+" if obj.cost_adjustment > 0 else ""
+            return format_html(
+                '<span style="color: {}; font-weight: 600;">{}{} ₴</span>',
+                color, symbol, obj.cost_adjustment
             )
         return "0 ₴" 
