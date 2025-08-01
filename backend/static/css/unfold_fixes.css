@@ -1,0 +1,64 @@
+/* Unfold Admin Navigation Fixes */
+
+/* Виправлення прокручування сайдбару */
+.unfold-sidebar {
+    position: sticky !important;
+    top: 0 !important;
+    height: 100vh !important;
+    overflow-y: auto !important;
+    scrollbar-width: thin !important;
+}
+
+/* Збереження позиції прокрутки в навігації */
+.unfold-sidebar nav {
+    scroll-behavior: smooth !important;
+}
+
+/* Покращення UX для навігації */
+.unfold-sidebar .unfold-navigation {
+    position: relative !important;
+}
+
+/* Виправлення для мобільних пристроїв */
+@media (max-width: 768px) {
+    .unfold-sidebar {
+        position: fixed !important;
+        z-index: 999 !important;
+    }
+}
+
+/* Smooth transitions для меню */
+.unfold-navigation-item {
+    transition: all 0.2s ease !important;
+}
+
+/* Покращення видимості активного пункту */
+.unfold-navigation-item.active {
+    background-color: rgba(139, 92, 246, 0.1) !important;
+    border-left: 3px solid #8b5cf6 !important;
+}
+
+/* Виправлення для групованої навігації */
+.unfold-navigation-group {
+    margin-bottom: 0.5rem !important;
+}
+
+/* Покращення для пошуку в сайдбарі */
+.unfold-sidebar-search {
+    position: sticky !important;
+    top: 0 !important;
+    background: white !important;
+    z-index: 10 !important;
+    padding: 1rem !important;
+    border-bottom: 1px solid #e5e7eb !important;
+}
+
+/* Темна тема підтримка */
+.dark .unfold-sidebar-search {
+    background: #1f2937 !important;
+    border-bottom-color: #374151 !important;
+}
+
+.dark .unfold-navigation-item.active {
+    background-color: rgba(139, 92, 246, 0.2) !important;
+}

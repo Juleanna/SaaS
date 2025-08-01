@@ -3,7 +3,7 @@ from django.utils.html import format_html
 from unfold.admin import ModelAdmin, TabularInline
 from unfold.contrib.filters.admin import RangeDateFilter
 from unfold.decorators import display
-from .models import Category, Product, ProductImage, ProductVariant
+from .models import Category, Product, ProductImage, ProductVariant, ProductSEO, ProductBarcode
 
 
 class ProductImageInline(TabularInline):
@@ -29,7 +29,9 @@ class CategoryProductInline(TabularInline):
     max_num = 10
     
     def get_stock_display(self, obj):
-        if not obj.track_stock:
+        # Перевіряємо наявність запасів через warehouse
+        stock_quantity = obj.get_stock_quantity()
+        if stock_quantity is None:
             return "Не відстежується"
         
         total_stock = obj.get_stock_quantity()
@@ -138,14 +140,11 @@ class ProductAdmin(ModelAdmin):
     list_filter = (
         'is_active', 
         'is_featured', 
-        'product_type',
-        'track_stock',
-        'stock_status',
         'category',
         'store',
         ('created_at', RangeDateFilter)
     )
-    search_fields = ('name', 'description', 'sku', 'barcode', 'qr_code', 'store__name', 'store__owner__email')
+    search_fields = ('name', 'description', 'sku', 'store__name', 'store__owner__email')
     prepopulated_fields = {'slug': ('name',)}
     readonly_fields = ('created_at', 'updated_at', 'current_price')
     list_per_page = 20
@@ -158,7 +157,7 @@ class ProductAdmin(ModelAdmin):
             'description': 'Базова інформація про продукт'
         }),
         ('Ціноутворення', {
-            'fields': ('base_cost', 'price', 'sale_price', 'current_price', 'currency'),
+            'fields': ('price', 'sale_price', 'current_price', 'currency'),
             'classes': ('tab',),
             'description': 'Основні ціни (детальне управління через прайс-листи)'
         }),
@@ -167,30 +166,15 @@ class ProductAdmin(ModelAdmin):
             'classes': ('tab',),
             'description': 'Метод розрахунку собівартості для warehouse'
         }),
-        ('Управління запасами', {
-            'fields': ('track_stock', 'stock_status', 'allow_backorders'),
-            'classes': ('tab',),
-            'description': 'Основні налаштування обліку залишків (пороги управляються через warehouse)'
-        }),
         ('Налаштування продажу', {
             'fields': ('minimum_order_quantity', 'maximum_order_quantity', 'order_increment'),
             'classes': ('tab',),
             'description': 'Обмеження кількості при замовленні'
         }),
-        ('SEO налаштування', {
-            'fields': ('meta_title', 'meta_description'),
-            'classes': ('tab',),
-            'description': 'Налаштування для пошукових систем'
-        }),
         ('Характеристики', {
-            'fields': ('product_type', 'weight', 'dimensions', 'sku'),
+            'fields': ('weight', 'dimensions', 'sku'),
             'classes': ('tab',),
             'description': 'Фізичні характеристики та артикул'
-        }),
-        ('Штрихкоди та QR коди', {
-            'fields': ('barcode', 'qr_code', 'auto_generate_codes'),
-            'classes': ('tab',),
-            'description': 'Штрихкоди та QR коди для ідентифікації товару'
         }),
         ('Статус та налаштування', {
             'fields': ('is_featured', 'is_active'),
@@ -217,10 +201,19 @@ class ProductAdmin(ModelAdmin):
     
     @display(description="Статус запасів")
     def get_stock_status(self, obj):
-        if not obj.track_stock:
+        # Перевіряємо, чи є у товару запаси на складі
+        try:
+            stock_quantity = obj.get_stock_quantity()
+            if stock_quantity is None:
+                return format_html(
+                    '<span style="display: inline-flex; align-items: center; gap: 4px; color: #6b7280;">'
+                    '<span class="material-symbols-outlined" style="font-size: 16px;">visibility_off</span> Не відстежується'
+                    '</span>'
+                )
+        except Exception:
             return format_html(
                 '<span style="display: inline-flex; align-items: center; gap: 4px; color: #6b7280;">'
-                '<span class="material-symbols-outlined" style="font-size: 16px;">visibility_off</span> Не відстежується'
+                '<span class="material-symbols-outlined" style="font-size: 16px;">error</span> Помилка'
                 '</span>'
             )
         
@@ -292,6 +285,111 @@ class ProductAdmin(ModelAdmin):
         response['Content-Disposition'] = 'inline; filename="qr_codes_bulk.html"'
         return response
     print_qr_codes.short_description = "Надрукувати QR коди обраних товарів"
+
+
+@admin.register(ProductSEO)
+class ProductSEOAdmin(ModelAdmin):
+    list_display = ('product', 'meta_title', 'noindex', 'nofollow', 'created_at')
+    list_filter = (
+        'noindex', 
+        'nofollow', 
+        'created_at',
+        'product__store'
+    )
+    search_fields = ('product__name', 'meta_title', 'meta_description', 'meta_keywords')
+    ordering = ('product__name',)
+    list_per_page = 25
+    
+    fieldsets = (
+        ('Основна SEO інформація', {
+            'fields': ('product', 'meta_title', 'meta_description', 'meta_keywords'),
+            'classes': ('tab',),
+            'description': 'Основні SEO метатеги'
+        }),
+        ('Open Graph', {
+            'fields': ('og_title', 'og_description', 'og_image'),
+            'classes': ('tab',),
+            'description': 'Налаштування для соціальних мереж'
+        }),
+        ('Налаштування індексації', {
+            'fields': ('noindex', 'nofollow'),
+            'classes': ('tab',),
+            'description': 'Керування індексацією пошуковими системами'
+        }),
+        ('Системна інформація', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',),
+            'description': 'Дати створення та оновлення'
+        }),
+    )
+    
+    readonly_fields = ('created_at', 'updated_at')
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('product', 'product__store')
+
+
+@admin.register(ProductBarcode)
+class ProductBarcodeAdmin(ModelAdmin):
+    list_display = ('product', 'product_type', 'barcode', 'qr_code', 'auto_generate_codes', 'created_at')
+    list_filter = (
+        'product_type', 
+        'auto_generate_codes', 
+        'created_at',
+        'product__store'
+    )
+    search_fields = ('product__name', 'barcode', 'qr_code')
+    ordering = ('product__name',)
+    list_per_page = 25
+    
+    fieldsets = (
+        ('Основна інформація', {
+            'fields': ('product', 'product_type'),
+            'classes': ('tab',),
+            'description': 'Товар та тип продукту'
+        }),
+        ('Штрихкоди та QR коди', {
+            'fields': ('barcode', 'qr_code', 'auto_generate_codes'),
+            'classes': ('tab',),
+            'description': 'Коди для ідентифікації товару'
+        }),
+        ('Системна інформація', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',),
+            'description': 'Дати створення та оновлення'
+        }),
+    )
+    
+    readonly_fields = ('created_at', 'updated_at')
+    
+    actions = ['generate_missing_barcodes', 'generate_missing_qr_codes']
+    
+    def generate_missing_barcodes(self, request, queryset):
+        """Генерація відсутніх штрихкодів"""
+        generated = 0
+        for item in queryset.filter(barcode=''):
+            if item.auto_generate_codes:
+                item.barcode = item.generate_barcode()
+                item.save()
+                generated += 1
+        
+        self.message_user(request, f'Згенеровано {generated} штрихкодів.')
+    generate_missing_barcodes.short_description = "Згенерувати відсутні штрихкоди"
+    
+    def generate_missing_qr_codes(self, request, queryset):
+        """Генерація відсутніх QR кодів"""
+        generated = 0
+        for item in queryset.filter(qr_code=''):
+            if item.auto_generate_codes:
+                item.qr_code = item.generate_qr_code()
+                item.save()
+                generated += 1
+        
+        self.message_user(request, f'Згенеровано {generated} QR кодів.')
+    generate_missing_qr_codes.short_description = "Згенерувати відсутні QR коди"
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('product', 'product__store')
 
 
 @admin.register(ProductImage)

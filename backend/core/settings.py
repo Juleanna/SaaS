@@ -52,6 +52,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'core.cache_utils.CacheHeadersMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -184,6 +185,23 @@ CORS_ALLOW_CREDENTIALS = True
 # Redis settings
 REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
 
+# Cache settings
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': REDIS_URL,
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        },
+        'KEY_PREFIX': 'saas_platform',
+        'TIMEOUT': 300,  # 5 хвилин за замовчуванням
+    }
+}
+
+# Session engine
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'default'
+
 # Celery settings
 CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
@@ -211,6 +229,33 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@saasplatform.com')
 # Custom user model
 AUTH_USER_MODEL = 'accounts.User'
 
+# Admin site configuration
+ADMIN_SITE_HEADER = 'SaaS Platform Адміністрування'
+ADMIN_SITE_TITLE = 'SaaS Admin'
+ADMIN_INDEX_TITLE = 'Панель управління'
+
+# Feature Flags налаштування
+FEATURE_FLAGS_CACHE_TIMEOUT = 300  # 5 хвилин
+
+# Кастомні Feature Flags (перевизначають дефолтні)
+FEATURE_FLAGS = {
+    # Увімкнуті для розробки
+    'barcode_generation': {
+        'enabled': True
+    },
+    'data_export': {
+        'enabled': True
+    },
+    
+    # Можна увімкнути для тестування
+    'warehouse_advanced_features': {
+        'enabled': DEBUG,  # Увімкнено тільки в development
+    },
+    'advanced_pricing': {
+        'enabled': DEBUG,
+    }
+}
+
 # Unfold Admin settings
 UNFOLD = {
     "SITE_TITLE": "SaaS Platform Admin",
@@ -229,22 +274,70 @@ UNFOLD = {
     "SHOW_VIEW_ON_SITE": True,  # Show "View on site" button
     "ENVIRONMENT": "core.settings.environment_callback",
     "DASHBOARD_CALLBACK": "core.admin.dashboard_callback",
+    "TABS": [
+        {
+            "models": [
+                "products.product",
+                "products.productimage", 
+                "products.productvariant",
+                "products.productseo",
+                "products.productbarcode",
+            ],
+            "items": [
+                {
+                    "title": "Основна інформація",
+                    "icon": "info",
+                    "link": "admin:products_product_change",
+                },
+                {
+                    "title": "Зображення",
+                    "icon": "photo_library",
+                    "link": "admin:products_productimage_changelist",
+                },
+                {
+                    "title": "Варіанти",
+                    "icon": "tune",
+                    "link": "admin:products_productvariant_changelist",
+                },
+            ]
+        },
+        {
+            "models": [
+                "orders.order",
+                "orders.orderitem",
+                "orders.orderstatushistory",
+            ],
+            "items": [
+                {
+                    "title": "Замовлення",
+                    "icon": "shopping_cart",
+                    "link": "admin:orders_order_change",
+                },
+                {
+                    "title": "Позиції",
+                    "icon": "format_list_bulleted",
+                    "link": "admin:orders_orderitem_changelist",
+                },
+                {
+                    "title": "Історія",
+                    "icon": "history",
+                    "link": "admin:orders_orderstatushistory_changelist",
+                },
+            ]
+        }
+    ],
     "STYLES": [
         lambda request: "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.css",
+        lambda request: static("css/unfold_fixes.css"),  # Custom navigation fixes
     ],
     "SCRIPTS": [
         lambda request: "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js",
+        lambda request: static("js/unfold_navigation_fix.js"),  # Custom navigation JS fixes
     ],
     "LOGIN": {
         "image": lambda request: static("login-bg.jpg"),  # Optional
         "redirect_after": lambda request: reverse_lazy("admin:index"),
     },
-    "STYLES": [
-        lambda request: static("css/styles.css"),  # Optional custom styles
-    ],
-    "SCRIPTS": [
-        lambda request: static("js/scripts.js"),  # Optional custom scripts
-    ],
     "COLORS": {
         "primary": {
             "50": "250 245 255",
@@ -269,8 +362,10 @@ UNFOLD = {
         },
     },
     "SIDEBAR": {
-        "show_search": True,  # Enable search in sidebar
-        "show_all_applications": True,  # Show all applications
+        "show_search": True,  # Enable search in sidebar  
+        "show_all_applications": False,  # Show all applications
+        "navigation_expanded": False,  # Sidebar collapsed by default to prevent scroll issues
+        "navigation_fixed": True,  # Fix navigation position
         "navigation": [
             {
                 "title": "Головна",
@@ -296,6 +391,7 @@ UNFOLD = {
                         "title": "Користувачі",
                         "icon": "person",
                         "link": lambda request: reverse_lazy("admin:accounts_user_changelist"),
+                        "permission": lambda request: request.user.has_perm("accounts.view_user"),
                     },
                     {
                         "title": "Групи",
@@ -306,7 +402,7 @@ UNFOLD = {
                 ],
             },
             {
-                "title": "Магазини та продукти",
+                "title": "Магазини",
                 "separator": True,
                 "items": [
                     {
@@ -324,15 +420,46 @@ UNFOLD = {
                         "icon": "share",
                         "link": lambda request: reverse_lazy("admin:stores_storesociallink_changelist"),
                     },
+                ],
+            },
+            {
+                "title": "Каталог товарів",
+                "separator": True,
+                "items": [
                     {
-                        "title": "Продукти",
+                        "title": "Категорії",
+                        "icon": "category",
+                        "link": lambda request: reverse_lazy("admin:products_category_changelist"),
+                    },
+                    {
+                        "title": "Товари",
                         "icon": "inventory",
                         "link": lambda request: reverse_lazy("admin:products_product_changelist"),
+                    },
+                    {
+                        "title": "Зображення товарів",
+                        "icon": "photo_library",
+                        "link": lambda request: reverse_lazy("admin:products_productimage_changelist"),
+                    },
+                    {
+                        "title": "Варіанти товарів",
+                        "icon": "tune",
+                        "link": lambda request: reverse_lazy("admin:products_productvariant_changelist"),
+                    },
+                    {
+                        "title": "SEO товарів",
+                        "icon": "search",
+                        "link": lambda request: reverse_lazy("admin:products_productseo_changelist"),
+                    },
+                    {
+                        "title": "Штрихкоди товарів",
+                        "icon": "qr_code",
+                        "link": lambda request: reverse_lazy("admin:products_productbarcode_changelist"),
                     },
                 ],
             },
             {
-                "title": "Замовлення та платежі",
+                "title": "Замовлення",
                 "separator": True,
                 "items": [
                     {
@@ -341,9 +468,45 @@ UNFOLD = {
                         "link": lambda request: reverse_lazy("admin:orders_order_changelist"),
                     },
                     {
+                        "title": "Позиції замовлень",
+                        "icon": "format_list_bulleted",
+                        "link": lambda request: reverse_lazy("admin:orders_orderitem_changelist"),
+                    },
+                    {
+                        "title": "Історія статусів",
+                        "icon": "history",
+                        "link": lambda request: reverse_lazy("admin:orders_orderstatushistory_changelist"),
+                    },
+                    {
+                        "title": "Кошики",
+                        "icon": "shopping_basket",
+                        "link": lambda request: reverse_lazy("admin:orders_cart_changelist"),
+                    },
+                    {
+                        "title": "Товари в кошиках",
+                        "icon": "add_shopping_cart",
+                        "link": lambda request: reverse_lazy("admin:orders_cartitem_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": "Платежі",
+                "separator": True,
+                "items": [
+                    {
                         "title": "Платежі",
                         "icon": "payment",
                         "link": lambda request: reverse_lazy("admin:payments_payment_changelist"),
+                    },
+                    {
+                        "title": "Методи оплати",
+                        "icon": "credit_card",
+                        "link": lambda request: reverse_lazy("admin:payments_paymentmethod_changelist"),
+                    },
+                    {
+                        "title": "Повернення коштів",
+                        "icon": "keyboard_return",
+                        "link": lambda request: reverse_lazy("admin:payments_refund_changelist"),
                     },
                 ],
             },
@@ -355,6 +518,32 @@ UNFOLD = {
                         "title": "Сповіщення",
                         "icon": "notifications",
                         "link": lambda request: reverse_lazy("admin:notifications_notification_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": "Telegram боти",
+                "separator": True,
+                "items": [
+                    {
+                        "title": "Боти",
+                        "icon": "smart_toy",
+                        "link": lambda request: reverse_lazy("admin:telegram_bot_telegrambot_changelist"),
+                    },
+                    {
+                        "title": "Користувачі Telegram",
+                        "icon": "person",
+                        "link": lambda request: reverse_lazy("admin:telegram_bot_telegramuser_changelist"),
+                    },
+                    {
+                        "title": "Сесії",
+                        "icon": "login",
+                        "link": lambda request: reverse_lazy("admin:telegram_bot_telegramsession_changelist"),
+                    },
+                    {
+                        "title": "Повідомлення",
+                        "icon": "message",
+                        "link": lambda request: reverse_lazy("admin:telegram_bot_telegrammessage_changelist"),
                     },
                 ],
             },
@@ -378,9 +567,26 @@ UNFOLD = {
                         "link": lambda request: reverse_lazy("admin:warehouse_supplier_changelist"),
                     },
                     {
+                        "title": "Одиниці вимірювання",
+                        "icon": "straighten",
+                        "link": lambda request: reverse_lazy("admin:warehouse_unit_changelist"),
+                    },
+                    {
+                        "title": "Фасування",
+                        "icon": "inventory_2",
+                        "link": lambda request: reverse_lazy("admin:warehouse_packaging_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": "Складські операції",
+                "separator": True,
+                "items": [
+                    {
                         "title": "Постачання",
                         "icon": "local_shipping",
                         "link": lambda request: reverse_lazy("admin:warehouse_supply_changelist"),
+                        "permission": lambda request: request.user.has_perm("warehouse.view_supply"),
                     },
                     {
                         "title": "Переміщення",
@@ -397,16 +603,6 @@ UNFOLD = {
                         "icon": "fact_check",
                         "link": lambda request: reverse_lazy("admin:warehouse_inventory_changelist"),
                     },
-                    {
-                        "title": "Одиниці вимірювання",
-                        "icon": "straighten",
-                        "link": lambda request: reverse_lazy("admin:warehouse_unit_changelist"),
-                    },
-                    {
-                        "title": "Фасування",
-                        "icon": "inventory_2",
-                        "link": lambda request: reverse_lazy("admin:warehouse_packaging_changelist"),
-                    },
                 ],
             },
             {
@@ -417,6 +613,7 @@ UNFOLD = {
                         "title": "Прайс-листи",
                         "icon": "receipt_long",
                         "link": lambda request: reverse_lazy("admin:pricelists_pricelist_changelist"),
+                        "permission": lambda request: request.user.has_perm("pricelists.view_pricelist"),
                     },
                     {
                         "title": "Позиції прайс-листів",
@@ -468,6 +665,35 @@ UNFOLD = {
             },
         ],
     },
+    "THEME": "light",  # Тема за замовчуванням
+    "ACTIONS": [
+        {
+            "title": "Експорт даних",
+            "icon": "download",
+            "link": lambda request: "/admin/export-data/",
+            "permission": lambda request: request.user.is_superuser,
+        },
+        {
+            "title": "Статус системи", 
+            "icon": "health_and_safety",
+            "link": lambda request: "/admin/system-status/",
+            "permission": lambda request: request.user.is_staff,
+        },
+        {
+            "title": "Масові дії",
+            "icon": "batch_prediction",
+            "link": lambda request: "/admin/bulk-actions/",
+            "permission": lambda request: request.user.has_perm("auth.change_user"),
+        },
+    ],
+    "FAVICONS": [
+        {
+            "rel": "icon",
+            "sizes": "32x32",
+            "type": "image/svg+xml",
+            "href": lambda request: static("favicon.svg"),
+        },
+    ],
 }
 
 def environment_callback(request):

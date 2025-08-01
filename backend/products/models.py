@@ -64,40 +64,7 @@ class Product(models.Model):
     )
     currency = models.CharField(max_length=3, default='UAH', verbose_name=_('Валюта'))
     
-    # Базова собівартість (для резервних розрахунків)
-    base_cost = models.DecimalField(
-        _('Базова собівартість'),
-        max_digits=10,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        validators=[MinValueValidator(Decimal('0.01'))],
-        help_text=_('Резервна собівартість (основний розрахунок через warehouse та прайс-листи)')
-    )
     
-    # Управління запасами
-    track_stock = models.BooleanField(
-        _('Відстежувати залишки'),
-        default=True,
-        help_text=_('Увімкнути облік залишків на складах')
-    )
-    stock_status = models.CharField(
-        _('Статус наявності'),
-        max_length=20,
-        choices=[
-            ('in_stock', _('В наявності')),
-            ('out_of_stock', _('Немає в наявності')),
-            ('limited', _('Обмежена кількість')),
-            ('preorder', _('Під замовлення')),
-            ('discontinued', _('Знято з виробництва')),
-        ],
-        default='in_stock'
-    )
-    allow_backorders = models.BooleanField(
-        _('Дозволити попереднє замовлення'),
-        default=False,
-        help_text=_('Дозволити замовлення при відсутності на складі')
-    )
     
     
     # Собівартість та методи розрахунку  
@@ -136,9 +103,7 @@ class Product(models.Model):
         help_text=_('Кратність, на яку може збільшуватися кількість замовлення')
     )
     
-    # SEO та відображення
-    meta_title = models.CharField(max_length=60, blank=True, verbose_name=_('Meta title'))
-    meta_description = models.TextField(blank=True, verbose_name=_('Meta description'))
+    # Основні налаштування
     is_featured = models.BooleanField(default=False, verbose_name=_('Рекомендований'))
     is_active = models.BooleanField(default=True, verbose_name=_('Активний'))
     
@@ -146,39 +111,6 @@ class Product(models.Model):
     weight = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True, verbose_name=_('Вага (кг)'))
     dimensions = models.CharField(max_length=50, blank=True, verbose_name=_('Розміри'))
     sku = models.CharField(max_length=50, blank=True, verbose_name=_('SKU'))
-    
-    # Тип товару для штрихкодування
-    PRODUCT_TYPE_CHOICES = [
-        ('piece', _('Поштучний товар')),
-        ('weight', _('Ваговий товар')),
-    ]
-    product_type = models.CharField(
-        max_length=10,
-        choices=PRODUCT_TYPE_CHOICES,
-        default='piece',
-        verbose_name=_('Тип товару')
-    )
-    
-    # Штрихкоди та QR коди
-    barcode = models.CharField(
-        max_length=13,
-        blank=True,
-        unique=True,
-        verbose_name=_('Штрихкод'),
-        help_text=_('13 цифр для поштучного товару, 7 цифр для вагового')
-    )
-    qr_code = models.CharField(
-        max_length=100,
-        blank=True,
-        unique=True,
-        verbose_name=_('QR код'),
-        help_text=_('Унікальний QR код товару')
-    )
-    auto_generate_codes = models.BooleanField(
-        default=True,
-        verbose_name=_('Автогенерація кодів'),
-        help_text=_('Автоматично генерувати штрихкод і QR код')
-    )
     
     # Дати
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Дата створення'))
@@ -212,9 +144,6 @@ class Product(models.Model):
     
     def get_stock_quantity(self, warehouse=None):
         """Отримати кількість на складі"""
-        if not self.track_stock:
-            return None
-        
         from warehouse.models import Stock
         
         if warehouse:
@@ -229,9 +158,6 @@ class Product(models.Model):
     
     def get_total_cost_value(self, warehouse=None):
         """Загальна вартість товару на складі"""
-        if not self.track_stock:
-            return Decimal('0')
-        
         from warehouse.models import Stock
         
         if warehouse:
@@ -262,14 +188,14 @@ class Product(models.Model):
             ).first()
         
         if not warehouse:
-            return self.base_cost or Decimal('0')
+            return Decimal('0')
         
         service = CostCalculationService()
         
         # Отримуємо основне фасування товару
         packaging = self.packagings.filter(is_default=True).first()
         if not packaging:
-            return self.base_cost or Decimal('0')
+            return Decimal('0')
         
         return service.calculate_average_cost(warehouse, self, packaging)
     
@@ -310,14 +236,6 @@ class Product(models.Model):
         """Отримати дані для відображення статусу запасів"""
         total_stock = self.get_stock_quantity()
         
-        if not self.track_stock:
-            return {
-                'status': 'not_tracked',
-                'color': 'gray',
-                'icon': 'visibility_off',
-                'message': 'Не відстежується'
-            }
-        
         if total_stock is None or total_stock <= 0:
             return {
                 'status': 'out_of_stock',
@@ -326,28 +244,28 @@ class Product(models.Model):
                 'message': 'Немає в наявності'
             }
         
-        # Пороги залишків тепер управляються через warehouse систему
+        # Пороги залишків управляються через warehouse систему
         from warehouse.models import Stock
         
         # Перевіряємо критичні залишки через warehouse настройки
         stocks = Stock.objects.filter(product=self)
-        critical_stocks = [s for s in stocks if s.is_critical_level()]
-        low_stocks = [s for s in stocks if s.is_low_level() and not s.is_critical_level()]
-        
-        if critical_stocks:
-            return {
-                'status': 'critical',
-                'color': 'red',
-                'icon': 'warning',
-                'message': f'Критично мало: {total_stock}'
-            }
+        low_stocks = [s for s in stocks if s.is_low_stock]
+        overstocked = [s for s in stocks if s.is_overstocked]
         
         if low_stocks:
             return {
                 'status': 'low',
                 'color': 'orange',
-                'icon': 'inventory_2',
+                'icon': 'warning',
                 'message': f'Мало залишків: {total_stock}'
+            }
+        
+        if overstocked:
+            return {
+                'status': 'overstocked',
+                'color': 'yellow',
+                'icon': 'inventory_2',
+                'message': f'Багато запасів: {total_stock}'
             }
         
         return {
@@ -357,18 +275,15 @@ class Product(models.Model):
             'message': f'В наявності: {total_stock}'
         }
     
-    def is_orderable(self, quantity=1):
+    def is_orderable(self, quantity=1, allow_backorders=False):
         """Чи можна замовити товар"""
         if not self.is_active:
             return False
         
-        if not self.track_stock:
-            return True
-        
         available_stock = self.get_stock_quantity()
         
         if available_stock is None or available_stock <= 0:
-            return self.allow_backorders
+            return allow_backorders
         
         if quantity < self.minimum_order_quantity:
             return False
@@ -378,9 +293,9 @@ class Product(models.Model):
         
         return available_stock >= quantity
     
-    def get_max_orderable_quantity(self):
+    def get_max_orderable_quantity(self, allow_backorders=False):
         """Максимальна кількість, яку можна замовити"""
-        if not self.track_stock or self.allow_backorders:
+        if allow_backorders:
             return self.maximum_order_quantity
         
         available_stock = self.get_stock_quantity()
@@ -393,59 +308,7 @@ class Product(models.Model):
         
         return available_stock
     
-    def clean(self):
-        """Валідація полів товару"""
-        super().clean()
-        
-        # Валідація штрихкоду
-        if self.barcode:
-            if not re.match(r'^\d+$', self.barcode):
-                raise ValidationError({
-                    'barcode': _('Штрихкод повинен містити тільки цифри')
-                })
-            
-            if self.product_type == 'piece' and len(self.barcode) != 13:
-                raise ValidationError({
-                    'barcode': _('Штрихкод для поштучного товару повинен містити 13 цифр')
-                })
-            elif self.product_type == 'weight' and len(self.barcode) != 7:
-                raise ValidationError({
-                    'barcode': _('Штрихкод для вагового товару повинен містити 7 цифр')
-                })
-    
-    def generate_barcode(self):
-        """Генерація штрихкоду"""
-        if self.product_type == 'piece':
-            # Генеруємо 13-значний штрихкод для поштучного товару
-            while True:
-                barcode = ''.join([str(random.randint(0, 9)) for _ in range(13)])
-                if not Product.objects.filter(barcode=barcode).exists():
-                    return barcode
-        else:
-            # Генеруємо 7-значний штрихкод для вагового товару
-            while True:
-                barcode = ''.join([str(random.randint(0, 9)) for _ in range(7)])
-                if not Product.objects.filter(barcode=barcode).exists():
-                    return barcode
-    
-    def generate_qr_code(self):
-        """Генерація QR коду"""
-        while True:
-            qr_code = str(uuid.uuid4()).replace('-', '').upper()[:12]
-            if not Product.objects.filter(qr_code=qr_code).exists():
-                return qr_code
-    
     def save(self, *args, **kwargs):
-        # Автоматична генерація кодів
-        if self.auto_generate_codes:
-            if not self.barcode:
-                self.barcode = self.generate_barcode()
-            if not self.qr_code:
-                self.qr_code = self.generate_qr_code()
-        
-        # Валідація перед збереженням
-        self.full_clean()
-        
         super().save(*args, **kwargs)
 
 
@@ -516,4 +379,147 @@ class ProductVariant(models.Model):
     def get_variant_cost(self, warehouse=None):
         """Собівартість варіанту"""
         base_cost = self.product.get_average_cost(warehouse)
-        return base_cost + self.cost_adjustment 
+        return base_cost + self.cost_adjustment
+
+
+class ProductSEO(models.Model):
+    """SEO налаштування товару"""
+    
+    product = models.OneToOneField(
+        Product, 
+        on_delete=models.CASCADE, 
+        related_name='seo',
+        verbose_name=_('Товар')
+    )
+    meta_title = models.CharField(max_length=60, blank=True, verbose_name=_('Meta title'))
+    meta_description = models.TextField(blank=True, verbose_name=_('Meta description'))
+    meta_keywords = models.CharField(max_length=255, blank=True, verbose_name=_('Meta keywords'))
+    
+    # Open Graph теги
+    og_title = models.CharField(max_length=95, blank=True, verbose_name=_('OG title'))
+    og_description = models.CharField(max_length=300, blank=True, verbose_name=_('OG description'))
+    og_image = models.ImageField(upload_to='og_images/', blank=True, verbose_name=_('OG зображення'))
+    
+    # Налаштування індексації
+    noindex = models.BooleanField(default=False, verbose_name=_('No Index'))
+    nofollow = models.BooleanField(default=False, verbose_name=_('No Follow'))
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Створено'))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_('Оновлено'))
+    
+    class Meta:
+        verbose_name = _('SEO налаштування товару')
+        verbose_name_plural = _('SEO налаштування товарів')
+    
+    def __str__(self):
+        return f"SEO для {self.product.name}"
+
+
+class ProductBarcode(models.Model):
+    """Штрихкоди та коди товарів"""
+    
+    PRODUCT_TYPE_CHOICES = [
+        ('piece', _('Поштучний товар')),
+        ('weight', _('Ваговий товар')),
+    ]
+    
+    product = models.OneToOneField(
+        Product, 
+        on_delete=models.CASCADE, 
+        related_name='barcode_info',
+        verbose_name=_('Товар')
+    )
+    
+    # Тип товару для штрихкодування
+    product_type = models.CharField(
+        max_length=10,
+        choices=PRODUCT_TYPE_CHOICES,
+        default='piece',
+        verbose_name=_('Тип товару')
+    )
+    
+    # Штрихкоди та QR коди
+    barcode = models.CharField(
+        max_length=13,
+        blank=True,
+        unique=True,
+        verbose_name=_('Штрихкод'),
+        help_text=_('13 цифр для поштучного товару, 7 цифр для вагового')
+    )
+    qr_code = models.CharField(
+        max_length=100,
+        blank=True,
+        unique=True,
+        verbose_name=_('QR код'),
+        help_text=_('Унікальний QR код товару')
+    )
+    auto_generate_codes = models.BooleanField(
+        default=True,
+        verbose_name=_('Автогенерація кодів'),
+        help_text=_('Автоматично генерувати штрихкод і QR код')
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Створено'))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_('Оновлено'))
+    
+    class Meta:
+        verbose_name = _('Штрихкод товару')
+        verbose_name_plural = _('Штрихкоди товарів')
+    
+    def __str__(self):
+        return f"Код для {self.product.name}"
+    
+    def clean(self):
+        """Валідація полів штрихкоду"""
+        super().clean()
+        
+        # Валідація штрихкоду
+        if self.barcode:
+            if not re.match(r'^\d+$', self.barcode):
+                raise ValidationError({
+                    'barcode': _('Штрихкод повинен містити тільки цифри')
+                })
+            
+            if self.product_type == 'piece' and len(self.barcode) != 13:
+                raise ValidationError({
+                    'barcode': _('Штрихкод для поштучного товару повинен містити 13 цифр')
+                })
+            elif self.product_type == 'weight' and len(self.barcode) != 7:
+                raise ValidationError({
+                    'barcode': _('Штрихкод для вагового товару повинен містити 7 цифр')
+                })
+    
+    def generate_barcode(self):
+        """Генерація штрихкоду"""
+        if self.product_type == 'piece':
+            # Генеруємо 13-значний штрихкод для поштучного товару
+            while True:
+                barcode = ''.join([str(random.randint(0, 9)) for _ in range(13)])
+                if not ProductBarcode.objects.filter(barcode=barcode).exists():
+                    return barcode
+        else:
+            # Генеруємо 7-значний штрихкод для вагового товару
+            while True:
+                barcode = ''.join([str(random.randint(0, 9)) for _ in range(7)])
+                if not ProductBarcode.objects.filter(barcode=barcode).exists():
+                    return barcode
+    
+    def generate_qr_code(self):
+        """Генерація QR коду"""
+        while True:
+            qr_code = str(uuid.uuid4()).replace('-', '').upper()[:12]
+            if not ProductBarcode.objects.filter(qr_code=qr_code).exists():
+                return qr_code
+    
+    def save(self, *args, **kwargs):
+        # Автоматична генерація кодів
+        if self.auto_generate_codes:
+            if not self.barcode:
+                self.barcode = self.generate_barcode()
+            if not self.qr_code:
+                self.qr_code = self.generate_qr_code()
+        
+        # Валідація перед збереженням
+        self.full_clean()
+        
+        super().save(*args, **kwargs) 
