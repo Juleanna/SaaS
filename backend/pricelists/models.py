@@ -241,6 +241,7 @@ class PriceListItem(models.Model):
         _('Фінальна ціна'),
         max_digits=10,
         decimal_places=2,
+        default=Decimal('0.01'),
         validators=[MinValueValidator(Decimal('0.01'))]
     )
     
@@ -301,7 +302,18 @@ class PriceListItem(models.Model):
         """Поточна собівартість для розрахунків"""
         if self.cost_calculation_method == 'manual' and self.manual_cost:
             return self.manual_cost
-        return self.calculated_cost or Decimal('0')
+        elif self.calculated_cost:
+            return self.calculated_cost
+        else:
+            # Якщо немає собівартості, пробуємо взяти з товару
+            try:
+                if self.product and hasattr(self.product, 'get_average_cost'):
+                    avg_cost = self.product.get_average_cost()
+                    if avg_cost and avg_cost > 0:
+                        return avg_cost
+            except:
+                pass
+            return Decimal('0')
     
     @property
     def profit_margin(self):
@@ -321,15 +333,21 @@ class PriceListItem(models.Model):
     def calculate_price(self):
         """Розрахунок ціни на основі налаштувань"""
         cost = self.current_cost
-        if not cost:
-            return None
+        
+        # Якщо немає собівартості, використовуємо ціну товару або мінімальну ціну
+        if not cost or cost <= 0:
+            if self.markup_type == 'fixed_price' and self.markup_value > 0:
+                return self.markup_value
+            # Використовуємо ціну товару як базу
+            base_price = self.product.price if self.product.price > 0 else Decimal('0.01')
+            return base_price
         
         if self.markup_type == 'percentage':
             calculated_price = cost * (1 + self.markup_value / 100)
         elif self.markup_type == 'fixed_amount':
             calculated_price = cost + self.markup_value
         elif self.markup_type == 'fixed_price':
-            calculated_price = self.markup_value
+            calculated_price = self.markup_value if self.markup_value > 0 else cost
         elif self.markup_type == 'formula' and self.markup_formula:
             try:
                 # Безпечний калькулятор формул
@@ -342,6 +360,10 @@ class PriceListItem(models.Model):
                 calculated_price = cost
         else:
             calculated_price = cost
+        
+        # Гарантуємо мінімальну ціну
+        if calculated_price <= 0:
+            calculated_price = Decimal('0.01')
         
         # Перевірка мін/макс обмежень
         if self.min_price and calculated_price < self.min_price:
@@ -362,8 +384,18 @@ class PriceListItem(models.Model):
             if calculated:
                 self.calculated_price = calculated
                 self.final_price = self.manual_price if self.manual_price else calculated
+            else:
+                # Якщо розрахунок не вдався, встановлюємо мінімальну ціну або ціну товару
+                fallback_price = self.manual_price or self.product.price or Decimal('0.01')
+                self.calculated_price = fallback_price
+                self.final_price = fallback_price
         else:
-            self.final_price = self.manual_price if self.manual_price else self.calculated_price
+            # Для ручного режиму гарантуємо, що final_price завжди встановлена
+            self.final_price = self.manual_price or self.calculated_price or self.product.price or Decimal('0.01')
+        
+        # Фінальна перевірка - final_price ніколи не повинна бути None або 0
+        if not self.final_price or self.final_price <= 0:
+            self.final_price = self.product.price or Decimal('0.01')
         
         super().save(*args, **kwargs)
 

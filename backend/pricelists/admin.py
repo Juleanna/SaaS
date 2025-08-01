@@ -6,6 +6,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, JsonResponse
 from django.template.response import TemplateResponse
 from django.utils import timezone
+from django import forms
 from unfold.admin import ModelAdmin, TabularInline, StackedInline
 from unfold.contrib.filters.admin import RangeDateFilter, RangeNumericFilter, RelatedDropdownFilter
 from unfold.decorators import action
@@ -19,9 +20,72 @@ from .utils.excel_handler import ExcelPriceListHandler
 from products.models import Product, Category
 
 
+class PriceListItemForm(forms.ModelForm):
+    """Кастомна форма для PriceListItem з валідацією final_price"""
+    
+    class Meta:
+        model = PriceListItem
+        fields = '__all__'
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        
+        # Перевіряємо, чи форма помічена для видалення
+        if cleaned_data.get('DELETE'):
+            return cleaned_data
+        
+        # Простий розрахунок без створення тимчасового об'єкта
+        product = cleaned_data.get('product')
+        manual_cost = cleaned_data.get('manual_cost')
+        calculated_cost = cleaned_data.get('calculated_cost')
+        markup_type = cleaned_data.get('markup_type', 'percentage')
+        markup_value = cleaned_data.get('markup_value', Decimal('0'))
+        manual_price = cleaned_data.get('manual_price')
+        is_manual_override = cleaned_data.get('is_manual_override', False)
+        
+        # Визначаємо собівартість
+        cost_calculation_method = cleaned_data.get('cost_calculation_method', 'auto')
+        if cost_calculation_method == 'manual' and manual_cost:
+            current_cost = manual_cost
+        elif calculated_cost:
+            current_cost = calculated_cost
+        else:
+            current_cost = Decimal('0')
+        
+        # Розраховуємо ціну
+        calculated_price = Decimal('0.01')  # Мінімальна ціна за замовчуванням
+        
+        if current_cost > 0:
+            if markup_type == 'percentage':
+                calculated_price = current_cost * (1 + markup_value / 100)
+            elif markup_type == 'fixed_amount':
+                calculated_price = current_cost + markup_value
+            elif markup_type == 'fixed_price':
+                calculated_price = markup_value if markup_value > 0 else current_cost
+            else:
+                calculated_price = current_cost
+        elif product and hasattr(product, 'price') and product.price > 0:
+            # Якщо немає собівартості, використовуємо ціну товару
+            calculated_price = product.price
+        
+        # Гарантуємо мінімальну ціну
+        if calculated_price <= 0:
+            calculated_price = Decimal('0.01')
+        
+        # Встановлюємо final_price
+        if is_manual_override:
+            cleaned_data['final_price'] = manual_price or calculated_price
+        else:
+            cleaned_data['final_price'] = manual_price or calculated_price
+        
+        return cleaned_data
+
+
 class PriceListItemInline(TabularInline):
     """Inline для позицій прайс-листа"""
     model = PriceListItem
+    # Відключаємо кастомну форму для inline щоб уникнути конфліктів з DELETE
+    # form = PriceListItemForm  
     extra = 0
     fields = [
         'product', 'cost_calculation_method', 'manual_cost', 'calculated_cost',
@@ -333,6 +397,8 @@ class PriceListAdmin(ModelAdmin):
 @admin.register(PriceListItem)
 class PriceListItemAdmin(ModelAdmin):
     """Адмін для позицій прайс-листа"""
+    
+    form = PriceListItemForm
     
     list_display = [
         'product', 'price_list', 'current_cost_display', 'markup_display', 
