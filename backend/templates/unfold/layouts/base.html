@@ -1,0 +1,67 @@
+{% extends "unfold/layouts/base.html" %}
+
+{% block extrahead %}
+{{ block.super }}
+<meta name="turbo-permanent" content="true">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<style>
+    /* Inline critical CSS for scroll position fix */
+    html { scroll-behavior: auto !important; }
+    body { scroll-behavior: auto !important; }
+    [data-turbo-permanent] { scroll-behavior: auto !important; }
+    .bg-white.dark\:bg-gray-900 { scroll-behavior: auto !important; }
+</style>
+<script>
+    // Inline script для миттєвого виконання
+    (function() {
+        if (typeof Storage !== "undefined" && document.body) {
+            window.addEventListener('beforeunload', function() {
+                try {
+                    const sidebar = document.querySelector('[data-turbo-permanent]') || 
+                                   document.querySelector('.bg-white.dark\\:bg-gray-900') ||
+                                   document.querySelector('nav[role="navigation"]');
+                    if (sidebar && typeof sidebar.scrollTop === 'number') {
+                        sessionStorage.setItem('unfold-scroll-pos', sidebar.scrollTop);
+                    }
+                } catch (e) {
+                    console.warn('Scroll position save failed:', e);
+                }
+            });
+        }
+    })();
+</script>
+{% endblock %}
+
+{% block extrajs %}
+{{ block.super }}
+<script>
+    // Відновлення позиції прокрутки після завантаження сторінки
+    function restoreScrollPosition() {
+        if (!document.body) {
+            setTimeout(restoreScrollPosition, 50);
+            return;
+        }
+        
+        try {
+            const sidebar = document.querySelector('[data-turbo-permanent]') || 
+                           document.querySelector('.bg-white.dark\\:bg-gray-900') ||
+                           document.querySelector('nav[role="navigation"]');
+            
+            const savedPos = sessionStorage.getItem('unfold-scroll-pos');
+            if (sidebar && savedPos && !isNaN(savedPos)) {
+                sidebar.scrollTop = parseInt(savedPos);
+            }
+        } catch (e) {
+            console.warn('Scroll position restore failed:', e);
+        }
+    }
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(restoreScrollPosition, 100);
+        });
+    } else {
+        setTimeout(restoreScrollPosition, 100);
+    }
+</script>
+{% endblock %}

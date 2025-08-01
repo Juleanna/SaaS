@@ -1,64 +1,139 @@
-/* Unfold Admin Navigation Fixes */
+/* Unfold Admin Navigation Fixes - Enhanced */
 
-/* Виправлення прокручування сайдбару */
-.unfold-sidebar {
+/* Основні селектори для Unfold Admin */
+[data-turbo-permanent],
+.bg-white.dark\:bg-gray-900,
+nav[role="navigation"],
+.sidebar {
     position: sticky !important;
     top: 0 !important;
     height: 100vh !important;
     overflow-y: auto !important;
     scrollbar-width: thin !important;
+    scroll-behavior: auto !important; /* Відключаємо smooth scroll щоб не заважав нашому JS */
 }
 
-/* Збереження позиції прокрутки в навігації */
-.unfold-sidebar nav {
-    scroll-behavior: smooth !important;
+/* Запобігання автоматичному прокручуванню до початку */
+[data-turbo-permanent] *,
+.bg-white.dark\:bg-gray-900 *,
+nav[role="navigation"] *,
+.sidebar * {
+    scroll-margin-top: 0 !important;
+    scroll-snap-margin: 0 !important;
 }
 
-/* Покращення UX для навігації */
-.unfold-sidebar .unfold-navigation {
-    position: relative !important;
+/* Виправлення для Turbo (якщо використовується) */
+[data-turbo-permanent] {
+    scroll-behavior: auto !important;
+}
+
+/* Загальні стилі для навігації */
+.unfold-sidebar,
+.sidebar,
+[data-controller="sidebar"] {
+    position: sticky !important;
+    top: 0 !important;
+    height: 100vh !important;
+    overflow-y: auto !important;
+    scroll-behavior: auto !important;
+}
+
+/* Виправлення для посилань в навігації */
+nav a,
+.sidebar a,
+[data-turbo-permanent] a {
+    scroll-margin: 0 !important;
+    scroll-snap-margin: 0 !important;
+}
+
+/* Запобігання фокусуванню на посиланнях */
+nav a:focus,
+.sidebar a:focus,
+[data-turbo-permanent] a:focus {
+    scroll-margin-top: 0 !important;
+    outline-offset: -1px !important;
+}
+
+/* Виправлення для активних елементів */
+.bg-primary-600,
+.bg-primary-500,
+[aria-current="page"] {
+    scroll-margin: 0 !important;
+}
+
+/* Smooth transitions для меню, але без scroll-behavior */
+.transition-all,
+nav li,
+.sidebar li {
+    transition: background-color 0.2s ease, color 0.2s ease !important;
+    /* НЕ додаємо scroll-behavior тут */
 }
 
 /* Виправлення для мобільних пристроїв */
 @media (max-width: 768px) {
-    .unfold-sidebar {
+    [data-turbo-permanent],
+    .bg-white.dark\:bg-gray-900,
+    nav[role="navigation"],
+    .sidebar {
         position: fixed !important;
         z-index: 999 !important;
+        left: 0;
+        top: 0;
     }
 }
 
-/* Smooth transitions для меню */
-.unfold-navigation-item {
-    transition: all 0.2s ease !important;
+/* Покращення прокрутки для WebKit браузерів */
+[data-turbo-permanent]::-webkit-scrollbar,
+.bg-white.dark\:bg-gray-900::-webkit-scrollbar,
+nav[role="navigation"]::-webkit-scrollbar,
+.sidebar::-webkit-scrollbar {
+    width: 6px;
 }
 
-/* Покращення видимості активного пункту */
-.unfold-navigation-item.active {
-    background-color: rgba(139, 92, 246, 0.1) !important;
-    border-left: 3px solid #8b5cf6 !important;
+[data-turbo-permanent]::-webkit-scrollbar-track,
+.bg-white.dark\:bg-gray-900::-webkit-scrollbar-track,
+nav[role="navigation"]::-webkit-scrollbar-track,
+.sidebar::-webkit-scrollbar-track {
+    background: #f1f1f1;
 }
 
-/* Виправлення для групованої навігації */
-.unfold-navigation-group {
-    margin-bottom: 0.5rem !important;
+[data-turbo-permanent]::-webkit-scrollbar-thumb,
+.bg-white.dark\:bg-gray-900::-webkit-scrollbar-thumb,
+nav[role="navigation"]::-webkit-scrollbar-thumb,
+.sidebar::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
 }
 
-/* Покращення для пошуку в сайдбарі */
-.unfold-sidebar-search {
-    position: sticky !important;
-    top: 0 !important;
-    background: white !important;
-    z-index: 10 !important;
-    padding: 1rem !important;
-    border-bottom: 1px solid #e5e7eb !important;
+/* Темна тема */
+.dark [data-turbo-permanent]::-webkit-scrollbar-track,
+.dark .bg-white.dark\:bg-gray-900::-webkit-scrollbar-track,
+.dark nav[role="navigation"]::-webkit-scrollbar-track,
+.dark .sidebar::-webkit-scrollbar-track {
+    background: #2d3748;
 }
 
-/* Темна тема підтримка */
-.dark .unfold-sidebar-search {
-    background: #1f2937 !important;
-    border-bottom-color: #374151 !important;
+.dark [data-turbo-permanent]::-webkit-scrollbar-thumb,
+.dark .bg-white.dark\:bg-gray-900::-webkit-scrollbar-thumb,
+.dark nav[role="navigation"]::-webkit-scrollbar-thumb,
+.dark .sidebar::-webkit-scrollbar-thumb {
+    background: #4a5568;
 }
 
-.dark .unfold-navigation-item.active {
-    background-color: rgba(139, 92, 246, 0.2) !important;
+/* Додаткове виправлення для елементів, що можуть викликати прокрутку */
+html {
+    scroll-behavior: auto !important;
+}
+
+/* Запобігання неконтрольованому фокусуванню */
+*:focus {
+    scroll-margin: 0 !important;
+}
+
+/* Виправлення для Django admin навігації */
+.module h2,
+.module caption,
+#changelist-filter h2,
+#changelist-filter h3 {
+    scroll-margin-top: 0 !important;
 }

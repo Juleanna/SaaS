@@ -1,91 +1,160 @@
-// Unfold Admin Navigation Position Fix
+// Unfold Admin Navigation Position Fix - Enhanced Version
 
-document.addEventListener('DOMContentLoaded', function() {
+(function() {
+    'use strict';
     
-    // Збереження позиції прокрутки сайдбару
-    const sidebar = document.querySelector('.unfold-sidebar');
-    const navigation = document.querySelector('.unfold-navigation');
+    const STORAGE_KEY = 'unfold-sidebar-scroll-position';
+    let sidebar = null;
+    let isRestoring = false;
     
-    if (sidebar && navigation) {
-        // Відновлення позиції прокрутки з localStorage
-        const savedScrollPosition = localStorage.getItem('unfold-sidebar-scroll');
-        if (savedScrollPosition) {
-            sidebar.scrollTop = parseInt(savedScrollPosition);
-        }
+    // Функція для знаходження сайдбару з різними можливими селекторами
+    function findSidebar() {
+        const selectors = [
+            '[data-turbo-permanent]', // Turbo permanent element
+            '.bg-white.dark\\:bg-gray-900', // Tailwind classes що використовує Unfold
+            '[data-controller="sidebar"]',
+            '.unfold-sidebar',
+            '#main-sidebar',
+            '.sidebar',
+            'nav[role="navigation"]',
+            '.navigation-container'
+        ];
         
-        // Збереження позиції прокрутки при зміні
-        let scrollTimeout;
-        sidebar.addEventListener('scroll', function() {
-            clearTimeout(scrollTimeout);
-            scrollTimeout = setTimeout(function() {
-                localStorage.setItem('unfold-sidebar-scroll', sidebar.scrollTop);
-            }, 100);
-        });
-        
-        // Запобігання стрибанню до початку при кліку на посилання
-        const navLinks = navigation.querySelectorAll('a');
-        navLinks.forEach(function(link) {
-            link.addEventListener('click', function(e) {
-                // Зберігаємо поточну позицію
-                localStorage.setItem('unfold-sidebar-scroll', sidebar.scrollTop);
-            });
-        });
-    }
-    
-    // Smooth scroll для навігації всередині сайдбару
-    const navItems = document.querySelectorAll('.unfold-navigation-item');
-    navItems.forEach(function(item) {
-        item.addEventListener('click', function(e) {
-            // Додаємо smooth scroll behavior
-            if (sidebar) {
-                sidebar.style.scrollBehavior = 'smooth';
-                setTimeout(function() {
-                    sidebar.style.scrollBehavior = 'auto';
-                }, 500);
+        for (let selector of selectors) {
+            const element = document.querySelector(selector);
+            if (element && element.scrollHeight > element.clientHeight) {
+                return element;
             }
-        });
-    });
-    
-    // Виправлення для випадкових стрибків при завантаженні
-    window.addEventListener('load', function() {
-        if (sidebar && savedScrollPosition) {
-            setTimeout(function() {
-                sidebar.scrollTop = parseInt(savedScrollPosition);
-            }, 100);
         }
-    });
+        
+        // Якщо не знайшли, шукаємо будь-який прокручуваний контейнер в лівій частині
+        const allElements = document.querySelectorAll('*');
+        for (let el of allElements) {
+            const rect = el.getBoundingClientRect();
+            const style = window.getComputedStyle(el);
+            
+            if (rect.left < 100 && // Лівий бік екрану
+                rect.width > 200 && rect.width < 400 && // Розмір як у сайдбару
+                rect.height > 400 && // Достатньо високий
+                (style.overflowY === 'auto' || style.overflowY === 'scroll') &&
+                el.scrollHeight > el.clientHeight) {
+                return el;
+            }
+        }
+        
+        return null;
+    }
     
-    // Покращення для мобільних пристроїв
-    if (window.innerWidth <= 768) {
-        const sidebarToggle = document.querySelector('[data-unfold-sidebar-toggle]');
-        if (sidebarToggle && sidebar) {
-            sidebarToggle.addEventListener('click', function() {
-                setTimeout(function() {
-                    const savedPosition = localStorage.getItem('unfold-sidebar-scroll');
-                    if (savedPosition) {
-                        sidebar.scrollTop = parseInt(savedPosition);
-                    }
-                }, 300);
-            });
+    // Збереження позиції
+    function saveScrollPosition() {
+        if (sidebar && !isRestoring) {
+            sessionStorage.setItem(STORAGE_KEY, sidebar.scrollTop.toString());
         }
     }
-});
-
-// Збереження стану розгорнутих секцій
-document.addEventListener('DOMContentLoaded', function() {
-    const expandableItems = document.querySelectorAll('[data-unfold-expandable]');
     
-    expandableItems.forEach(function(item) {
-        const key = 'unfold-expanded-' + item.dataset.unfoldExpandable;
-        const isExpanded = localStorage.getItem(key) === 'true';
-        
-        if (isExpanded) {
-            item.classList.add('expanded');
+    // Відновлення позиції
+    function restoreScrollPosition() {
+        const savedPosition = sessionStorage.getItem(STORAGE_KEY);
+        if (sidebar && savedPosition && !isNaN(savedPosition)) {
+            isRestoring = true;
+            sidebar.scrollTop = parseInt(savedPosition);
+            
+            // Додаткова перевірка через короткий інтервал
+            setTimeout(() => {
+                if (sidebar.scrollTop !== parseInt(savedPosition)) {
+                    sidebar.scrollTop = parseInt(savedPosition);
+                }
+                isRestoring = false;
+            }, 100);
         }
+    }
+    
+    // Ініціалізація
+    function init() {
+        sidebar = findSidebar();
         
-        item.addEventListener('click', function() {
-            const expanded = item.classList.toggle('expanded');
-            localStorage.setItem(key, expanded);
-        });
+        if (sidebar) {
+            console.log('Sidebar знайдено:', sidebar);
+            
+            // Відновлюємо позицію
+            restoreScrollPosition();
+            
+            // Слухаємо прокрутку з debouncing
+            let scrollTimeout;
+            sidebar.addEventListener('scroll', function() {
+                clearTimeout(scrollTimeout);
+                scrollTimeout = setTimeout(saveScrollPosition, 50);
+            }, { passive: true });
+            
+            // Зберігаємо при кліку на посилання
+            sidebar.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A' || e.target.closest('a')) {
+                    saveScrollPosition();
+                }
+            });
+            
+            // Зберігаємо перед виходом зі сторінки
+            window.addEventListener('beforeunload', saveScrollPosition);
+            
+            // Для SPA навігації
+            if (window.Turbo) {
+                document.addEventListener('turbo:before-visit', saveScrollPosition);
+                document.addEventListener('turbo:load', function() {
+                    setTimeout(restoreScrollPosition, 50);
+                });
+            }
+            
+        } else {
+            console.warn('Sidebar не знайдено, спробуємо пізніше...');
+            // Якщо не знайшли, спробуємо ще раз через 1 секунду
+            setTimeout(init, 1000);
+        }
+    }
+    
+    // Запуск при завантаженні DOM
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+    
+    // Запуск при повному завантаженні
+    window.addEventListener('load', function() {
+        setTimeout(init, 100);
     });
-});
+    
+    // Для випадків динамічного контенту
+    function setupObserver() {
+        if (document.body) {
+            const observer = new MutationObserver(function(mutations) {
+                if (!sidebar) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.addedNodes.length > 0) {
+                            const newSidebar = findSidebar();
+                            if (newSidebar && !sidebar) {
+                                sidebar = newSidebar;
+                                init();
+                            }
+                        }
+                    });
+                }
+            });
+            
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+        } else {
+            // Якщо body ще не доступний, спробуємо пізніше
+            setTimeout(setupObserver, 100);
+        }
+    }
+    
+    // Запускаємо observer тільки після того, як body буде доступний
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupObserver);
+    } else {
+        setupObserver();
+    }
+    
+})();

@@ -333,6 +333,7 @@ UNFOLD = {
     "SCRIPTS": [
         lambda request: "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js",
         lambda request: static("js/unfold_navigation_fix.js"),  # Custom navigation JS fixes
+        lambda request: static("js/scroll_position_keeper.js"),  # Backup scroll position keeper
     ],
     "LOGIN": {
         "image": lambda request: static("login-bg.jpg"),  # Optional
