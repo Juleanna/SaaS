@@ -12,6 +12,7 @@ import {
   Bars3Icon,
   XMarkIcon,
   Cog6ToothIcon,
+  BuildingStorefrontIcon,
 } from '@heroicons/react/24/outline';
 
 const Layout = () => {
@@ -19,6 +20,7 @@ const Layout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [openSubmenu, setOpenSubmenu] = useState(null);
   
   // Отримуємо актуальні дані профілю для аватару
   const { data: profileData } = useQuery({
@@ -41,6 +43,16 @@ const Layout = () => {
   const navigation = [
     { name: 'Головна', href: '/', icon: HomeIcon },
     { name: 'Магазини', href: '/stores', icon: ShoppingBagIcon },
+    { name: 'Склад', href: '/warehouse', icon: BuildingStorefrontIcon, 
+      submenu: [
+        { name: 'Панель складу', href: '/warehouse' },
+        { name: 'Управління складами', href: '/warehouse/management' },
+        { name: 'Залишки', href: '/warehouse/inventory' },
+        { name: 'Партії товарів', href: '/warehouse/batches' },
+        { name: 'Постачальники', href: '/warehouse/suppliers' },
+        { name: 'Постачання', href: '/warehouse/supplies' },
+      ]
+    },
     { name: 'Товари', href: '/stores/1/products', icon: CubeIcon },
     { name: 'Замовлення', href: '/stores/1/orders', icon: ShoppingCartIcon },
     { name: 'Профіль', href: '/profile', icon: UserIcon },
@@ -56,6 +68,78 @@ const Layout = () => {
       return location.pathname === '/';
     }
     return location.pathname.startsWith(href);
+  };
+
+  const toggleSubmenu = (itemName) => {
+    setOpenSubmenu(openSubmenu === itemName ? null : itemName);
+  };
+
+  const renderNavigationItem = (item, isMobile = false) => {
+    const hasSubmenu = item.submenu && item.submenu.length > 0;
+    const isSubmenuOpen = openSubmenu === item.name;
+    const isItemActive = isActive(item.href);
+
+    if (hasSubmenu) {
+      return (
+        <div key={item.name}>
+          <button
+            onClick={() => toggleSubmenu(item.name)}
+            className={`group flex items-center w-full px-2 py-2 text-sm font-medium rounded-md ${
+              isItemActive
+                ? 'bg-primary-100 text-primary-900'
+                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+            }`}
+          >
+            <item.icon className="mr-3 h-5 w-5" />
+            {item.name}
+            <svg
+              className={`ml-auto h-4 w-4 transition-transform ${
+                isSubmenuOpen ? 'rotate-90' : ''
+              }`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+          {isSubmenuOpen && (
+            <div className="ml-6 mt-1 space-y-1">
+              {item.submenu.map((subItem) => (
+                <Link
+                  key={subItem.name}
+                  to={subItem.href}
+                  className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
+                    location.pathname === subItem.href
+                      ? 'bg-primary-50 text-primary-700 border-l-4 border-primary-700'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  }`}
+                  onClick={() => isMobile && setSidebarOpen(false)}
+                >
+                  {subItem.name}
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <Link
+        key={item.name}
+        to={item.href}
+        className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
+          isItemActive
+            ? 'bg-primary-100 text-primary-900'
+            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+        }`}
+        onClick={() => isMobile && setSidebarOpen(false)}
+      >
+        <item.icon className="mr-3 h-5 w-5" />
+        {item.name}
+      </Link>
+    );
   };
 
   return (
@@ -74,21 +158,7 @@ const Layout = () => {
             </button>
           </div>
           <nav className="flex-1 space-y-1 px-2 py-4">
-            {navigation.map((item) => (
-              <Link
-                key={item.name}
-                to={item.href}
-                className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
-                  isActive(item.href)
-                    ? 'bg-primary-100 text-primary-900'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }`}
-                onClick={() => setSidebarOpen(false)}
-              >
-                <item.icon className="mr-3 h-5 w-5" />
-                {item.name}
-              </Link>
-            ))}
+            {navigation.map((item) => renderNavigationItem(item, true))}
           </nav>
         </div>
       </div>
@@ -100,20 +170,7 @@ const Layout = () => {
             <h1 className="text-xl font-semibold text-gray-900">SaaS Platform</h1>
           </div>
           <nav className="flex-1 space-y-1 px-2 py-4">
-            {navigation.map((item) => (
-              <Link
-                key={item.name}
-                to={item.href}
-                className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
-                  isActive(item.href)
-                    ? 'bg-primary-100 text-primary-900'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }`}
-              >
-                <item.icon className="mr-3 h-5 w-5" />
-                {item.name}
-              </Link>
-            ))}
+            {navigation.map((item) => renderNavigationItem(item, false))}
           </nav>
         </div>
       </div>

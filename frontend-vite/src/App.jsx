@@ -10,6 +10,12 @@ import Stores from './pages/Stores';
 import StoreDetails from './pages/StoreDetails';
 import Products from './pages/Products';
 import Orders from './pages/Orders';
+import WarehouseDashboard from './pages/Warehouse/WarehouseDashboard';
+import InventoryManagement from './pages/Warehouse/InventoryManagement';
+import StockBatches from './pages/Warehouse/StockBatches';
+import Suppliers from './pages/Warehouse/Suppliers';
+import WarehouseManagement from './pages/Warehouse/WarehouseManagement';
+import SupplyManagement from './pages/Warehouse/SupplyManagement';
 
 function App() {
   const { isAuthenticated } = useAuthStore();
@@ -28,6 +34,12 @@ function App() {
             <Route path="stores/:storeId" element={<StoreDetails />} />
             <Route path="stores/:storeId/products" element={<Products />} />
             <Route path="stores/:storeId/orders" element={<Orders />} />
+            <Route path="warehouse" element={<WarehouseDashboard />} />
+            <Route path="warehouse/management" element={<WarehouseManagement />} />
+            <Route path="warehouse/inventory" element={<InventoryManagement />} />
+            <Route path="warehouse/batches" element={<StockBatches />} />
+            <Route path="warehouse/suppliers" element={<Suppliers />} />
+            <Route path="warehouse/supplies" element={<SupplyManagement />} />
           </Route>
         ) : (
           <Route path="*" element={<Login />} />
