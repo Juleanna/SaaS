@@ -10,6 +10,55 @@ from products.models import Product
 from warehouse.api.serializers import InventorySerializer, InventoryItemSerializer
 
 
+# Базові List Views для сумісності з фронтендом
+class WarehouseListView(generics.ListAPIView):
+    """Список складів (заглушка для сумісності)"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, *args, **kwargs):
+        # Повертаємо заглушку даних для складів
+        return Response([
+            {
+                'id': 1,
+                'name': 'Основний склад',
+                'address': 'Вул. Складська 1',
+                'is_active': True
+            }
+        ])
+
+
+class StockListView(generics.ListAPIView):
+    """Список залишків (заглушка для сумісності)"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, *args, **kwargs):
+        return Response([])
+
+
+class SupplierListView(generics.ListAPIView):
+    """Список постачальників (заглушка для сумісності)"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, *args, **kwargs):
+        return Response([])
+
+
+class SupplyListView(generics.ListAPIView):
+    """Список постачань (заглушка для сумісності)"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, *args, **kwargs):
+        return Response([])
+
+
+class InventoryListView(generics.ListAPIView):
+    """Список інвентаризацій (заглушка для сумісності)"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, *args, **kwargs):
+        return Response([])
+
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def scan_product_for_inventory(request, inventory_id):

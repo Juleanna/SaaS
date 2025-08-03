@@ -71,18 +71,19 @@ def change_password(request):
 @permission_classes([AllowAny])
 def login_view(request):
     """Кастомний view для входу в систему"""
+    print(f"Login attempt - Request data: {request.data}")  # Debug log
     serializer = LoginSerializer(data=request.data)
     
     if serializer.is_valid():
         user = serializer.validated_data['user']
         
         # Генеруємо JWT токени
-        token_serializer = CustomTokenObtainPairSerializer()
-        token_data = token_serializer.get_token(user)
+        from rest_framework_simplejwt.tokens import RefreshToken
+        refresh = RefreshToken.for_user(user)
         
         return Response({
-            'access': str(token_data.access_token),
-            'refresh': str(token_data),
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
             'user': {
                 'id': user.id,
                 'email': user.email,
@@ -95,6 +96,7 @@ def login_view(request):
             }
         }, status=status.HTTP_200_OK)
     
+    print(f"Login failed - Serializer errors: {serializer.errors}")  # Debug log
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

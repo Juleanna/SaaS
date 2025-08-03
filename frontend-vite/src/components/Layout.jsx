@@ -13,6 +13,9 @@ import {
   XMarkIcon,
   Cog6ToothIcon,
   BuildingStorefrontIcon,
+  FolderIcon,
+  CreditCardIcon,
+  DocumentTextIcon,
 } from '@heroicons/react/24/outline';
 
 const Layout = () => {
@@ -42,7 +45,16 @@ const Layout = () => {
 
   const navigation = [
     { name: 'Головна', href: '/', icon: HomeIcon },
-    { name: 'Магазини', href: '/stores', icon: ShoppingBagIcon },
+    { name: 'Магазини', href: '/admin/stores', icon: ShoppingBagIcon },
+    { name: 'Товари', href: '/products', icon: CubeIcon, 
+      submenu: [
+        { name: 'Всі товари', href: '/products' },
+        { name: 'Категорії', href: '/categories' },
+      ]
+    },
+    { name: 'Замовлення', href: '/stores/1/orders', icon: ShoppingCartIcon },
+    { name: 'Платежі', href: '/payments', icon: CreditCardIcon },
+    { name: 'Прайс-листи', href: '/pricelists', icon: DocumentTextIcon },
     { name: 'Склад', href: '/warehouse', icon: BuildingStorefrontIcon, 
       submenu: [
         { name: 'Панель складу', href: '/warehouse' },
@@ -51,10 +63,9 @@ const Layout = () => {
         { name: 'Партії товарів', href: '/warehouse/batches' },
         { name: 'Постачальники', href: '/warehouse/suppliers' },
         { name: 'Постачання', href: '/warehouse/supplies' },
+        { name: 'Демо сканер', href: '/warehouse/scanner-demo' },
       ]
     },
-    { name: 'Товари', href: '/stores/1/products', icon: CubeIcon },
-    { name: 'Замовлення', href: '/stores/1/orders', icon: ShoppingCartIcon },
     { name: 'Профіль', href: '/profile', icon: UserIcon },
   ];
 
