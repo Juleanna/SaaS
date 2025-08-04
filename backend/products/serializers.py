@@ -27,7 +27,7 @@ class ProductVariantSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = ProductVariant
-        fields = ['id', 'name', 'value', 'price_adjustment', 'stock_quantity', 'is_active', 'final_price']
+        fields = ['id', 'name', 'value', 'price_adjustment', 'is_active', 'final_price']
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -39,18 +39,33 @@ class ProductSerializer(serializers.ModelSerializer):
     current_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     discount_percentage = serializers.IntegerField(read_only=True)
     is_on_sale = serializers.BooleanField(read_only=True)
+    stock_quantity = serializers.SerializerMethodField()
+    store = serializers.SerializerMethodField()
+    order_count = serializers.IntegerField(read_only=True)
     
     class Meta:
         model = Product
         fields = [
             'id', 'name', 'slug', 'description', 'short_description',
             'price', 'sale_price', 'currency', 'current_price',
-            'stock_quantity', 'is_in_stock', 'allow_backorders',
-            'meta_title', 'meta_description', 'is_featured', 'is_active',
+            'stock_quantity', 'is_featured', 'is_active',
             'weight', 'dimensions', 'sku', 'created_at', 'updated_at',
-            'category', 'images', 'variants', 'discount_percentage', 'is_on_sale'
+            'category', 'images', 'variants', 'discount_percentage', 'is_on_sale',
+            'store', 'order_count'
         ]
         read_only_fields = ['id', 'slug', 'created_at', 'updated_at']
+    
+    def get_stock_quantity(self, obj):
+        """Отримати кількість на складі"""
+        return obj.get_stock_quantity()
+    
+    def get_store(self, obj):
+        """Отримати інформацію про магазин"""
+        return {
+            'id': obj.store.id,
+            'name': obj.store.name,
+            'slug': obj.store.slug
+        }
 
 
 class ProductCreateSerializer(serializers.ModelSerializer):
@@ -60,9 +75,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             'name', 'description', 'short_description', 'price', 'sale_price',
-            'currency', 'stock_quantity', 'is_in_stock', 'allow_backorders',
-            'meta_title', 'meta_description', 'is_featured', 'weight',
-            'dimensions', 'sku', 'category'
+            'currency', 'is_featured', 'weight', 'dimensions', 'sku', 'category'
         ]
     
     def create(self, validated_data):
@@ -77,8 +90,7 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             'name', 'description', 'short_description', 'price', 'sale_price',
-            'currency', 'stock_quantity', 'is_in_stock', 'allow_backorders',
-            'meta_title', 'meta_description', 'is_featured', 'is_active',
+            'currency', 'is_featured', 'is_active',
             'weight', 'dimensions', 'sku', 'category'
         ]
 
@@ -100,7 +112,7 @@ class ProductVariantCreateSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = ProductVariant
-        fields = ['name', 'value', 'price_adjustment', 'stock_quantity', 'is_active']
+        fields = ['name', 'value', 'price_adjustment', 'is_active']
     
     def create(self, validated_data):
         validated_data['product'] = self.context['product']
@@ -116,14 +128,18 @@ class ProductPublicSerializer(serializers.ModelSerializer):
     current_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     discount_percentage = serializers.IntegerField(read_only=True)
     is_on_sale = serializers.BooleanField(read_only=True)
+    stock_quantity = serializers.SerializerMethodField()
     
     class Meta:
         model = Product
         fields = [
             'id', 'name', 'slug', 'description', 'short_description',
             'price', 'sale_price', 'currency', 'current_price',
-            'stock_quantity', 'is_in_stock', 'allow_backorders',
-            'meta_title', 'meta_description', 'is_featured',
+            'stock_quantity', 'is_featured',
             'weight', 'dimensions', 'sku', 'created_at',
             'category', 'images', 'variants', 'discount_percentage', 'is_on_sale'
-        ] 
+        ]
+    
+    def get_stock_quantity(self, obj):
+        """Отримати кількість на складі"""
+        return obj.get_stock_quantity() 

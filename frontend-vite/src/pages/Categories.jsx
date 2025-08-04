@@ -23,9 +23,46 @@ const Categories = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
+  const [userStores, setUserStores] = useState([]);
+  const [storesLoading, setStoresLoading] = useState(true);
   
   // Get store ID (from URL or user's first store)
-  const currentStoreId = storeId || user?.stores?.[0]?.id || 1;
+  console.log('Full user object:', user);
+  console.log('User stores from token:', user?.stores);
+  console.log('User stores from API:', userStores);
+  
+  const currentStoreId = storeId || userStores?.[0]?.id || user?.stores?.[0]?.id;
+
+  // Якщо завантажуються магазини
+  if (storesLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <p className="ml-4 text-gray-600">Завантажуємо магазини...</p>
+      </div>
+    );
+  }
+
+  // Якщо немає Store ID, показуємо повідомлення
+  if (!currentStoreId || userStores.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <div className="text-yellow-500 mb-4">
+          <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Немає доступних магазинів</h3>
+        <p className="text-gray-600 mb-4">Спочатку створіть магазин, щоб керувати категоріями.</p>
+        <button
+          onClick={() => navigate('/admin/stores')}
+          className="btn-primary"
+        >
+          Створити магазин
+        </button>
+      </div>
+    );
+  }
 
   const fetchCategories = async () => {
     try {
@@ -33,41 +70,24 @@ const Categories = () => {
       const params = new URLSearchParams();
       if (searchTerm) params.append('search', searchTerm);
       
+      console.log('Fetching categories with storeId:', currentStoreId);
+      
+      if (!currentStoreId) {
+        throw new Error('Немає ID магазину');
+      }
+      console.log('User:', user);
+      
       const response = await api.get(`/products/stores/${currentStoreId}/categories/?${params}`);
       setCategories(response.data.results || response.data);
     } catch (error) {
       console.error('Error fetching categories:', error);
-      setError('Помилка завантаження категорій');
-      // Fallback to mock data if API fails
-      setCategories([
-        {
-          id: 1,
-          name: 'Смартфони',
-          description: 'Мобільні телефони та аксесуари',
-          is_active: true,
-          products_count: 15,
-          created_at: '2024-01-10T10:00:00Z',
-          updated_at: '2024-01-15T14:30:00Z',
-        },
-        {
-          id: 2,
-          name: 'Ноутбуки',
-          description: 'Портативні комп\'ютери різних брендів',
-          is_active: true,
-          products_count: 8,
-          created_at: '2024-01-12T11:00:00Z',
-          updated_at: '2024-01-18T16:20:00Z',
-        },
-        {
-          id: 3,
-          name: 'Планшети',
-          description: 'Планшетні комп\'ютери та електронні книги',
-          is_active: false,
-          products_count: 3,
-          created_at: '2024-01-14T12:00:00Z',
-          updated_at: '2024-01-20T10:15:00Z',
-        },
-      ]);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      
+      // Показуємо детальнішу помилку
+      const errorMessage = error.response?.data?.detail || error.response?.data?.message || 'Помилка завантаження категорій';
+      setError(`${errorMessage} (Store ID: ${currentStoreId})`);
+      setCategories([]); // Показуємо порожній список замість fallback даних
     } finally {
       setLoading(false);
     }
@@ -97,9 +117,28 @@ const Categories = () => {
     }
   };
 
+  const fetchUserStores = async () => {
+    try {
+      setStoresLoading(true);
+      const response = await api.get('/stores/');
+      setUserStores(response.data.results || response.data || []);
+    } catch (error) {
+      console.error('Error fetching user stores:', error);
+      setUserStores([]);
+    } finally {
+      setStoresLoading(false);
+    }
+  };
+
   useEffect(() => {
-    fetchCategories();
-  }, [currentStoreId, searchTerm]);
+    fetchUserStores();
+  }, []);
+
+  useEffect(() => {
+    if (!storesLoading && currentStoreId) {
+      fetchCategories();
+    }
+  }, [currentStoreId, searchTerm, storesLoading]);
 
   const filteredCategories = categories.filter(category => 
     category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -110,6 +149,30 @@ const Categories = () => {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <p className="ml-4 text-gray-600">Завантажуємо категорії з API...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <div className="text-red-500 mb-4">
+          <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.124 4c-.77-.833-2.186-.833-2.956 0L2.632 16.5c-.77.833.192 2.5 1.732 2.5z" />
+          </svg>
+        </div>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Помилка завантаження</h3>
+        <p className="text-gray-600 mb-4">{error}</p>
+        <button
+          onClick={() => {
+            setError(null);
+            fetchCategories();
+          }}
+          className="btn-primary"
+        >
+          Спробувати знову
+        </button>
       </div>
     );
   }

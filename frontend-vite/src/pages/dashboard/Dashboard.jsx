@@ -620,12 +620,12 @@ const Dashboard = () => {
                             {product.name}
                           </p>
                           <p className="text-sm text-gray-500 truncate">
-                            {product.store.name} • {product.sales_count} продажів
+                            {product.store?.name} • {product.order_count || product.sales_count || 0} продажів
                           </p>
                         </div>
                         <div className="flex-shrink-0 text-right">
                           <p className="text-sm font-medium text-gray-900">
-                            {formatPrice(product.revenue)}
+                            {formatPrice(product.revenue || (product.current_price * (product.order_count || 0)))}
                           </p>
                           <p className="text-xs text-gray-500">
                             дохід

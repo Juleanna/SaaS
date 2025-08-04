@@ -276,4 +276,18 @@ def order_statistics(request, store_id):
         'total_revenue': total_revenue,
         'status_statistics': status_stats,
         'source_statistics': source_stats
-    }) 
+    })
+
+
+@api_view(['GET'])
+def recent_orders(request):
+    """Отримання останніх замовлень користувача"""
+    user_stores = Store.objects.filter(owner=request.user)
+    limit = int(request.GET.get('limit', 5))
+    
+    orders = Order.objects.filter(
+        store__in=user_stores
+    ).order_by('-created_at')[:limit]
+    
+    serializer = OrderSerializer(orders, many=True, context={'request': request})
+    return Response(serializer.data) 

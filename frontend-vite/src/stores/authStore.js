@@ -26,9 +26,32 @@ export const useAuthStore = create(
           return { success: true };
         } catch (error) {
           console.error('Login error:', error.response?.data);
+          
+          let errorMessage = 'Помилка входу';
+          
+          if (error.response?.data) {
+            const errorData = error.response.data;
+            
+            // Обробляємо різні формати помилок від Django REST Framework
+            if (typeof errorData === 'string') {
+              errorMessage = errorData;
+            } else if (errorData.non_field_errors && Array.isArray(errorData.non_field_errors)) {
+              // Для ValidationError від серіалізатора
+              errorMessage = errorData.non_field_errors[0];
+            } else if (errorData.detail) {
+              errorMessage = errorData.detail;
+            } else if (errorData.message) {
+              errorMessage = errorData.message;
+            } else if (errorData.email && Array.isArray(errorData.email)) {
+              errorMessage = errorData.email[0];
+            } else if (errorData.password && Array.isArray(errorData.password)) {
+              errorMessage = errorData.password[0];
+            }
+          }
+          
           return { 
             success: false, 
-            error: error.response?.data?.message || error.response?.data?.detail || 'Помилка входу' 
+            error: errorMessage
           };
         }
       },

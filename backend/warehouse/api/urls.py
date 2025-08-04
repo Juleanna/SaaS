@@ -4,6 +4,8 @@ from . import views
 urlpatterns = [
     # Основні warehouse endpoints (для сумісності з фронтендом)
     path('warehouses/', views.WarehouseListView.as_view(), name='warehouse-list'),
+    path('warehouses/<int:pk>/', views.WarehouseDetailView.as_view(), name='warehouse-detail'),
+    path('warehouses/<int:warehouse_id>/stats/', views.warehouse_stats, name='warehouse-stats'),
     path('stocks/', views.StockListView.as_view(), name='stock-list'),
     path('suppliers/', views.SupplierListView.as_view(), name='supplier-list'),
     path('supplies/', views.SupplyListView.as_view(), name='supply-list'),

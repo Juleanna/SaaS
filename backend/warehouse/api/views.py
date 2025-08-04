@@ -11,7 +11,7 @@ from warehouse.api.serializers import InventorySerializer, InventoryItemSerializ
 
 
 # Базові List Views для сумісності з фронтендом
-class WarehouseListView(generics.ListAPIView):
+class WarehouseListView(generics.ListCreateAPIView):
     """Список складів (заглушка для сумісності)"""
     permission_classes = [IsAuthenticated]
     
@@ -25,6 +25,97 @@ class WarehouseListView(generics.ListAPIView):
                 'is_active': True
             }
         ])
+    
+    def post(self, request, *args, **kwargs):
+        # Заглушка для створення нового складу
+        return Response({
+            'id': 2,
+            'message': 'Склад успішно створено',
+            **request.data
+        }, status=status.HTTP_201_CREATED)
+
+
+class WarehouseDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """Деталі складу (заглушка для сумісності)"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, *args, **kwargs):
+        warehouse_id = kwargs.get('pk')
+        # Повертаємо заглушку даних для конкретного складу
+        return Response({
+            'id': warehouse_id,
+            'name': 'Основний склад',
+            'address': 'Вул. Складська 1',
+            'is_active': True,
+            'description': 'Головний склад компанії',
+            'manager': 'Іванов І.І.',
+            'phone': '+380501234567',
+            'email': 'warehouse@company.com'
+        })
+    
+    def put(self, request, *args, **kwargs):
+        warehouse_id = kwargs.get('pk')
+        # Заглушка для оновлення складу
+        return Response({
+            'id': warehouse_id,
+            'message': 'Склад успішно оновлено',
+            **request.data
+        })
+    
+    def patch(self, request, *args, **kwargs):
+        warehouse_id = kwargs.get('pk')
+        # Заглушка для часткового оновлення складу
+        return Response({
+            'id': warehouse_id,
+            'message': 'Склад успішно оновлено',
+            **request.data
+        })
+    
+    def delete(self, request, *args, **kwargs):
+        warehouse_id = kwargs.get('pk')
+        # Заглушка для видалення складу
+        return Response({
+            'message': f'Склад {warehouse_id} успішно видалено'
+        }, status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def warehouse_stats(request, warehouse_id):
+    """Статистика складу"""
+    return Response({
+        'warehouse_id': warehouse_id,
+        'total_products': 156,
+        'total_stock_value': 2456789.50,
+        'low_stock_items': 23,
+        'out_of_stock_items': 8,
+        'inventory_turnover': 4.2,
+        'stock_levels': {
+            'high': 89,
+            'medium': 44,
+            'low': 23,
+            'out': 8
+        },
+        'recent_movements': {
+            'incoming': 15,
+            'outgoing': 28,
+            'adjustments': 3
+        },
+        'top_products': [
+            {
+                'id': 1,
+                'name': 'Товар 1',
+                'current_stock': 150,
+                'value': 45000.00
+            },
+            {
+                'id': 2,
+                'name': 'Товар 2',
+                'current_stock': 89,
+                'value': 32100.00
+            }
+        ]
+    })
 
 
 class StockListView(generics.ListAPIView):

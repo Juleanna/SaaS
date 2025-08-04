@@ -228,13 +228,21 @@ def invalidate_related_cache(sender, instance, **kwargs):
     # Продукти
     if sender.__name__ == 'Product':
         cache_manager.invalidate_products(instance.store_id)
-        if hasattr(instance, 'category') and instance.category:
-            cache_manager.delete_pattern(f"category_{instance.category_id}")
+        try:
+            if hasattr(instance, 'category') and instance.category:
+                cache_manager.delete_pattern(f"category_{instance.category_id}")
+        except (AttributeError, Exception):
+            # Ігноруємо помилки при доступі до category під час видалення
+            pass
     
     # Категорії
     elif sender.__name__ == 'Category':
-        cache_manager.invalidate_products(instance.store_id)
-        cache_manager.delete_pattern(f"categories:store_{instance.store_id}")
+        try:
+            cache_manager.invalidate_products(instance.store_id)
+            cache_manager.delete_pattern(f"categories:store_{instance.store_id}")
+        except (AttributeError, Exception):
+            # Ігноруємо помилки при доступі до store під час видалення
+            pass
     
     # Магазини
     elif sender.__name__ == 'Store':
@@ -243,17 +251,25 @@ def invalidate_related_cache(sender, instance, **kwargs):
     
     # Запаси
     elif sender.__name__ == 'Stock':
-        cache_manager.invalidate_stock(
-            instance.product_id if hasattr(instance, 'product_id') else None,
-            instance.warehouse_id if hasattr(instance, 'warehouse_id') else None
-        )
+        try:
+            cache_manager.invalidate_stock(
+                instance.product_id if hasattr(instance, 'product_id') else None,
+                instance.warehouse_id if hasattr(instance, 'warehouse_id') else None
+            )
+        except (AttributeError, Exception):
+            # Ігноруємо помилки при доступі до полів під час видалення
+            pass
     
     # Прайс-листи
     elif sender.__name__ in ['PriceList', 'PriceListItem']:
-        if hasattr(instance, 'store_id'):
-            cache_manager.delete_pattern(f"pricelist:store_{instance.store_id}")
-        elif hasattr(instance, 'price_list') and hasattr(instance.price_list, 'store_id'):
-            cache_manager.delete_pattern(f"pricelist:store_{instance.price_list.store_id}")
+        try:
+            if hasattr(instance, 'store_id'):
+                cache_manager.delete_pattern(f"pricelist:store_{instance.store_id}")
+            elif hasattr(instance, 'price_list') and hasattr(instance.price_list, 'store_id'):
+                cache_manager.delete_pattern(f"pricelist:store_{instance.price_list.store_id}")
+        except (AttributeError, Exception):
+            # Ігноруємо помилки при доступі до полів під час видалення
+            pass
     
     # Користувачі
     elif sender.__name__ == 'User':

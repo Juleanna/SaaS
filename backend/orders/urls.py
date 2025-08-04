@@ -41,4 +41,7 @@ urlpatterns = [
     path('api/public/<slug:store_slug>/checkout/', 
          views.checkout, 
          name='checkout'),
+    
+    # Додаткові API
+    path('recent/', views.recent_orders, name='recent-orders'),
 ]

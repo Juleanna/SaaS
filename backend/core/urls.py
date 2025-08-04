@@ -4,6 +4,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from core.admin import dashboard_view
 from core import feature_flags_views
+from core.views import dashboard_stats
 
 urlpatterns = [
     path('admin/dashboard/', dashboard_view, name='admin_dashboard'),
@@ -27,6 +28,9 @@ urlpatterns = [
     path('api/admin/feature-flags/enable/', feature_flags_views.admin_enable_flag, name='admin-enable-flag'),
     path('api/admin/feature-flags/disable/', feature_flags_views.admin_disable_flag, name='admin-disable-flag'),
     path('api/admin/feature-flags/clear-cache/', feature_flags_views.admin_clear_flag_cache, name='admin-clear-flag-cache'),
+    
+    # Dashboard API
+    path('api/dashboard/stats/', dashboard_stats, name='dashboard-stats'),
 ]
 
 if settings.DEBUG:

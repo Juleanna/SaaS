@@ -12,6 +12,9 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data = super().validate(attrs)
         
         # Додаємо інформацію про користувача
+        from stores.models import Store
+        user_stores = Store.objects.filter(owner=self.user).values('id', 'name', 'slug')
+        
         data['user'] = {
             'id': self.user.id,
             'email': self.user.email,
@@ -21,6 +24,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             'company_name': self.user.company_name,
             'subscription_plan': self.user.subscription_plan,
             'is_subscribed': self.user.is_subscribed,
+            'stores': list(user_stores),
         }
         
         return data
@@ -55,6 +59,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     
     avatar = serializers.SerializerMethodField()
     avg_spending = serializers.ReadOnlyField()
+    stores = serializers.SerializerMethodField()
     
     def get_avatar(self, obj):
         if obj.avatar:
@@ -64,6 +69,10 @@ class UserProfileSerializer(serializers.ModelSerializer):
             return obj.avatar.url
         return None
     
+    def get_stores(self, obj):
+        from stores.models import Store
+        return list(Store.objects.filter(owner=obj).values('id', 'name', 'slug'))
+    
     class Meta:
         model = User
         fields = (
@@ -71,7 +80,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'phone', 'company_name', 'avatar', 'telegram_username', 'telegram_chat_id',
             'instagram_username', 'email_notifications', 'telegram_notifications',
             'subscription_plan', 'is_subscribed', 'balance', 'monthly_spending', 
-            'total_spent', 'avg_spending', 'date_joined'
+            'total_spent', 'avg_spending', 'date_joined', 'stores'
         )
         read_only_fields = ('id', 'email', 'date_joined', 'balance', 'monthly_spending', 'total_spent')
 

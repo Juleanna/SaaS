@@ -4,7 +4,7 @@ from .views import (
     ProductListCreateView, ProductDetailView, ProductPublicView,
     ProductImageListCreateView, ProductImageDetailView,
     ProductVariantListCreateView, ProductVariantDetailView,
-    store_products, product_by_slug, toggle_product_status
+    store_products, product_by_slug, toggle_product_status, top_products
 )
 
 urlpatterns = [
@@ -31,4 +31,7 @@ urlpatterns = [
     
     # API для роботи з кодами
     path('api/', include('products.api.urls')),
+    
+    # Додаткові API
+    path('top/', top_products, name='top-products'),
 ] 

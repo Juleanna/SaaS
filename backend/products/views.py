@@ -18,8 +18,12 @@ class CategoryListCreateView(generics.ListCreateAPIView):
     """View для управління категоріями"""
     
     serializer_class = CategorySerializer
+    permission_classes = [permissions.IsAuthenticated]
     
     def get_queryset(self):
+        print(f"User: {self.request.user}")
+        print(f"Is authenticated: {self.request.user.is_authenticated}")
+        print(f"Store ID: {self.kwargs.get('store_id')}")
         store = get_object_or_404(Store, id=self.kwargs['store_id'], owner=self.request.user)
         return Category.objects.filter(store=store)
     
@@ -33,6 +37,7 @@ class CategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
     """View для управління окремою категорією"""
     
     serializer_class = CategorySerializer
+    permission_classes = [permissions.IsAuthenticated]
     
     def get_queryset(self):
         store = get_object_or_404(Store, id=self.kwargs['store_id'], owner=self.request.user)
@@ -42,6 +47,7 @@ class CategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
 class ProductListCreateView(generics.ListCreateAPIView):
     """View для управління товарами"""
     
+    permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['category', 'is_active', 'is_featured', 'is_in_stock']
     search_fields = ['name', 'description', 'sku']
@@ -66,6 +72,8 @@ class ProductListCreateView(generics.ListCreateAPIView):
 class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
     """View для управління окремим товаром"""
     
+    permission_classes = [permissions.IsAuthenticated]
+    
     def get_queryset(self):
         store = get_object_or_404(Store, id=self.kwargs['store_id'], owner=self.request.user)
         return Product.objects.filter(store=store)
@@ -89,6 +97,7 @@ class ProductImageListCreateView(generics.ListCreateAPIView):
     """View для управління зображеннями товару"""
     
     serializer_class = ProductImageSerializer
+    permission_classes = [permissions.IsAuthenticated]
     
     def get_queryset(self):
         store = get_object_or_404(Store, id=self.kwargs['store_id'], owner=self.request.user)
@@ -111,6 +120,7 @@ class ProductImageDetailView(generics.RetrieveUpdateDestroyAPIView):
     """View для управління окремим зображенням товару"""
     
     serializer_class = ProductImageSerializer
+    permission_classes = [permissions.IsAuthenticated]
     
     def get_queryset(self):
         store = get_object_or_404(Store, id=self.kwargs['store_id'], owner=self.request.user)
@@ -122,6 +132,7 @@ class ProductVariantListCreateView(generics.ListCreateAPIView):
     """View для управління варіантами товару"""
     
     serializer_class = ProductVariantSerializer
+    permission_classes = [permissions.IsAuthenticated]
     
     def get_queryset(self):
         store = get_object_or_404(Store, id=self.kwargs['store_id'], owner=self.request.user)
@@ -144,6 +155,7 @@ class ProductVariantDetailView(generics.RetrieveUpdateDestroyAPIView):
     """View для управління окремим варіантом товару"""
     
     serializer_class = ProductVariantSerializer
+    permission_classes = [permissions.IsAuthenticated]
     
     def get_queryset(self):
         store = get_object_or_404(Store, id=self.kwargs['store_id'], owner=self.request.user)
@@ -187,6 +199,7 @@ def product_by_slug(request, store_slug, product_slug):
 
 
 @api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
 def toggle_product_status(request, store_id, product_id):
     """Перемикання статусу товару"""
     store = get_object_or_404(Store, id=store_id, owner=request.user)
@@ -197,4 +210,26 @@ def toggle_product_status(request, store_id, product_id):
     return Response({
         'message': f'Товар {"активовано" if product.is_active else "деактивовано"}',
         'is_active': product.is_active
-    }) 
+    })
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def top_products(request):
+    """Отримання топ товарів користувача"""
+    user_stores = Store.objects.filter(owner=request.user)
+    limit = int(request.GET.get('limit', 5))
+    
+    from django.db.models import Count
+    from orders.models import OrderItem
+    
+    # Топ товари за кількістю замовлень
+    top_products = Product.objects.filter(
+        store__in=user_stores,
+        is_active=True
+    ).annotate(
+        order_count=Count('orderitem')
+    ).order_by('-order_count')[:limit]
+    
+    serializer = ProductSerializer(top_products, many=True, context={'request': request})
+    return Response(serializer.data) 

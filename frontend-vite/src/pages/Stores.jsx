@@ -25,6 +25,39 @@ const BLOCK_TYPES = [
 const Stores = () => {
   const queryClient = useQueryClient();
   const location = useLocation();
+  
+  // Мутація для видалення магазину
+  const deleteStoreMutation = useMutation({
+    mutationFn: async (storeId) => {
+      await api.delete(`/stores/${storeId}/`);
+    },
+    onSuccess: (_, storeId) => {
+      // Оновлюємо кеш після успішного видалення
+      queryClient.setQueryData(['stores'], (oldData) => {
+        if (!oldData) return oldData;
+        if (Array.isArray(oldData)) {
+          return oldData.filter(store => store.id !== storeId);
+        }
+        if (oldData.results) {
+          return {
+            ...oldData,
+            results: oldData.results.filter(store => store.id !== storeId)
+          };
+        }
+        return oldData;
+      });
+      
+      toast.success('Магазин успішно видалено!');
+      setShowDeleteModal(false);
+      setStoreToDelete(null);
+    },
+    onError: (error) => {
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.detail || 
+                          'Помилка видалення магазину';
+      toast.error(errorMessage);
+    }
+  });
   const [showModal, setShowModal] = useState(false);
   const [editingStore, setEditingStore] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -235,24 +268,9 @@ const Stores = () => {
   };
 
   // Функція для підтвердження видалення магазину
-  const confirmDeleteStore = async () => {
+  const confirmDeleteStore = () => {
     if (!storeToDelete) return;
-
-    setIsLoading(true);
-    try {
-      await api.delete(`/stores/${storeToDelete.id}/`);
-      toast.success('Магазин успішно видалено!');
-      setShowDeleteModal(false);
-      setStoreToDelete(null);
-      refetch(); // Оновлюємо список магазинів
-    } catch (error) {
-      const errorMessage = error.response?.data?.message || 
-                          error.response?.data?.detail || 
-                          'Помилка видалення магазину';
-      toast.error(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
+    deleteStoreMutation.mutate(storeToDelete.id);
   };
 
   // Функція для скасування видалення
@@ -1213,7 +1231,7 @@ const Stores = () => {
               </h3>
               <button
                 onClick={cancelDelete}
-                disabled={isLoading}
+                disabled={deleteStoreMutation.isPending}
                 className="text-gray-400 hover:text-gray-600"
               >
                 <XMarkIcon className="h-6 w-6" />
@@ -1235,15 +1253,15 @@ const Stores = () => {
             <div className="flex space-x-3">
               <button
                 onClick={confirmDeleteStore}
-                disabled={isLoading}
+                disabled={deleteStoreMutation.isPending}
                 className="btn-primary bg-red-600 hover:bg-red-700 flex-1 flex items-center justify-center"
               >
                 <TrashIcon className="h-4 w-4 mr-2" />
-                {isLoading ? 'Видалення...' : 'Видалити'}
+                {deleteStoreMutation.isPending ? 'Видалення...' : 'Видалити'}
               </button>
               <button
                 onClick={cancelDelete}
-                disabled={isLoading}
+                disabled={deleteStoreMutation.isPending}
                 className="btn-outline flex-1"
               >
                 Скасувати
