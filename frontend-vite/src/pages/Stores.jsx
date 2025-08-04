@@ -506,96 +506,167 @@ const Stores = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Заголовок */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Мої магазини</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Керуйте всіма вашими магазинами
+    <div className="space-y-8 animate-fade-in-up">
+      {/* Hero заголовок з градієнтом */}
+      <div className="glass-strong rounded-3xl p-8 text-center relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-purple-500/5 to-pink-500/10"></div>
+        <div className="relative z-10">
+          <h1 className="text-4xl font-bold gradient-text-blue mb-4">Мої магазини</h1>
+          <p className="text-lg text-gray-600 mb-8">
+            Створюйте, керуйте та розвивайте свої інтернет-магазини в одному місці
           </p>
+          <button onClick={handleCreateStore} className="btn-primary text-lg px-8 py-4">
+            <PlusIcon className="h-5 w-5 mr-3" />
+            Створити новий магазин
+          </button>
         </div>
-        <button onClick={handleCreateStore} className="btn-primary">
-          <PlusIcon className="h-4 w-4 mr-2" />
-          Створити магазин
-        </button>
+        
+        {/* Декоративні елементи */}
+        <div className="absolute top-4 right-4 w-20 h-20 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-xl"></div>
+        <div className="absolute bottom-4 left-4 w-16 h-16 bg-gradient-to-br from-pink-400/20 to-orange-400/20 rounded-full blur-xl"></div>
       </div>
 
       {/* Список магазинів */}
       {stores.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="text-gray-500 mb-4">У вас поки немає магазинів</div>
-          <button onClick={handleCreateStore} className="btn-primary">
-            <PlusIcon className="h-4 w-4 mr-2" />
-            Створити перший магазин
-          </button>
+        <div className="card text-center py-16 animate-fade-in-scale">
+          <div className="card-body">
+            <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center">
+              <svg className="w-12 h-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+              </svg>
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-3">Створіть свій перший магазин</h3>
+            <p className="text-gray-600 mb-8 max-w-md mx-auto">
+              Почніть свій шлях в електронній комерції. Створіть красивий магазин за декілька хвилин.
+            </p>
+            <button onClick={handleCreateStore} className="btn-primary text-lg px-8 py-4">
+              <PlusIcon className="h-5 w-5 mr-3" />
+              Створити перший магазин
+            </button>
+          </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {stores.map((store) => (
-            <div key={store.id} className="card">
-              <div className="card-body">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-medium text-gray-900">
-                    {store.name}
-                  </h3>
-                  <span className={`badge ${(store.is_active || store.status === 'active') ? 'badge-success' : 'badge-warning'}`}>
-                    {(store.is_active || store.status === 'active') ? 'Активний' : 'Неактивний'}
-                  </span>
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          {stores.map((store, index) => (
+            <div 
+              key={store.id} 
+              className="card group hover:scale-105 transition-all duration-300 animate-fade-in-up"
+              style={{ animationDelay: `${index * 0.1}s` }}
+            >
+              <div className="card-body relative overflow-hidden">
+                {/* Логотип або плейсхолдер */}
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-3">
+                    {store.logo ? (
+                      <img
+                        src={store.logo}
+                        alt={store.name}
+                        className="w-12 h-12 rounded-xl object-cover border-2 border-white shadow-lg"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-xl flex items-center justify-center shadow-lg">
+                        <span className="text-white font-bold text-lg">
+                          {store.name.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                        {store.name}
+                      </h3>
+                      <span className={`badge text-xs ${(store.is_active || store.status === 'active') ? 'badge-success' : 'badge-warning'}`}>
+                        {(store.is_active || store.status === 'active') ? '🟢 Активний' : '🟡 Неактивний'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
                 
-                <p className="mt-2 text-sm text-gray-500 line-clamp-2">{store.description || 'Без опису'}</p>
+                <p className="text-gray-600 line-clamp-2 mb-4 min-h-[2.5rem]">
+                  {store.description || 'Опис магазину не вказано'}
+                </p>
                 
-                {/* Контактна інформація якщо є */}
+                {/* Статистика з іконками */}
+                <div className="grid grid-cols-3 gap-3 mb-6">
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-3 text-center">
+                    <div className="text-blue-600 mb-1">
+                      <svg className="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                      </svg>
+                    </div>
+                    <div className="text-lg font-bold text-gray-900">
+                      {store.products_count || store.products || 0}
+                    </div>
+                    <div className="text-xs text-gray-600">Товари</div>
+                  </div>
+                  <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-3 text-center">
+                    <div className="text-green-600 mb-1">
+                      <svg className="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                      </svg>
+                    </div>
+                    <div className="text-lg font-bold text-gray-900">
+                      {store.orders_count || store.orders || 0}
+                    </div>
+                    <div className="text-xs text-gray-600">Замовлення</div>
+                  </div>
+                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-3 text-center">
+                    <div className="text-purple-600 mb-1">
+                      <svg className="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                      </svg>
+                    </div>
+                    <div className="text-lg font-bold text-gray-900">
+                      {store.revenue || 0}₴
+                    </div>
+                    <div className="text-xs text-gray-600">Дохід</div>
+                  </div>
+                </div>
+                
+                {/* Контактна інформація */}
                 {(store.phone || store.email) && (
-                  <div className="mt-3 text-xs text-gray-400 space-y-1">
-                    {store.phone && <div>📞 {store.phone}</div>}
-                    {store.email && <div>✉️ {store.email}</div>}
+                  <div className="bg-gray-50 rounded-xl p-3 mb-4 space-y-1">
+                    {store.phone && (
+                      <div className="flex items-center text-xs text-gray-600">
+                        <span className="mr-2">📞</span>
+                        {store.phone}
+                      </div>
+                    )}
+                    {store.email && (
+                      <div className="flex items-center text-xs text-gray-600">
+                        <span className="mr-2">✉️</span>
+                        {store.email}
+                      </div>
+                    )}
                   </div>
                 )}
                 
-                <div className="mt-4 grid grid-cols-3 gap-4 text-center">
-                  <div>
-                    <div className="text-lg font-semibold text-gray-900">
-                      {store.products_count || store.products || 0}
-                    </div>
-                    <div className="text-xs text-gray-500">Товари</div>
-                  </div>
-                  <div>
-                    <div className="text-lg font-semibold text-gray-900">
-                      {store.orders_count || store.orders || 0}
-                    </div>
-                    <div className="text-xs text-gray-500">Замовлення</div>
-                  </div>
-                  <div>
-                    <div className="text-lg font-semibold text-gray-900">
-                      {store.revenue || 0} ₴
-                    </div>
-                    <div className="text-xs text-gray-500">Дохід</div>
-                  </div>
-                </div>
-                
-                <div className="mt-6 flex space-x-2">
+                {/* Дії */}
+                <div className="flex space-x-2">
                   <Link
                     to={`/stores/${store.id}`}
-                    className="btn-outline flex-1 flex items-center justify-center"
+                    className="btn-outline flex-1 flex items-center justify-center text-sm py-2"
                   >
                     <EyeIcon className="h-4 w-4 mr-2" />
                     Переглянути
                   </Link>
                   <button 
                     onClick={() => handleEditStore(store)}
-                    className="btn-outline"
+                    className="btn-outline px-3 py-2"
+                    title="Редагувати"
                   >
                     <PencilIcon className="h-4 w-4" />
                   </button>
                   <button 
                     onClick={() => handleDeleteStore(store)}
-                    className="btn-outline text-red-600 hover:text-red-700 hover:bg-red-50"
+                    className="btn-outline px-3 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-200"
+                    title="Видалити"
                   >
                     <TrashIcon className="h-4 w-4" />
                   </button>
                 </div>
+                
+                {/* Декоративний градієнт */}
+                <div className="absolute -top-4 -right-4 w-16 h-16 bg-gradient-to-br from-blue-200/50 to-purple-200/50 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </div>
             </div>
           ))}
@@ -604,52 +675,73 @@ const Stores = () => {
 
       {/* Модальне вікно для створення/редагування магазину */}
       {showModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-medium text-gray-900">
-                {editingStore ? 'Редагувати магазин' : 'Створити новий магазин'}
-              </h3>
-              <button
-                onClick={() => {
-                  setShowModal(false);
-                  setActiveTab('basic');
-                }}
-                disabled={isLoading}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <XMarkIcon className="h-6 w-6" />
-              </button>
+        <div className="fixed inset-0 z-50">
+          {/* Затемнення всієї сторінки */}
+          <div className="fixed inset-0 bg-black/70" onClick={() => { setShowModal(false); setActiveTab('basic'); }}></div>
+          
+          {/* Модальне вікно */}
+          <div className="fixed inset-0 flex items-center justify-center p-4 animate-fade-in-scale">
+            <div 
+              className="bg-white rounded-3xl max-w-5xl w-full max-h-[95vh] overflow-hidden shadow-2xl relative z-10"
+              onClick={(e) => e.stopPropagation()}
+            >
+            {/* Заголовок модального вікна */}
+            <div className="bg-gradient-to-r from-blue-500/10 via-purple-500/5 to-pink-500/10 px-8 py-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-2xl font-bold gradient-text-blue">
+                    {editingStore ? 'Редагувати магазин' : 'Створити новий магазин'}
+                  </h3>
+                  <p className="text-gray-600 mt-1">
+                    {editingStore ? 'Оновіть інформацію про ваш магазин' : 'Налаштуйте свій магазин за декілька простих кроків'}
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowModal(false);
+                    setActiveTab('basic');
+                  }}
+                  disabled={isLoading}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <XMarkIcon className="h-6 w-6 text-gray-500" />
+                </button>
+              </div>
             </div>
             
-            {/* Tabs */}
-            <div className="border-b border-gray-200 mb-6">
-              <nav className="-mb-px flex space-x-8">
-                {[
-                  { id: 'basic', name: 'Основне' },
-                  { id: 'contact', name: 'Контакти' },
-                  { id: 'design', name: 'Дизайн' },
-                  { id: 'landing', name: 'Лендинг' },
-                  { id: 'social', name: 'Соціальні мережі' },
-                  { id: 'blocks', name: 'Блоки контенту' },
-                  { id: 'seo', name: 'SEO' },
-                  { id: 'settings', name: 'Налаштування' }
-                ].map((tab) => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                      activeTab === tab.id
-                        ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                  >
-                    {tab.name}
-                  </button>
-                ))}
-              </nav>
-            </div>
+            {/* Контент модального вікна */}
+            <div className="overflow-y-auto max-h-[calc(95vh-140px)]">
+              <div className="p-8">
+            
+                {/* Навігаційні вкладки */}
+                <div className="mb-8">
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { id: 'basic', name: 'Основне', icon: '📝' },
+                      { id: 'contact', name: 'Контакти', icon: '📞' },
+                      { id: 'design', name: 'Дизайн', icon: '🎨' },
+                      { id: 'landing', name: 'Лендинг', icon: '🖼️' },
+                      { id: 'social', name: 'Соцмережі', icon: '📱' },
+                      { id: 'blocks', name: 'Контент', icon: '📑' },
+                      { id: 'seo', name: 'SEO', icon: '🔍' },
+                      { id: 'settings', name: 'Налаштування', icon: '⚙️' }
+                    ].map((tab) => (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`px-4 py-3 rounded-xl font-medium text-sm transition-all duration-200 flex items-center space-x-2 ${
+                          activeTab === tab.id
+                            ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg transform scale-105'
+                            : 'bg-white/60 text-gray-700 hover:bg-white/80 hover:shadow-md'
+                        }`}
+                      >
+                        <span>{tab.icon}</span>
+                        <span>{tab.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
             
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               {/* Основна інформація */}
@@ -1196,76 +1288,133 @@ const Stores = () => {
                 </div>
               )}
               
-              <div className="flex space-x-3 pt-6 border-t border-gray-200">
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="btn-primary flex-1 flex items-center justify-center"
-                >
-                  {isLoading ? 'Збереження...' : (editingStore ? 'Оновити' : 'Створити')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowModal(false);
-                    setActiveTab('basic');
-                  }}
-                  disabled={isLoading}
-                  className="btn-outline"
-                >
-                  Скасувати
-                </button>
+                {/* Кнопки дій */}
+                <div className="flex space-x-4 pt-8 border-t border-gray-200 mt-8">
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="btn-primary flex-1 flex items-center justify-center text-lg py-4 relative overflow-hidden"
+                  >
+                    <div className="flex items-center">
+                      {isLoading && (
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      )}
+                      {isLoading ? 'Збереження...' : (editingStore ? '✏️ Оновити магазин' : '🎉 Створити магазин')}
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowModal(false);
+                      setActiveTab('basic');
+                    }}
+                    disabled={isLoading}
+                    className="btn-outline px-8 py-4 text-lg"
+                  >
+                    Скасувати
+                  </button>
+                </div>
+              </form>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}
 
       {/* Модальне вікно підтвердження видалення */}
       {showDeleteModal && storeToDelete && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-gray-900">
-                Підтвердження видалення
-              </h3>
-              <button
-                onClick={cancelDelete}
-                disabled={deleteStoreMutation.isPending}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <XMarkIcon className="h-6 w-6" />
-              </button>
+        <div className="fixed inset-0 z-50">
+          {/* Затемнення всієї сторінки */}
+          <div className="fixed inset-0 bg-black/70" onClick={cancelDelete}></div>
+          
+          {/* Модальне вікно */}
+          <div className="fixed inset-0 flex items-center justify-center p-4 animate-fade-in-scale">
+            <div 
+              className="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl relative z-10"
+              onClick={(e) => e.stopPropagation()}
+            >
+            {/* Заголовок */}
+            <div className="bg-gradient-to-r from-red-500/10 to-orange-500/10 px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                    <TrashIcon className="h-6 w-6 text-red-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900">
+                      Видалення магазину
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Це безповоротна дія
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={cancelDelete}
+                  disabled={deleteStoreMutation.isPending}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <XMarkIcon className="h-5 w-5 text-gray-500" />
+                </button>
+              </div>
             </div>
             
-            <div className="mb-6">
-              <p className="text-sm text-gray-500 mb-2">
-                Ви впевнені, що хочете видалити магазин?
-              </p>
-              <p className="text-base font-medium text-gray-900">
-                "{storeToDelete.name}"
-              </p>
-              <p className="text-sm text-red-600 mt-2">
-                ⚠️ Ця дія є незворотною. Всі дані магазину будуть втрачені назавжди.
-              </p>
-            </div>
-            
-            <div className="flex space-x-3">
-              <button
-                onClick={confirmDeleteStore}
-                disabled={deleteStoreMutation.isPending}
-                className="btn-primary bg-red-600 hover:bg-red-700 flex-1 flex items-center justify-center"
-              >
-                <TrashIcon className="h-4 w-4 mr-2" />
-                {deleteStoreMutation.isPending ? 'Видалення...' : 'Видалити'}
-              </button>
-              <button
-                onClick={cancelDelete}
-                disabled={deleteStoreMutation.isPending}
-                className="btn-outline flex-1"
-              >
-                Скасувати
-              </button>
+            {/* Контент */}
+            <div className="p-6">
+              <div className="text-center mb-6">
+                <p className="text-gray-700 mb-3">
+                  Ви впевнені, що хочете видалити магазин?
+                </p>
+                <div className="bg-gray-50 rounded-xl p-4 mb-4">
+                  <p className="font-bold text-lg text-gray-900">
+                    "{storeToDelete.name}"
+                  </p>
+                  {storeToDelete.description && (
+                    <p className="text-sm text-gray-600 mt-1">
+                      {storeToDelete.description}
+                    </p>
+                  )}
+                </div>
+                <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                  <div className="flex items-center justify-center space-x-2 text-red-700">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                    </svg>
+                    <span className="font-medium">Увага!</span>
+                  </div>
+                  <p className="text-sm text-red-600 mt-2">
+                    Всі дані магазину, включаючи товари, замовлення та налаштування будуть втрачені назавжди.
+                  </p>
+                </div>
+              </div>
+              
+              {/* Кнопки */}
+              <div className="flex space-x-3">
+                <button
+                  onClick={confirmDeleteStore}
+                  disabled={deleteStoreMutation.isPending}
+                  className="btn-primary bg-red-600 hover:bg-red-700 border-red-600 hover:border-red-700 flex-1 flex items-center justify-center py-3"
+                >
+                  {deleteStoreMutation.isPending && (
+                    <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  )}
+                  <TrashIcon className="h-4 w-4 mr-2" />
+                  {deleteStoreMutation.isPending ? 'Видалення...' : 'Так, видалити'}
+                </button>
+                <button
+                  onClick={cancelDelete}
+                  disabled={deleteStoreMutation.isPending}
+                  className="btn-outline flex-1 py-3"
+                >
+                  Скасувати
+                </button>
+              </div>
             </div>
           </div>
         </div>

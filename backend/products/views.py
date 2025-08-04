@@ -49,7 +49,7 @@ class ProductListCreateView(generics.ListCreateAPIView):
     
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['category', 'is_active', 'is_featured', 'is_in_stock']
+    filterset_fields = ['category', 'is_active', 'is_featured']
     search_fields = ['name', 'description', 'sku']
     ordering_fields = ['name', 'price', 'created_at']
     ordering = ['-created_at']

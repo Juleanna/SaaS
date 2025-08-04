@@ -54,171 +54,257 @@ const StoreDetails = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-fade-in-up">
       {/* Навігація назад */}
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center justify-between">
         <button
           onClick={() => navigate('/stores')}
-          className="btn-outline flex items-center"
+          className="btn-outline flex items-center hover:scale-105 transition-transform"
         >
           <ArrowLeftIcon className="h-4 w-4 mr-2" />
           Назад до магазинів
         </button>
-      </div>
-
-      {/* Банер магазину */}
-      {store.banner_image && (
-        <div className="mb-6">
-          <img
-            src={store.banner_image}
-            alt="Store banner"
-            className="w-full h-48 object-cover rounded-lg shadow-lg"
-          />
-        </div>
-      )}
-
-      {/* Заголовок */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          {/* Логотип */}
-          {store.logo && (
-            <div className="flex-shrink-0">
-              <img
-                src={store.logo}
-                alt="Store logo"
-                className="w-16 h-16 object-cover rounded-lg border border-gray-200"
-              />
-            </div>
-          )}
-          
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">{store.name}</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              {store.description || 'Без опису'}
-            </p>
-            <div className="mt-2 flex items-center space-x-4">
-              <span className={`badge ${(store.is_active || store.status === 'active') ? 'badge-success' : 'badge-warning'}`}>
-                {(store.is_active || store.status === 'active') ? 'Активний' : 'Неактивний'}
-              </span>
-              <span className="text-sm text-gray-500">
-                Створено: {new Date(store.created_at).toLocaleDateString('uk-UA')}
-              </span>
-            </div>
-          </div>
-        </div>
         
         <div className="flex items-center space-x-3">
           <button
             onClick={() => navigate('/stores', { state: { editStore: store } })}
-            className="btn-outline flex items-center"
+            className="btn-primary flex items-center"
           >
             <PencilIcon className="h-4 w-4 mr-2" />
-            Редагувати
+            Редагувати магазин
           </button>
         </div>
       </div>
 
-      {/* Статистика */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-        <div className="card">
-          <div className="card-body">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <CubeIcon className="h-8 w-8 text-blue-600" />
-              </div>
-              <div className="ml-4">
-                <div className="text-2xl font-semibold text-gray-900">
-                  {store.products_count || store.products || 0}
-                </div>
-                <div className="text-sm text-gray-500">Товари</div>
-              </div>
-            </div>
+      {/* Hero секція з банером та інформацією */}
+      <div className="glass-strong rounded-3xl overflow-hidden shadow-2xl">
+        {/* Банер */}
+        {store.banner_image && (
+          <div className="h-64 relative overflow-hidden">
+            <img
+              src={store.banner_image}
+              alt="Store banner"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
           </div>
-        </div>
-
-        <div className="card">
-          <div className="card-body">
-            <div className="flex items-center">
+        )}
+        
+        {/* Головна інформація */}
+        <div className="p-8 relative">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center space-x-6">
+              {/* Логотип */}
               <div className="flex-shrink-0">
-                <ShoppingCartIcon className="h-8 w-8 text-green-600" />
+                {store.logo ? (
+                  <img
+                    src={store.logo}
+                    alt="Store logo"
+                    className="w-20 h-20 object-cover rounded-2xl border-4 border-white shadow-lg"
+                  />
+                ) : (
+                  <div className="w-20 h-20 bg-gradient-to-br from-blue-400 to-purple-500 rounded-2xl flex items-center justify-center shadow-lg border-4 border-white">
+                    <span className="text-white font-bold text-2xl">
+                      {store.name.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                )}
               </div>
-              <div className="ml-4">
-                <div className="text-2xl font-semibold text-gray-900">
-                  {store.orders_count || store.orders || 0}
+              
+              <div>
+                <h1 className="text-4xl font-bold gradient-text-blue mb-2">{store.name}</h1>
+                <p className="text-lg text-gray-600 mb-4 max-w-2xl">
+                  {store.description || 'Опис магазину не вказано'}
+                </p>
+                <div className="flex items-center space-x-6">
+                  <span className={`badge text-sm px-4 py-2 ${(store.is_active || store.status === 'active') ? 'badge-success' : 'badge-warning'}`}>
+                    {(store.is_active || store.status === 'active') ? '🟢 Активний' : '🟡 Неактивний'}
+                  </span>
+                  <span className="text-sm text-gray-500 flex items-center">
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3a4 4 0 118 0v4m-4 12v-8m-8 4h16"/>
+                    </svg>
+                    Створено: {new Date(store.created_at).toLocaleDateString('uk-UA')}
+                  </span>
                 </div>
-                <div className="text-sm text-gray-500">Замовлення</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="card-body">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <ChartBarIcon className="h-8 w-8 text-purple-600" />
-              </div>
-              <div className="ml-4">
-                <div className="text-2xl font-semibold text-gray-900">
-                  {store.revenue || 0} ₴
-                </div>
-                <div className="text-sm text-gray-500">Дохід</div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Швидкі дії */}
-      <div className="card">
+      {/* Статистика з анімацією */}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+        <div className="card hover:scale-105 transition-transform duration-300 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+          <div className="card-body text-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <CubeIcon className="h-8 w-8 text-white" />
+            </div>
+            <div className="text-3xl font-bold text-gray-900 mb-2">
+              {store.products_count || store.products || 0}
+            </div>
+            <div className="text-sm text-gray-600 font-medium">Товари в асортименті</div>
+            <div className="mt-2">
+              <Link
+                to={`/stores/${store.id}/products`}
+                className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+              >
+                Переглянути →
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        <div className="card hover:scale-105 transition-transform duration-300 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+          <div className="card-body text-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <ShoppingCartIcon className="h-8 w-8 text-white" />
+            </div>
+            <div className="text-3xl font-bold text-gray-900 mb-2">
+              {store.orders_count || store.orders || 0}
+            </div>
+            <div className="text-sm text-gray-600 font-medium">Всього замовлень</div>
+            <div className="mt-2">
+              <Link
+                to={`/stores/${store.id}/orders`}
+                className="text-green-600 hover:text-green-700 text-sm font-medium"
+              >
+                Переглянути →
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        <div className="card hover:scale-105 transition-transform duration-300 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+          <div className="card-body text-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <ChartBarIcon className="h-8 w-8 text-white" />
+            </div>
+            <div className="text-3xl font-bold text-gray-900 mb-2">
+              {store.revenue || 0}₴
+            </div>
+            <div className="text-sm text-gray-600 font-medium">Загальний дохід</div>
+            <div className="mt-2">
+              <span className="text-purple-600 text-sm font-medium">
+                За весь час
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Швидкі дії з покращеним дизайном */}
+      <div className="card animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
         <div className="card-body">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Швидкі дії</h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Швидкі дії</h2>
+            <p className="text-gray-600">Керуйте вашим магазином</p>
+          </div>
+          
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Link
               to={`/stores/${store.id}/products`}
-              className="btn-outline flex items-center justify-center"
+              className="group bg-gradient-to-br from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 rounded-2xl p-6 text-center transition-all duration-300 hover:scale-105 hover:shadow-lg"
             >
-              <CubeIcon className="h-4 w-4 mr-2" />
-              Керувати товарами
+              <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                <CubeIcon className="h-6 w-6 text-white" />
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-1">Товари</h3>
+              <p className="text-sm text-gray-600">Керування асортиментом</p>
             </Link>
+
             <Link
               to={`/stores/${store.id}/orders`}
-              className="btn-outline flex items-center justify-center"
+              className="group bg-gradient-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 rounded-2xl p-6 text-center transition-all duration-300 hover:scale-105 hover:shadow-lg"
             >
-              <ShoppingCartIcon className="h-4 w-4 mr-2" />
-              Переглянути замовлення
+              <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                <ShoppingCartIcon className="h-6 w-6 text-white" />
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-1">Замовлення</h3>
+              <p className="text-sm text-gray-600">Обробка замовлень</p>
             </Link>
+
+            <Link
+              to={`/stores/${store.id}/analytics`}
+              className="group bg-gradient-to-br from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 rounded-2xl p-6 text-center transition-all duration-300 hover:scale-105 hover:shadow-lg"
+            >
+              <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                <ChartBarIcon className="h-6 w-6 text-white" />
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-1">Аналітика</h3>
+              <p className="text-sm text-gray-600">Звіти та статистика</p>
+            </Link>
+
+            <button
+              onClick={() => navigate('/stores', { state: { editStore: store } })}
+              className="group bg-gradient-to-br from-orange-50 to-orange-100 hover:from-orange-100 hover:to-orange-200 rounded-2xl p-6 text-center transition-all duration-300 hover:scale-105 hover:shadow-lg"
+            >
+              <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                <PencilIcon className="h-6 w-6 text-white" />
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-1">Налаштування</h3>
+              <p className="text-sm text-gray-600">Редагування магазину</p>
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Інформація про магазин */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      {/* Детальна інформація */}
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         {/* Основна інформація */}
-        <div className="card">
+        <div className="card animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
           <div className="card-body">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Основна інформація</h2>
-            <div className="space-y-4">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mr-4">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+              </div>
+              <h2 className="text-xl font-bold text-gray-900">Основна інформація</h2>
+            </div>
+            
+            <div className="space-y-6">
               <div>
-                <label className="form-label">URL адреса</label>
-                <div className="mt-1 text-sm text-gray-900 font-mono bg-gray-50 p-2 rounded">
-                  {store.slug}
+                <label className="form-label flex items-center">
+                  <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                  </svg>
+                  URL адреса
+                </label>
+                <div className="mt-2 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 border">
+                  <code className="text-blue-600 font-mono text-sm">{store.slug}</code>
+                  <button 
+                    onClick={() => navigator.clipboard.writeText(store.slug)}
+                    className="ml-3 text-xs text-gray-500 hover:text-gray-700 transition-colors"
+                  >
+                    📋 Копіювати
+                  </button>
                 </div>
               </div>
               
               <div>
-                <label className="form-label">Статус</label>
-                <div className="mt-1">
-                  <span className={`badge ${(store.is_active || store.status === 'active') ? 'badge-success' : 'badge-warning'}`}>
-                    {(store.is_active || store.status === 'active') ? 'Активний' : 'Неактивний'}
+                <label className="form-label flex items-center">
+                  <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  Статус
+                </label>
+                <div className="mt-2">
+                  <span className={`badge text-sm px-4 py-2 ${(store.is_active || store.status === 'active') ? 'badge-success' : 'badge-warning'}`}>
+                    {(store.is_active || store.status === 'active') ? '🟢 Активний' : '🟡 Неактивний'}
                   </span>
                 </div>
               </div>
               
               <div>
-                <label className="form-label">Опис</label>
-                <div className="mt-1 text-sm text-gray-900">
-                  {store.description || 'Опис не вказано'}
+                <label className="form-label flex items-center">
+                  <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"/>
+                  </svg>
+                  Опис
+                </label>
+                <div className="mt-2 bg-gray-50 rounded-xl p-4 text-gray-700">
+                  {store.description || 'Опис магазину не вказано'}
                 </div>
               </div>
             </div>
@@ -226,28 +312,64 @@ const StoreDetails = () => {
         </div>
 
         {/* Контактна інформація */}
-        <div className="card">
+        <div className="card animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
           <div className="card-body">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Контактна інформація</h2>
-            <div className="space-y-4">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mr-4">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                </svg>
+              </div>
+              <h2 className="text-xl font-bold text-gray-900">Контактна інформація</h2>
+            </div>
+            
+            <div className="space-y-6">
               <div>
-                <label className="form-label">Телефон</label>
-                <div className="mt-1 text-sm text-gray-900">
-                  {store.phone || 'Не вказано'}
+                <label className="form-label flex items-center">
+                  <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                  </svg>
+                  Телефон
+                </label>
+                <div className="mt-2 bg-gray-50 rounded-xl p-4">
+                  {store.phone ? (
+                    <a href={`tel:${store.phone}`} className="text-green-600 hover:text-green-700 font-medium">
+                      {store.phone}
+                    </a>
+                  ) : (
+                    <span className="text-gray-500">Не вказано</span>
+                  )}
                 </div>
               </div>
               
               <div>
-                <label className="form-label">Email</label>
-                <div className="mt-1 text-sm text-gray-900">
-                  {store.email || 'Не вказано'}
+                <label className="form-label flex items-center">
+                  <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                  </svg>
+                  Email
+                </label>
+                <div className="mt-2 bg-gray-50 rounded-xl p-4">
+                  {store.email ? (
+                    <a href={`mailto:${store.email}`} className="text-blue-600 hover:text-blue-700 font-medium">
+                      {store.email}
+                    </a>
+                  ) : (
+                    <span className="text-gray-500">Не вказано</span>
+                  )}
                 </div>
               </div>
               
               <div>
-                <label className="form-label">Адреса</label>
-                <div className="mt-1 text-sm text-gray-900">
-                  {store.address || 'Не вказано'}
+                <label className="form-label flex items-center">
+                  <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  </svg>
+                  Адреса
+                </label>
+                <div className="mt-2 bg-gray-50 rounded-xl p-4 text-gray-700">
+                  {store.address || 'Адреса не вказана'}
                 </div>
               </div>
             </div>

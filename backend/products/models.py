@@ -17,13 +17,13 @@ class Category(models.Model):
     store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='categories', verbose_name=_('Магазин'))
     name = models.CharField(max_length=100, verbose_name=_('Назва'))
     description = models.TextField(blank=True, verbose_name=_('Опис'))
-    slug = models.SlugField(max_length=100, unique=True, verbose_name=_('URL'))
+    slug = models.SlugField(max_length=100, verbose_name=_('URL'))
     image = models.ImageField(upload_to='category_images/', blank=True, verbose_name=_('Зображення'))
     order = models.PositiveIntegerField(default=0, verbose_name=_('Порядок'))
     is_active = models.BooleanField(default=True, verbose_name=_('Активна'))
     
     # Дати
-    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True, verbose_name=_('Дата створення'))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Дата створення'))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_('Дата оновлення'))
     
     class Meta:
@@ -34,6 +34,7 @@ class Category(models.Model):
     
     def __str__(self):
         return f"{self.store.name} - {self.name}"
+
 
 
 class Product(models.Model):
