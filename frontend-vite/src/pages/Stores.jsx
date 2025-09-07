@@ -58,6 +58,7 @@ const Stores = () => {
       toast.error(errorMessage);
     }
   });
+  
   const [showModal, setShowModal] = useState(false);
   const [editingStore, setEditingStore] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -279,16 +280,6 @@ const Stores = () => {
     setStoreToDelete(null);
   };
 
-  // Функція для генерації slug з назви
-  const generateSlug = (name) => {
-    return name
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .trim();
-  };
-
   // Функція для обробки завантаження логотипу
   const handleLogoUpload = (event) => {
     const file = event.target.files[0];
@@ -506,818 +497,754 @@ const Stores = () => {
   }
 
   return (
-    <div className="space-y-8 animate-fade-in-up">
-      {/* Hero заголовок з градієнтом */}
-      <div className="glass-strong rounded-3xl p-8 text-center relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-purple-500/5 to-pink-500/10"></div>
-        <div className="relative z-10">
-          <h1 className="text-4xl font-bold gradient-text-blue mb-4">Мої магазини</h1>
-          <p className="text-lg text-gray-600 mb-8">
-            Створюйте, керуйте та розвивайте свої інтернет-магазини в одному місці
-          </p>
-          <button onClick={handleCreateStore} className="btn-primary text-lg px-8 py-4">
-            <PlusIcon className="h-5 w-5 mr-3" />
-            Створити новий магазин
-          </button>
-        </div>
-        
-        {/* Декоративні елементи */}
-        <div className="absolute top-4 right-4 w-20 h-20 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-xl"></div>
-        <div className="absolute bottom-4 left-4 w-16 h-16 bg-gradient-to-br from-pink-400/20 to-orange-400/20 rounded-full blur-xl"></div>
-      </div>
-
-      {/* Список магазинів */}
-      {stores.length === 0 ? (
-        <div className="card text-center py-16 animate-fade-in-scale">
-          <div className="card-body">
-            <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center">
-              <svg className="w-12 h-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-              </svg>
-            </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-3">Створіть свій перший магазин</h3>
-            <p className="text-gray-600 mb-8 max-w-md mx-auto">
-              Почніть свій шлях в електронній комерції. Створіть красивий магазин за декілька хвилин.
+    <>
+      <div className="space-y-8 animate-fade-in-up">
+        {/* Hero заголовок з градієнтом */}
+        <div className="glass-strong rounded-3xl p-8 text-center relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-purple-500/5 to-pink-500/10"></div>
+          <div className="relative z-10">
+            <h1 className="text-4xl font-bold gradient-text-blue mb-4">Мої магазини</h1>
+            <p className="text-lg text-gray-600 mb-8">
+              Створюйте, керуйте та розвивайте свої інтернет-магазини в одному місці
             </p>
-            <button onClick={handleCreateStore} className="btn-primary text-lg px-8 py-4">
-              <PlusIcon className="h-5 w-5 mr-3" />
-              Створити перший магазин
+            <button onClick={handleCreateStore} className="btn-primary text-sm px-4 py-2 flex items-center justify-center whitespace-nowrap mx-auto">
+              <PlusIcon className="h-4 w-4 mr-2" />
+              Створити новий магазин
             </button>
           </div>
+          
+          {/* Декоративні елементи */}
+          <div className="absolute top-4 right-4 w-20 h-20 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-xl"></div>
+          <div className="absolute bottom-4 left-4 w-16 h-16 bg-gradient-to-br from-pink-400/20 to-orange-400/20 rounded-full blur-xl"></div>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {stores.map((store, index) => (
-            <div 
-              key={store.id} 
-              className="card group hover:scale-105 transition-all duration-300 animate-fade-in-up"
-              style={{ animationDelay: `${index * 0.1}s` }}
-            >
-              <div className="card-body relative overflow-hidden">
-                {/* Логотип або плейсхолдер */}
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    {store.logo ? (
-                      <img
-                        src={store.logo}
-                        alt={store.name}
-                        className="w-12 h-12 rounded-xl object-cover border-2 border-white shadow-lg"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-xl flex items-center justify-center shadow-lg">
-                        <span className="text-white font-bold text-lg">
-                          {store.name.charAt(0).toUpperCase()}
+
+        {/* Список магазинів */}
+        {stores.length === 0 ? (
+          <div className="card text-center py-16 animate-fade-in-scale">
+            <div className="card-body">
+              <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center">
+                <svg className="w-12 h-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">Створіть свій перший магазин</h3>
+              <p className="text-gray-600 mb-8 max-w-md mx-auto">
+                Почніть свій шлях в електронній комерції. Створіть красивий магазин за декілька хвилин.
+              </p>
+              <button onClick={handleCreateStore} className="btn-primary text-lg px-8 py-4 flex items-center justify-center whitespace-nowrap mx-auto">
+                <PlusIcon className="h-5 w-5 mr-3" />
+                Створити перший магазин
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            {stores.map((store, index) => (
+              <div 
+                key={store.id} 
+                className="card group hover:scale-105 transition-all duration-300 animate-fade-in-up"
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <div className="card-body relative overflow-hidden">
+                  {/* Логотип або плейсхолдер */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      {store.logo ? (
+                        <img
+                          src={store.logo}
+                          alt={store.name}
+                          className="w-12 h-12 rounded-xl object-cover border-2 border-white shadow-lg"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-xl flex items-center justify-center shadow-lg">
+                          <span className="text-white font-bold text-lg">
+                            {store.name.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                          {store.name}
+                        </h3>
+                        <span className={`badge text-xs ${(store.is_active || store.status === 'active') ? 'badge-success' : 'badge-warning'}`}>
+                          {(store.is_active || store.status === 'active') ? '🟢 Активний' : '🟡 Неактивний'}
                         </span>
                       </div>
-                    )}
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
-                        {store.name}
-                      </h3>
-                      <span className={`badge text-xs ${(store.is_active || store.status === 'active') ? 'badge-success' : 'badge-warning'}`}>
-                        {(store.is_active || store.status === 'active') ? '🟢 Активний' : '🟡 Неактивний'}
-                      </span>
                     </div>
+                  </div>
+                  
+                  <p className="text-gray-600 line-clamp-2 mb-4 min-h-[2.5rem]">
+                    {store.description || 'Опис магазину не вказано'}
+                  </p>
+                  
+                  {/* Дії */}
+                  <div className="flex space-x-2">
+                    <Link
+                      to={`/stores/${store.id}`}
+                      className="btn-outline flex-1 flex items-center justify-center text-sm py-2 whitespace-nowrap"
+                    >
+                      <EyeIcon className="h-4 w-4 mr-2" />
+                      Переглянути
+                    </Link>
+                    <button 
+                      onClick={() => handleEditStore(store)}
+                      className="btn-outline px-3 py-2"
+                      title="Редагувати"
+                    >
+                      <PencilIcon className="h-4 w-4" />
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteStore(store)}
+                      className="btn-outline px-3 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-200"
+                      title="Видалити"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </button>
                   </div>
                 </div>
-                
-                <p className="text-gray-600 line-clamp-2 mb-4 min-h-[2.5rem]">
-                  {store.description || 'Опис магазину не вказано'}
-                </p>
-                
-                {/* Статистика з іконками */}
-                <div className="grid grid-cols-3 gap-3 mb-6">
-                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-3 text-center">
-                    <div className="text-blue-600 mb-1">
-                      <svg className="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                      </svg>
-                    </div>
-                    <div className="text-lg font-bold text-gray-900">
-                      {store.products_count || store.products || 0}
-                    </div>
-                    <div className="text-xs text-gray-600">Товари</div>
-                  </div>
-                  <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-3 text-center">
-                    <div className="text-green-600 mb-1">
-                      <svg className="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-                      </svg>
-                    </div>
-                    <div className="text-lg font-bold text-gray-900">
-                      {store.orders_count || store.orders || 0}
-                    </div>
-                    <div className="text-xs text-gray-600">Замовлення</div>
-                  </div>
-                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-3 text-center">
-                    <div className="text-purple-600 mb-1">
-                      <svg className="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
-                      </svg>
-                    </div>
-                    <div className="text-lg font-bold text-gray-900">
-                      {store.revenue || 0}₴
-                    </div>
-                    <div className="text-xs text-gray-600">Дохід</div>
-                  </div>
-                </div>
-                
-                {/* Контактна інформація */}
-                {(store.phone || store.email) && (
-                  <div className="bg-gray-50 rounded-xl p-3 mb-4 space-y-1">
-                    {store.phone && (
-                      <div className="flex items-center text-xs text-gray-600">
-                        <span className="mr-2">📞</span>
-                        {store.phone}
-                      </div>
-                    )}
-                    {store.email && (
-                      <div className="flex items-center text-xs text-gray-600">
-                        <span className="mr-2">✉️</span>
-                        {store.email}
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                {/* Дії */}
-                <div className="flex space-x-2">
-                  <Link
-                    to={`/stores/${store.id}`}
-                    className="btn-outline flex-1 flex items-center justify-center text-sm py-2"
-                  >
-                    <EyeIcon className="h-4 w-4 mr-2" />
-                    Переглянути
-                  </Link>
-                  <button 
-                    onClick={() => handleEditStore(store)}
-                    className="btn-outline px-3 py-2"
-                    title="Редагувати"
-                  >
-                    <PencilIcon className="h-4 w-4" />
-                  </button>
-                  <button 
-                    onClick={() => handleDeleteStore(store)}
-                    className="btn-outline px-3 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-200"
-                    title="Видалити"
-                  >
-                    <TrashIcon className="h-4 w-4" />
-                  </button>
-                </div>
-                
-                {/* Декоративний градієнт */}
-                <div className="absolute -top-4 -right-4 w-16 h-16 bg-gradient-to-br from-blue-200/50 to-purple-200/50 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Модальне вікно для створення/редагування магазину */}
       {showModal && (
-        <div className="fixed inset-0 z-50">
-          {/* Затемнення всієї сторінки */}
+        <div className="fixed inset-0 z-[9999]">
           <div className="fixed inset-0 bg-black/70" onClick={() => { setShowModal(false); setActiveTab('basic'); }}></div>
           
-          {/* Модальне вікно */}
           <div className="fixed inset-0 flex items-center justify-center p-4 animate-fade-in-scale">
             <div 
-              className="bg-white rounded-3xl max-w-5xl w-full max-h-[95vh] overflow-hidden shadow-2xl relative z-10"
+              className="bg-white rounded-3xl max-w-5xl w-full max-h-[95vh] overflow-hidden shadow-2xl relative z-[10000]"
               onClick={(e) => e.stopPropagation()}
             >
-            {/* Заголовок модального вікна */}
-            <div className="bg-gradient-to-r from-blue-500/10 via-purple-500/5 to-pink-500/10 px-8 py-6 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-2xl font-bold gradient-text-blue">
-                    {editingStore ? 'Редагувати магазин' : 'Створити новий магазин'}
-                  </h3>
-                  <p className="text-gray-600 mt-1">
-                    {editingStore ? 'Оновіть інформацію про ваш магазин' : 'Налаштуйте свій магазин за декілька простих кроків'}
-                  </p>
-                </div>
-                <button
-                  onClick={() => {
-                    setShowModal(false);
-                    setActiveTab('basic');
-                  }}
-                  disabled={isLoading}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                >
-                  <XMarkIcon className="h-6 w-6 text-gray-500" />
-                </button>
-              </div>
-            </div>
-            
-            {/* Контент модального вікна */}
-            <div className="overflow-y-auto max-h-[calc(95vh-140px)]">
-              <div className="p-8">
-            
-                {/* Навігаційні вкладки */}
-                <div className="mb-8">
-                  <div className="flex flex-wrap gap-2">
-                    {[
-                      { id: 'basic', name: 'Основне', icon: '📝' },
-                      { id: 'contact', name: 'Контакти', icon: '📞' },
-                      { id: 'design', name: 'Дизайн', icon: '🎨' },
-                      { id: 'landing', name: 'Лендинг', icon: '🖼️' },
-                      { id: 'social', name: 'Соцмережі', icon: '📱' },
-                      { id: 'blocks', name: 'Контент', icon: '📑' },
-                      { id: 'seo', name: 'SEO', icon: '🔍' },
-                      { id: 'settings', name: 'Налаштування', icon: '⚙️' }
-                    ].map((tab) => (
-                      <button
-                        key={tab.id}
-                        type="button"
-                        onClick={() => setActiveTab(tab.id)}
-                        className={`px-4 py-3 rounded-xl font-medium text-sm transition-all duration-200 flex items-center space-x-2 ${
-                          activeTab === tab.id
-                            ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg transform scale-105'
-                            : 'bg-white/60 text-gray-700 hover:bg-white/80 hover:shadow-md'
-                        }`}
-                      >
-                        <span>{tab.icon}</span>
-                        <span>{tab.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-            
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              {/* Основна інформація */}
-              {activeTab === 'basic' && (
-                <div className="space-y-4">
+              <div className="bg-gradient-to-r from-blue-500/10 via-purple-500/5 to-pink-500/10 px-8 py-6 border-b border-gray-200">
+                <div className="flex items-center justify-between">
                   <div>
-                    <label htmlFor="name" className="form-label">Назва магазину *</label>
-                    <input
-                      id="name"
-                      type="text"
-                      {...register('name', {
-                        required: 'Назва магазину обов\'язкова',
-                        minLength: {
-                          value: 2,
-                          message: 'Назва повинна містити принаймні 2 символи',
-                        },
-                      })}
-                      className="input"
-                      placeholder="Введіть назву магазину"
-                    />
-                    {errors.name && (
-                      <p className="form-error">{errors.name.message}</p>
-                    )}
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="description" className="form-label">Опис</label>
-                    <textarea
-                      id="description"
-                      rows={4}
-                      {...register('description')}
-                      className="input"
-                      placeholder="Розкажіть про ваш магазин..."
-                    />
-                    {errors.description && (
-                      <p className="form-error">{errors.description.message}</p>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Контактна інформація */}
-              {activeTab === 'contact' && (
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="phone" className="form-label">Телефон</label>
-                    <input
-                      id="phone"
-                      type="tel"
-                      {...register('phone')}
-                      className="input"
-                      placeholder="+380 (XX) XXX-XX-XX"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="email" className="form-label">Email</label>
-                    <input
-                      id="email"
-                      type="email"
-                      {...register('email')}
-                      className="input"
-                      placeholder="store@example.com"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="address" className="form-label">Адреса</label>
-                    <textarea
-                      id="address"
-                      rows={3}
-                      {...register('address')}
-                      className="input"
-                      placeholder="Повна адреса магазину або складу..."
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Дизайн */}
-              {activeTab === 'design' && (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                    <div>
-                      <label htmlFor="primary_color" className="form-label">Основний колір</label>
-                      <input
-                        id="primary_color"
-                        type="color"
-                        {...register('primary_color')}
-                        className="input h-12"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label htmlFor="secondary_color" className="form-label">Додатковий колір</label>
-                      <input
-                        id="secondary_color"
-                        type="color"
-                        {...register('secondary_color')}
-                        className="input h-12"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label htmlFor="accent_color" className="form-label">Акцентний колір</label>
-                      <input
-                        id="accent_color"
-                        type="color"
-                        {...register('accent_color')}
-                        className="input h-12"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Лендинг */}
-              {activeTab === 'landing' && (
-                <div className="space-y-6">
-                  {/* Логотип */}
-                  <div>
-                    <label className="form-label">Логотип магазину</label>
-                    <div className="mt-2">
-                      {logoPreview ? (
-                        <div className="relative inline-block">
-                          <img
-                            src={logoPreview}
-                            alt="Logo preview"
-                            className="w-32 h-32 object-cover rounded-lg border border-gray-300"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setLogoPreview(null);
-                              setLogoFile(null);
-                            }}
-                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ) : (
-                        <label className="flex flex-col items-center justify-center w-32 h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                            <svg className="w-8 h-8 mb-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-                            </svg>
-                            <p className="text-xs text-gray-500">Завантажити</p>
-                          </div>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleLogoUpload}
-                            className="hidden"
-                          />
-                        </label>
-                      )}
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Рекомендований розмір: 200x200px. Максимум: 2MB
+                    <h3 className="text-2xl font-bold gradient-text-blue">
+                      {editingStore ? 'Редагувати магазин' : 'Створити новий магазин'}
+                    </h3>
+                    <p className="text-gray-600 mt-1">
+                      {editingStore ? 'Оновіть інформацію про ваш магазин' : 'Налаштуйте свій магазин за декілька простих кроків'}
                     </p>
                   </div>
-
-                  {/* Банер */}
-                  <div>
-                    <label className="form-label">Банер магазину</label>
-                    <div className="mt-2">
-                      {bannerPreview ? (
-                        <div className="relative inline-block">
-                          <img
-                            src={bannerPreview}
-                            alt="Banner preview"
-                            className="w-full max-w-md h-32 object-cover rounded-lg border border-gray-300"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setBannerPreview(null);
-                              setBannerFile(null);
-                            }}
-                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ) : (
-                        <label className="flex flex-col items-center justify-center w-full max-w-md h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                            <svg className="w-8 h-8 mb-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-                            </svg>
-                            <p className="text-xs text-gray-500">Завантажити банер</p>
-                          </div>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleBannerUpload}
-                            className="hidden"
-                          />
-                        </label>
-                      )}
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Рекомендований розмір: 1200x400px. Максимум: 5MB
-                    </p>
-                  </div>
-
-                  {/* Налаштування лендингу */}
-                  <div>
-                    <h3 className="text-base font-medium text-gray-900 mb-4">Налаштування лендингу</h3>
-                    <div className="space-y-4">
-                      <div className="flex items-center">
-                        <input
-                          id="show_telegram_button"
-                          type="checkbox"
-                          {...register('show_telegram_button')}
-                          className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                        />
-                        <label htmlFor="show_telegram_button" className="ml-2 block text-sm text-gray-900">
-                          Показувати кнопку Telegram
-                        </label>
-                      </div>
-                      
-                      <div className="flex items-center">
-                        <input
-                          id="show_instagram_feed"
-                          type="checkbox"
-                          {...register('show_instagram_feed')}
-                          className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                        />
-                        <label htmlFor="show_instagram_feed" className="ml-2 block text-sm text-gray-900">
-                          Показувати Instagram стрічку
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Соціальні мережі */}
-              {activeTab === 'social' && (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-base font-medium text-gray-900">Соціальні мережі</h3>
-                    <button
-                      type="button"
-                      onClick={addSocialLink}
-                      className="btn-outline flex items-center"
-                    >
-                      <PlusIcon className="h-4 w-4 mr-2" />
-                      Додати соцмережу
-                    </button>
-                  </div>
-
-                  {socialLinks.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      <p>Соціальні мережі не додано</p>
-                      <button
-                        type="button"
-                        onClick={addSocialLink}
-                        className="btn-primary mt-4"
-                      >
-                        Додати першу соцмережу
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {socialLinks.map((link, index) => (
-                        <div key={link.id || index} className="border border-gray-200 rounded-lg p-4">
-                          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <div>
-                              <label className="form-label">Тип соцмережі</label>
-                              <select
-                                value={link.social_type}
-                                onChange={(e) => updateSocialLink(index, 'social_type', e.target.value)}
-                                className="input"
-                              >
-                                {SOCIAL_TYPES.map((type) => (
-                                  <option key={type.value} value={type.value}>
-                                    {type.icon} {type.label}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-
-                            <div>
-                              <label className="form-label">URL</label>
-                              <input
-                                type="url"
-                                value={link.url}
-                                onChange={(e) => updateSocialLink(index, 'url', e.target.value)}
-                                className="input"
-                                placeholder="https://instagram.com/username"
-                              />
-                            </div>
-
-                            <div>
-                              <label className="form-label">Назва (необов'язково)</label>
-                              <input
-                                type="text"
-                                value={link.title}
-                                onChange={(e) => updateSocialLink(index, 'title', e.target.value)}
-                                className="input"
-                                placeholder="Наш Instagram"
-                              />
-                            </div>
-
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center">
-                                <input
-                                  type="checkbox"
-                                  checked={link.is_active}
-                                  onChange={(e) => updateSocialLink(index, 'is_active', e.target.checked)}
-                                  className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                />
-                                <label className="ml-2 block text-sm text-gray-900">
-                                  Активна
-                                </label>
-                              </div>
-
-                              <button
-                                type="button"
-                                onClick={() => removeSocialLink(index)}
-                                className="text-red-600 hover:text-red-800 text-sm"
-                              >
-                                <TrashIcon className="h-4 w-4" />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Блоки контенту */}
-              {activeTab === 'blocks' && (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-base font-medium text-gray-900">Блоки контенту</h3>
-                    <button
-                      type="button"
-                      onClick={addStoreBlock}
-                      className="btn-outline flex items-center"
-                    >
-                      <PlusIcon className="h-4 w-4 mr-2" />
-                      Додати блок
-                    </button>
-                  </div>
-
-                  {storeBlocks.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      <p>Блоки контенту не додано</p>
-                      <p className="text-sm mt-2">Додайте блоки для створення інформативного лендингу вашого магазину</p>
-                      <button
-                        type="button"
-                        onClick={addStoreBlock}
-                        className="btn-primary mt-4"
-                      >
-                        Додати перший блок
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {storeBlocks.map((block, index) => (
-                        <div key={block.id || index} className="border border-gray-200 rounded-lg p-4">
-                          <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center space-x-2">
-                              <select
-                                value={block.block_type}
-                                onChange={(e) => updateStoreBlock(index, 'block_type', e.target.value)}
-                                className="text-sm border border-gray-300 rounded px-2 py-1"
-                              >
-                                {BLOCK_TYPES.map((type) => (
-                                  <option key={type.value} value={type.value}>
-                                    {type.icon} {type.label}
-                                  </option>
-                                ))}
-                              </select>
-                              
-                              <div className="flex items-center">
-                                <input
-                                  type="checkbox"
-                                  checked={block.is_active}
-                                  onChange={(e) => updateStoreBlock(index, 'is_active', e.target.checked)}
-                                  className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                />
-                                <label className="ml-2 text-sm text-gray-600">
-                                  Активний
-                                </label>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center space-x-2">
-                              {/* Кнопки переміщення */}
-                              <button
-                                type="button"
-                                onClick={() => moveStoreBlock(index, 'up')}
-                                disabled={index === 0}
-                                className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                              >
-                                <ChevronUpIcon className="h-4 w-4" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => moveStoreBlock(index, 'down')}
-                                disabled={index === storeBlocks.length - 1}
-                                className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                              >
-                                <ChevronDownIcon className="h-4 w-4" />
-                              </button>
-                              
-                              {/* Кнопка видалення */}
-                              <button
-                                type="button"
-                                onClick={() => removeStoreBlock(index)}
-                                className="p-1 text-red-600 hover:text-red-800"
-                              >
-                                <TrashIcon className="h-4 w-4" />
-                              </button>
-                            </div>
-                          </div>
-
-                          <div className="space-y-4">
-                            <div>
-                              <label className="form-label">Заголовок блоку *</label>
-                              <input
-                                type="text"
-                                value={block.title}
-                                onChange={(e) => updateStoreBlock(index, 'title', e.target.value)}
-                                className="input"
-                                placeholder="Введіть заголовок блоку"
-                              />
-                            </div>
-
-                            <div>
-                              <label className="form-label">Контент *</label>
-                              <textarea
-                                rows={6}
-                                value={block.content}
-                                onChange={(e) => updateStoreBlock(index, 'content', e.target.value)}
-                                className="input"
-                                placeholder="Введіть контент блоку. Підтримується HTML розмітка..."
-                              />
-                              <p className="text-xs text-gray-500 mt-1">
-                                Підтримується HTML розмітка для форматування тексту
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="mt-4 pt-4 border-t border-gray-100">
-                            <div className="text-xs text-gray-500">
-                              Порядок: #{index + 1} | Тип: {BLOCK_TYPES.find(t => t.value === block.block_type)?.label}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {storeBlocks.length > 0 && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <div className="flex">
-                        <div className="flex-shrink-0">
-                          <svg className="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                        <div className="ml-3">
-                          <h3 className="text-sm font-medium text-blue-800">
-                            Поради для блоків контенту
-                          </h3>
-                          <ul className="mt-2 text-sm text-blue-700 list-disc list-inside space-y-1">
-                            <li><strong>Про нас</strong> - розкажіть про історію та місію магазину</li>
-                            <li><strong>Контакти</strong> - додайте контактну інформацію та години роботи</li>
-                            <li><strong>Часті питання</strong> - відповіді на популярні запитання клієнтів</li>
-                            <li><strong>Кастомний блок</strong> - будь-яка додаткова інформація</li>
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* SEO */}
-              {activeTab === 'seo' && (
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="meta_title" className="form-label">Meta Title</label>
-                    <input
-                      id="meta_title"
-                      type="text"
-                      {...register('meta_title', {
-                        maxLength: {
-                          value: 60,
-                          message: 'Meta title повинен бути до 60 символів'
-                        }
-                      })}
-                      className="input"
-                      placeholder="SEO заголовок для пошукових систем"
-                    />
-                    {errors.meta_title && (
-                      <p className="form-error">{errors.meta_title.message}</p>
-                    )}
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="meta_description" className="form-label">Meta Description</label>
-                    <textarea
-                      id="meta_description"
-                      rows={3}
-                      {...register('meta_description', {
-                        maxLength: {
-                          value: 160,
-                          message: 'Meta description повинен бути до 160 символів'
-                        }
-                      })}
-                      className="input"
-                      placeholder="Опис для пошукових систем..."
-                    />
-                    {errors.meta_description && (
-                      <p className="form-error">{errors.meta_description.message}</p>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Налаштування */}
-              {activeTab === 'settings' && (
-                <div className="space-y-4">
-                  <div className="flex items-center">
-                    <input
-                      id="is_active"
-                      type="checkbox"
-                      {...register('is_active')}
-                      className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                    />
-                    <label htmlFor="is_active" className="ml-2 block text-sm text-gray-900">
-                      Магазин активний
-                    </label>
-                  </div>
-                </div>
-              )}
-              
-                {/* Кнопки дій */}
-                <div className="flex space-x-4 pt-8 border-t border-gray-200 mt-8">
                   <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="btn-primary flex-1 flex items-center justify-center text-lg py-4 relative overflow-hidden"
-                  >
-                    <div className="flex items-center">
-                      {isLoading && (
-                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                      )}
-                      {isLoading ? 'Збереження...' : (editingStore ? '✏️ Оновити магазин' : '🎉 Створити магазин')}
-                    </div>
-                  </button>
-                  <button
-                    type="button"
                     onClick={() => {
                       setShowModal(false);
                       setActiveTab('basic');
                     }}
                     disabled={isLoading}
-                    className="btn-outline px-8 py-4 text-lg"
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                   >
-                    Скасувати
+                    <XMarkIcon className="h-6 w-6 text-gray-500" />
                   </button>
                 </div>
-              </form>
+              </div>
+            
+              <div className="overflow-y-auto max-h-[calc(95vh-140px)]">
+                <div className="p-8">
+                  <div className="mb-8">
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { id: 'basic', name: 'Основне', icon: '📝' },
+                        { id: 'contact', name: 'Контакти', icon: '📞' },
+                        { id: 'design', name: 'Дизайн', icon: '🎨' },
+                        { id: 'landing', name: 'Лендинг', icon: '🖼️' },
+                        { id: 'social', name: 'Соцмережі', icon: '📱' },
+                        { id: 'blocks', name: 'Контент', icon: '📑' },
+                        { id: 'seo', name: 'SEO', icon: '🔍' },
+                        { id: 'settings', name: 'Налаштування', icon: '⚙️' }
+                      ].map((tab) => (
+                        <button
+                          key={tab.id}
+                          type="button"
+                          onClick={() => setActiveTab(tab.id)}
+                          className={`px-4 py-3 rounded-xl font-medium text-sm transition-all duration-200 flex items-center space-x-2 ${
+                            activeTab === tab.id
+                              ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg transform scale-105'
+                              : 'bg-white/60 text-gray-700 hover:bg-white/80 hover:shadow-md'
+                          }`}
+                        >
+                          <span>{tab.icon}</span>
+                          <span>{tab.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+            
+                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                    {/* Основна інформація */}
+                    {activeTab === 'basic' && (
+                      <div className="space-y-4">
+                        <div>
+                          <label htmlFor="name" className="form-label">Назва магазину *</label>
+                          <input
+                            id="name"
+                            type="text"
+                            {...register('name', {
+                              required: 'Назва магазину обов\'язкова',
+                              minLength: {
+                                value: 2,
+                                message: 'Назва повинна містити принаймні 2 символи',
+                              },
+                            })}
+                            className="input"
+                            placeholder="Введіть назву магазину"
+                          />
+                          {errors.name && (
+                            <p className="form-error">{errors.name.message}</p>
+                          )}
+                        </div>
+                        
+                        <div>
+                          <label htmlFor="description" className="form-label">Опис</label>
+                          <textarea
+                            id="description"
+                            rows={4}
+                            {...register('description')}
+                            className="input"
+                            placeholder="Розкажіть про ваш магазин..."
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Контактна інформація */}
+                    {activeTab === 'contact' && (
+                      <div className="space-y-4">
+                        <div>
+                          <label htmlFor="phone" className="form-label">Телефон</label>
+                          <input
+                            id="phone"
+                            type="tel"
+                            {...register('phone')}
+                            className="input"
+                            placeholder="+380 (XX) XXX-XX-XX"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label htmlFor="email" className="form-label">Email</label>
+                          <input
+                            id="email"
+                            type="email"
+                            {...register('email')}
+                            className="input"
+                            placeholder="store@example.com"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label htmlFor="address" className="form-label">Адреса</label>
+                          <textarea
+                            id="address"
+                            rows={3}
+                            {...register('address')}
+                            className="input"
+                            placeholder="Введіть адресу магазину або точку видачі..."
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Дизайн */}
+                    {activeTab === 'design' && (
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                          <div>
+                            <label htmlFor="primary_color" className="form-label">Основний колір</label>
+                            <input
+                              id="primary_color"
+                              type="color"
+                              {...register('primary_color')}
+                              className="input h-12"
+                            />
+                          </div>
+                          
+                          <div>
+                            <label htmlFor="secondary_color" className="form-label">Додатковий колір</label>
+                            <input
+                              id="secondary_color"
+                              type="color"
+                              {...register('secondary_color')}
+                              className="input h-12"
+                            />
+                          </div>
+                          
+                          <div>
+                            <label htmlFor="accent_color" className="form-label">Акцентний колір</label>
+                            <input
+                              id="accent_color"
+                              type="color"
+                              {...register('accent_color')}
+                              className="input h-12"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Лендинг */}
+                    {activeTab === 'landing' && (
+                      <div className="space-y-6">
+                        {/* Логотип */}
+                        <div>
+                          <label className="form-label">Логотип магазину</label>
+                          <div className="mt-2">
+                            {logoPreview ? (
+                              <div className="relative inline-block">
+                                <img
+                                  src={logoPreview}
+                                  alt="Logo preview"
+                                  className="w-32 h-32 object-cover rounded-lg border border-gray-300"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setLogoPreview(null);
+                                    setLogoFile(null);
+                                  }}
+                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ) : (
+                              <label className="flex flex-col items-center justify-center w-32 h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                  <svg className="w-8 h-8 mb-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                  </svg>
+                                  <p className="text-xs text-gray-500">Завантажити</p>
+                                </div>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={handleLogoUpload}
+                                  className="hidden"
+                                />
+                              </label>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Рекомендований розмір: 200x200px. Максимум: 2MB
+                          </p>
+                        </div>
+
+                        {/* Банер */}
+                        <div>
+                          <label className="form-label">Банер магазину</label>
+                          <div className="mt-2">
+                            {bannerPreview ? (
+                              <div className="relative inline-block">
+                                <img
+                                  src={bannerPreview}
+                                  alt="Banner preview"
+                                  className="w-full max-w-md h-32 object-cover rounded-lg border border-gray-300"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setBannerPreview(null);
+                                    setBannerFile(null);
+                                  }}
+                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ) : (
+                              <label className="flex flex-col items-center justify-center w-full max-w-md h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                  <svg className="w-8 h-8 mb-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                  </svg>
+                                  <p className="text-xs text-gray-500">Завантажити банер</p>
+                                </div>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={handleBannerUpload}
+                                  className="hidden"
+                                />
+                              </label>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Рекомендований розмір: 1200x400px. Максимум: 5MB
+                          </p>
+                        </div>
+
+                        {/* Налаштування лендингу */}
+                        <div>
+                          <h3 className="text-base font-medium text-gray-900 mb-4">Налаштування лендингу</h3>
+                          <div className="space-y-4">
+                            <div className="flex items-center">
+                              <input
+                                id="show_telegram_button"
+                                type="checkbox"
+                                {...register('show_telegram_button')}
+                                className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              />
+                              <label htmlFor="show_telegram_button" className="ml-2 block text-sm text-gray-900">
+                                Показувати кнопку Telegram
+                              </label>
+                            </div>
+                            
+                            <div className="flex items-center">
+                              <input
+                                id="show_instagram_feed"
+                                type="checkbox"
+                                {...register('show_instagram_feed')}
+                                className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              />
+                              <label htmlFor="show_instagram_feed" className="ml-2 block text-sm text-gray-900">
+                                Показувати Instagram стрічку
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Соціальні мережі */}
+                    {activeTab === 'social' && (
+                      <div className="space-y-6">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-base font-medium text-gray-900">Соціальні мережі</h3>
+                          <button
+                            type="button"
+                            onClick={addSocialLink}
+                            className="btn-outline flex items-center whitespace-nowrap"
+                          >
+                            <PlusIcon className="h-4 w-4 mr-2" />
+                            Додати соцмережу
+                          </button>
+                        </div>
+
+                        {socialLinks.length === 0 ? (
+                          <div className="text-center py-8 text-gray-500">
+                            <p>Соціальні мережі не додано</p>
+                            <button
+                              type="button"
+                              onClick={addSocialLink}
+                              className="btn-primary mt-4 whitespace-nowrap"
+                            >
+                              Додати першу соцмережу
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            {socialLinks.map((link, index) => (
+                              <div key={link.id || index} className="border border-gray-200 rounded-lg p-4">
+                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                  <div>
+                                    <label className="form-label">Тип соцмережі</label>
+                                    <select
+                                      value={link.social_type}
+                                      onChange={(e) => updateSocialLink(index, 'social_type', e.target.value)}
+                                      className="input"
+                                    >
+                                      {SOCIAL_TYPES.map((type) => (
+                                        <option key={type.value} value={type.value}>
+                                          {type.icon} {type.label}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </div>
+
+                                  <div>
+                                    <label className="form-label">URL</label>
+                                    <input
+                                      type="url"
+                                      value={link.url}
+                                      onChange={(e) => updateSocialLink(index, 'url', e.target.value)}
+                                      className="input"
+                                      placeholder="https://instagram.com/username"
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <label className="form-label">Назва (необов'язково)</label>
+                                    <input
+                                      type="text"
+                                      value={link.title}
+                                      onChange={(e) => updateSocialLink(index, 'title', e.target.value)}
+                                      className="input"
+                                      placeholder="Наш Instagram"
+                                    />
+                                  </div>
+
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center">
+                                      <input
+                                        type="checkbox"
+                                        checked={link.is_active}
+                                        onChange={(e) => updateSocialLink(index, 'is_active', e.target.checked)}
+                                        className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                      />
+                                      <label className="ml-2 block text-sm text-gray-900">
+                                        Активна
+                                      </label>
+                                    </div>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => removeSocialLink(index)}
+                                      className="text-red-600 hover:text-red-800 text-sm"
+                                    >
+                                      <TrashIcon className="h-4 w-4" />
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Блоки контенту */}
+                    {activeTab === 'blocks' && (
+                      <div className="space-y-6">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-base font-medium text-gray-900">Блоки контенту</h3>
+                          <button
+                            type="button"
+                            onClick={addStoreBlock}
+                            className="btn-outline flex items-center whitespace-nowrap"
+                          >
+                            <PlusIcon className="h-4 w-4 mr-2" />
+                            Додати блок
+                          </button>
+                        </div>
+
+                        {storeBlocks.length === 0 ? (
+                          <div className="text-center py-8 text-gray-500">
+                            <p>Блоки контенту не додано</p>
+                            <p className="text-sm mt-2">Додайте блоки для створення інформативного лендингу вашого магазину</p>
+                            <button
+                              type="button"
+                              onClick={addStoreBlock}
+                              className="btn-primary mt-4 whitespace-nowrap"
+                            >
+                              Додати перший блок
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            {storeBlocks.map((block, index) => (
+                              <div key={block.id || index} className="border border-gray-200 rounded-lg p-4">
+                                <div className="flex items-center justify-between mb-4">
+                                  <div className="flex items-center space-x-2">
+                                    <select
+                                      value={block.block_type}
+                                      onChange={(e) => updateStoreBlock(index, 'block_type', e.target.value)}
+                                      className="text-sm border border-gray-300 rounded px-2 py-1"
+                                    >
+                                      {BLOCK_TYPES.map((type) => (
+                                        <option key={type.value} value={type.value}>
+                                          {type.icon} {type.label}
+                                        </option>
+                                      ))}
+                                    </select>
+                                    
+                                    <div className="flex items-center">
+                                      <input
+                                        type="checkbox"
+                                        checked={block.is_active}
+                                        onChange={(e) => updateStoreBlock(index, 'is_active', e.target.checked)}
+                                        className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                      />
+                                      <label className="ml-2 text-sm text-gray-600">
+                                        Активний
+                                      </label>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center space-x-2">
+                                    {/* Кнопки переміщення */}
+                                    <button
+                                      type="button"
+                                      onClick={() => moveStoreBlock(index, 'up')}
+                                      disabled={index === 0}
+                                      className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                      <ChevronUpIcon className="h-4 w-4" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => moveStoreBlock(index, 'down')}
+                                      disabled={index === storeBlocks.length - 1}
+                                      className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                      <ChevronDownIcon className="h-4 w-4" />
+                                    </button>
+                                    
+                                    {/* Кнопка видалення */}
+                                    <button
+                                      type="button"
+                                      onClick={() => removeStoreBlock(index)}
+                                      className="p-1 text-red-600 hover:text-red-800"
+                                    >
+                                      <TrashIcon className="h-4 w-4" />
+                                    </button>
+                                  </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                  <div>
+                                    <label className="form-label">Заголовок блоку *</label>
+                                    <input
+                                      type="text"
+                                      value={block.title}
+                                      onChange={(e) => updateStoreBlock(index, 'title', e.target.value)}
+                                      className="input"
+                                      placeholder="Введіть заголовок блоку"
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <label className="form-label">Контент *</label>
+                                    <textarea
+                                      rows={6}
+                                      value={block.content}
+                                      onChange={(e) => updateStoreBlock(index, 'content', e.target.value)}
+                                      className="input"
+                                      placeholder="Введіть контент блоку. Підтримується HTML розмітка..."
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">
+                                      Підтримується HTML розмітка для форматування тексту
+                                    </p>
+                                  </div>
+                                </div>
+
+                                <div className="mt-4 pt-4 border-t border-gray-100">
+                                  <div className="text-xs text-gray-500">
+                                    Порядок: #{index + 1} | Тип: {BLOCK_TYPES.find(t => t.value === block.block_type)?.label}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {storeBlocks.length > 0 && (
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div className="flex">
+                              <div className="flex-shrink-0">
+                                <svg className="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                </svg>
+                              </div>
+                              <div className="ml-3">
+                                <h3 className="text-sm font-medium text-blue-800">
+                                  Поради для блоків контенту
+                                </h3>
+                                <ul className="mt-2 text-sm text-blue-700 list-disc list-inside space-y-1">
+                                  <li><strong>Про нас</strong> - розкажіть про історію та місію магазину</li>
+                                  <li><strong>Контакти</strong> - додайте контактну інформацію та години роботи</li>
+                                  <li><strong>Часті питання</strong> - відповіді на популярні запитання клієнтів</li>
+                                  <li><strong>Кастомний блок</strong> - будь-яка додаткова інформація</li>
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* SEO */}
+                    {activeTab === 'seo' && (
+                      <div className="space-y-4">
+                        <div>
+                          <label htmlFor="meta_title" className="form-label">Meta Title</label>
+                          <input
+                            id="meta_title"
+                            type="text"
+                            {...register('meta_title', {
+                              maxLength: {
+                                value: 60,
+                                message: 'Meta title повинен бути до 60 символів'
+                              }
+                            })}
+                            className="input"
+                            placeholder="SEO заголовок для пошукових систем"
+                          />
+                          {errors.meta_title && (
+                            <p className="form-error">{errors.meta_title.message}</p>
+                          )}
+                        </div>
+                        
+                        <div>
+                          <label htmlFor="meta_description" className="form-label">Meta Description</label>
+                          <textarea
+                            id="meta_description"
+                            rows={3}
+                            {...register('meta_description', {
+                              maxLength: {
+                                value: 160,
+                                message: 'Meta description повинен бути до 160 символів'
+                              }
+                            })}
+                            className="input"
+                            placeholder="Опис для пошукових систем..."
+                          />
+                          {errors.meta_description && (
+                            <p className="form-error">{errors.meta_description.message}</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Налаштування */}
+                    {activeTab === 'settings' && (
+                      <div className="space-y-4">
+                        <div className="flex items-center">
+                          <input
+                            id="is_active"
+                            type="checkbox"
+                            {...register('is_active')}
+                            className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          />
+                          <label htmlFor="is_active" className="ml-2 block text-sm text-gray-900">
+                            Магазин активний
+                          </label>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Кнопки дій */}
+                    <div className="flex space-x-4 pt-8 border-t border-gray-200 mt-8">
+                      <button
+                        type="submit"
+                        disabled={isLoading}
+                        className="btn-primary flex-1 flex items-center justify-center text-lg py-4 relative overflow-hidden whitespace-nowrap"
+                      >
+                        <div className="flex items-center">
+                          {isLoading && (
+                            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                          )}
+                          {isLoading ? 'Збереження...' : (editingStore ? '✏️ Оновити магазин' : '🎉 Створити магазин')}
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowModal(false);
+                          setActiveTab('basic');
+                        }}
+                        disabled={isLoading}
+                        className="btn-outline px-8 py-4 text-lg whitespace-nowrap"
+                      >
+                        Скасувати
+                      </button>
+                    </div>
+                  </form>
+                </div>
               </div>
             </div>
           </div>
@@ -1326,100 +1253,96 @@ const Stores = () => {
 
       {/* Модальне вікно підтвердження видалення */}
       {showDeleteModal && storeToDelete && (
-        <div className="fixed inset-0 z-50">
-          {/* Затемнення всієї сторінки */}
+        <div className="fixed inset-0 z-[9999]">
           <div className="fixed inset-0 bg-black/70" onClick={cancelDelete}></div>
           
-          {/* Модальне вікно */}
           <div className="fixed inset-0 flex items-center justify-center p-4 animate-fade-in-scale">
             <div 
-              className="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl relative z-10"
+              className="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl relative z-[10000]"
               onClick={(e) => e.stopPropagation()}
             >
-            {/* Заголовок */}
-            <div className="bg-gradient-to-r from-red-500/10 to-orange-500/10 px-6 py-4 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                    <TrashIcon className="h-6 w-6 text-red-600" />
+              <div className="bg-gradient-to-r from-red-500/10 to-orange-500/10 px-6 py-4 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                      <TrashIcon className="h-6 w-6 text-red-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900">
+                        Видалення магазину
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        Це безповоротна дія
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900">
-                      Видалення магазину
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      Це безповоротна дія
-                    </p>
-                  </div>
+                  <button
+                    onClick={cancelDelete}
+                    disabled={deleteStoreMutation.isPending}
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  >
+                    <XMarkIcon className="h-5 w-5 text-gray-500" />
+                  </button>
                 </div>
-                <button
-                  onClick={cancelDelete}
-                  disabled={deleteStoreMutation.isPending}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                >
-                  <XMarkIcon className="h-5 w-5 text-gray-500" />
-                </button>
               </div>
-            </div>
             
-            {/* Контент */}
-            <div className="p-6">
-              <div className="text-center mb-6">
-                <p className="text-gray-700 mb-3">
-                  Ви впевнені, що хочете видалити магазин?
-                </p>
-                <div className="bg-gray-50 rounded-xl p-4 mb-4">
-                  <p className="font-bold text-lg text-gray-900">
-                    "{storeToDelete.name}"
+              <div className="p-6">
+                <div className="text-center mb-6">
+                  <p className="text-gray-700 mb-3">
+                    Ви впевнені, що хочете видалити магазин?
                   </p>
-                  {storeToDelete.description && (
-                    <p className="text-sm text-gray-600 mt-1">
-                      {storeToDelete.description}
+                  <div className="bg-gray-50 rounded-xl p-4 mb-4">
+                    <p className="font-bold text-lg text-gray-900">
+                      "{storeToDelete.name}"
                     </p>
-                  )}
-                </div>
-                <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                  <div className="flex items-center justify-center space-x-2 text-red-700">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
-                    </svg>
-                    <span className="font-medium">Увага!</span>
+                    {storeToDelete.description && (
+                      <p className="text-sm text-gray-600 mt-1">
+                        {storeToDelete.description}
+                      </p>
+                    )}
                   </div>
-                  <p className="text-sm text-red-600 mt-2">
-                    Всі дані магазину, включаючи товари, замовлення та налаштування будуть втрачені назавжди.
-                  </p>
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                    <div className="flex items-center justify-center space-x-2 text-red-700">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                      </svg>
+                      <span className="font-medium">Увага!</span>
+                    </div>
+                    <p className="text-sm text-red-600 mt-2">
+                      Всі дані магазину будуть втрачені назавжди.
+                    </p>
+                  </div>
                 </div>
-              </div>
-              
-              {/* Кнопки */}
-              <div className="flex space-x-3">
-                <button
-                  onClick={confirmDeleteStore}
-                  disabled={deleteStoreMutation.isPending}
-                  className="btn-primary bg-red-600 hover:bg-red-700 border-red-600 hover:border-red-700 flex-1 flex items-center justify-center py-3"
-                >
-                  {deleteStoreMutation.isPending && (
-                    <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                  )}
-                  <TrashIcon className="h-4 w-4 mr-2" />
-                  {deleteStoreMutation.isPending ? 'Видалення...' : 'Так, видалити'}
-                </button>
-                <button
-                  onClick={cancelDelete}
-                  disabled={deleteStoreMutation.isPending}
-                  className="btn-outline flex-1 py-3"
-                >
-                  Скасувати
-                </button>
+                
+                <div className="flex space-x-3">
+                  <button
+                    onClick={confirmDeleteStore}
+                    disabled={deleteStoreMutation.isPending}
+                    className="btn-primary bg-red-600 hover:bg-red-700 border-red-600 hover:border-red-700 flex-1 flex items-center justify-center py-3 whitespace-nowrap"
+                  >
+                    {deleteStoreMutation.isPending && (
+                      <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    )}
+                    <TrashIcon className="h-4 w-4 mr-2" />
+                    {deleteStoreMutation.isPending ? 'Видалення...' : 'Так, видалити'}
+                  </button>
+                  <button
+                    onClick={cancelDelete}
+                    disabled={deleteStoreMutation.isPending}
+                    className="btn-outline flex-1 py-3 whitespace-nowrap"
+                  >
+                    Скасувати
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 
