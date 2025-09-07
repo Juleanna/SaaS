@@ -12,6 +12,7 @@ const CategoryModal = ({
   const [formData, setFormData] = useState({
     name: '',
     description: '',
+    slug: '',
     meta_title: '',
     meta_description: '',
     is_active: true,
@@ -25,6 +26,7 @@ const CategoryModal = ({
       setFormData({
         name: category.name || '',
         description: category.description || '',
+        slug: category.slug || '',
         meta_title: category.meta_title || '',
         meta_description: category.meta_description || '',
         is_active: category.is_active ?? true,
@@ -33,6 +35,7 @@ const CategoryModal = ({
       setFormData({
         name: '',
         description: '',
+        slug: '',
         meta_title: '',
         meta_description: '',
         is_active: true,
@@ -41,12 +44,31 @@ const CategoryModal = ({
     setErrors({});
   }, [category, isOpen]);
 
+  // Функція для генерації slug з назви
+  const generateSlug = (text) => {
+    return text
+      .toLowerCase()
+      .replace(/[^a-z0-9а-я]/g, '-') // Замінюємо всі не-літери на дефіси
+      .replace(/-+/g, '-') // Замінюємо множинні дефіси на один
+      .replace(/^-|-$/g, '') // Видаляємо дефіси на початку і в кінці
+      .substring(0, 50); // Обмежуємо довжину
+  };
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+    let newValue = type === 'checkbox' ? checked : value;
+    
+    const newFormData = {
+      ...formData,
+      [name]: newValue
+    };
+    
+    // Автоматично генеруємо slug при зміні назви
+    if (name === 'name' && newValue && !category) {
+      newFormData.slug = generateSlug(newValue);
+    }
+    
+    setFormData(newFormData);
     
     // Clear error when user starts typing
     if (errors[name]) {
@@ -71,30 +93,46 @@ const CategoryModal = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    console.log('Form submitted with data:', formData);
+    console.log('Store ID:', storeId);
+    
     if (!validateForm()) {
+      console.log('Form validation failed');
+      return;
+    }
+
+    if (!storeId) {
+      console.error('No store ID provided');
+      alert('Помилка: не вказано магазин');
       return;
     }
 
     setLoading(true);
     try {
       let response;
+      const url = category 
+        ? `/products/stores/${storeId}/categories/${category.id}/`
+        : `/products/stores/${storeId}/categories/`;
+      
+      console.log('Making request to:', url, 'with data:', formData);
       
       if (category) {
-        response = await api.put(
-          `/products/stores/${storeId}/categories/${category.id}/`,
-          formData
-        );
+        response = await api.put(url, formData);
       } else {
-        response = await api.post(
-          `/products/stores/${storeId}/categories/`,
-          formData
-        );
+        response = await api.post(url, formData);
       }
+      
+      console.log('Category saved successfully:', response.data);
 
       onSave && onSave(response.data);
       onClose();
     } catch (error) {
       console.error('Error saving category:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      console.error('Request URL:', error.config?.url);
+      console.error('Request data:', error.config?.data);
+      
       if (error.response?.data) {
         const serverErrors = {};
         Object.keys(error.response.data).forEach(key => {
@@ -104,7 +142,7 @@ const CategoryModal = ({
         });
         setErrors(serverErrors);
       } else {
-        alert('Помилка збереження категорії');
+        alert(`Помилка збереження категорії: ${error.message}`);
       }
     } finally {
       setLoading(false);
@@ -166,6 +204,28 @@ const CategoryModal = ({
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Введіть опис категорії"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    URL (slug)
+                  </label>
+                  <input
+                    type="text"
+                    name="slug"
+                    value={formData.slug}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      errors.slug ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                    placeholder="url-категории"
+                  />
+                  {errors.slug && (
+                    <p className="mt-1 text-sm text-red-600">{errors.slug}</p>
+                  )}
+                  <p className="mt-1 text-xs text-gray-500">
+                    Автоматично генерується з назви. Тільки латинські літери, цифри та дефіси.
+                  </p>
                 </div>
 
                 <div>

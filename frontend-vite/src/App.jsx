@@ -49,6 +49,7 @@ function App() {
             <Route path="products" element={<Products />} />
             <Route path="products/:productId" element={<ProductDetail />} />
             <Route path="categories" element={<Categories />} />
+            <Route path="categories/:storeId" element={<Categories />} />
             <Route path="payments" element={<Payments />} />
             <Route path="pricelists" element={<PriceLists />} />
             <Route path="warehouse" element={<WarehouseDashboard />} />

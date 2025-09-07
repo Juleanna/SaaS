@@ -72,7 +72,9 @@ const Categories = () => {
       const params = new URLSearchParams();
       if (searchTerm) params.append('search', searchTerm);
       
-      const response = await api.get(`/products/stores/${currentStoreId}/categories/?${params}`);
+      const url = `/products/stores/${currentStoreId}/categories/?${params}`;
+      console.log('Fetching categories from:', url);
+      const response = await api.get(url);
       setCategories(response.data.results || response.data || []);
       setError(null);
     } catch (error) {
@@ -123,12 +125,12 @@ const Categories = () => {
     }
   }, [currentStoreId, searchTerm, storesLoading]);
 
-  // Оновлюємо URL при зміні магазину
+  // Оновлюємо URL при зміні магазину (тільки якщо це не з URL параметра)
   useEffect(() => {
-    if (currentStoreId && currentStoreId !== storeId) {
-      navigate(`/admin/categories/${currentStoreId}`, { replace: true });
+    if (currentStoreId && !storeId && selectedStoreId) {
+      navigate(`/categories/${currentStoreId}`, { replace: true });
     }
-  }, [currentStoreId, storeId, navigate]);
+  }, [selectedStoreId, storeId, navigate]);
 
   // Показуємо завантаження магазинів
   if (storesLoading) {
@@ -164,6 +166,48 @@ const Categories = () => {
     );
   }
 
+  // Показуємо повідомлення коли не обрано магазин
+  if (!storesLoading && userStores.length > 0 && !currentStoreId) {
+    return (
+      <div className="space-y-6">
+        {/* Header з вибором магазину */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Категорії</h1>
+            <p className="mt-1 text-sm text-gray-500">
+              Керуйте категоріями товарів вашого магазину
+            </p>
+            <div className="mt-3">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Виберіть магазин
+              </label>
+              <select
+                value={selectedStoreId || ''}
+                onChange={(e) => setSelectedStoreId(e.target.value)}
+                className="block w-64 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              >
+                <option value="">Оберіть магазин...</option>
+                {userStores.map((store) => (
+                  <option key={store.id} value={store.id}>
+                    {store.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div className="text-center py-12">
+          <BuildingStorefrontIcon className="mx-auto h-12 w-12 text-gray-400" />
+          <h3 className="mt-2 text-sm font-medium text-gray-900">Оберіть магазин</h3>
+          <p className="mt-1 text-sm text-gray-500">
+            Виберіть магазин зі списку вище, щоб переглянути його категорії.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // Показуємо завантаження категорій
   if (loading) {
     return (
@@ -188,30 +232,31 @@ const Categories = () => {
           <p className="mt-1 text-sm text-gray-500">
             Керуйте категоріями товарів вашого магазину
           </p>
-          {userStores.length > 1 && (
+          {userStores.length > 0 && (
+            console.log('Rendering store selector, stores:', userStores) ||
             <div className="mt-3">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Виберіть магазин
+                {userStores.length > 1 ? 'Виберіть магазин' : 'Магазин'}
               </label>
-              <select
-                value={selectedStoreId || ''}
-                onChange={(e) => setSelectedStoreId(e.target.value)}
-                className="block w-64 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              >
-                <option value="">Оберіть магазин...</option>
-                {userStores.map((store) => (
-                  <option key={store.id} value={store.id}>
-                    <BuildingStorefrontIcon className="h-4 w-4 mr-2 inline" />
-                    {store.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-          {userStores.length === 1 && (
-            <div className="mt-2 flex items-center text-sm text-gray-600">
-              <BuildingStorefrontIcon className="h-4 w-4 mr-2" />
-              {userStores[0].name}
+              {userStores.length > 1 ? (
+                <select
+                  value={selectedStoreId || ''}
+                  onChange={(e) => setSelectedStoreId(e.target.value)}
+                  className="block w-64 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                >
+                  <option value="">Оберіть магазин...</option>
+                  {userStores.map((store) => (
+                    <option key={store.id} value={store.id}>
+                      {store.name}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div className="flex items-center text-sm text-gray-900 bg-gray-50 px-3 py-2 rounded-md border">
+                  <BuildingStorefrontIcon className="h-4 w-4 mr-2" />
+                  {userStores[0].name}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -219,7 +264,7 @@ const Categories = () => {
           <button 
             onClick={() => setShowCreateModal(true)}
             disabled={!currentStoreId}
-            className={`${currentStoreId ? 'btn-primary' : 'btn-disabled'}`}
+            className={`${currentStoreId ? 'btn-primary' : 'btn-disabled'} flex items-center justify-center whitespace-nowrap mx-auto`}
             title={!currentStoreId ? 'Оберіть магазин для створення категорії' : 'Додати категорію'}
           >
             <PlusIcon className="h-4 w-4 mr-2" />
@@ -414,7 +459,7 @@ const Categories = () => {
               <div className="mt-6">
                 <button
                   onClick={() => setShowCreateModal(true)}
-                  className="btn-primary"
+                  className="btn-primary flex items-center justify-center whitespace-nowrap mx-auto"
                 >
                   <PlusIcon className="h-4 w-4 mr-2" />
                   Додати категорію

@@ -12,6 +12,18 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'description', 'slug', 'image', 'order', 'is_active', 'products_count']
 
 
+class CategoryCreateSerializer(serializers.ModelSerializer):
+    """Серіалізатор для створення категорії"""
+    
+    class Meta:
+        model = Category
+        fields = ['name', 'description', 'slug', 'image', 'order', 'is_active']
+    
+    def create(self, validated_data):
+        validated_data['store'] = self.context['store']
+        return super().create(validated_data)
+
+
 class ProductImageSerializer(serializers.ModelSerializer):
     """Серіалізатор для зображень товару"""
     

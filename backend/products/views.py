@@ -7,7 +7,7 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from stores.models import Store
 from .models import Category, Product, ProductImage, ProductVariant
 from .serializers import (
-    CategorySerializer, ProductSerializer, ProductCreateSerializer, ProductUpdateSerializer,
+    CategorySerializer, CategoryCreateSerializer, ProductSerializer, ProductCreateSerializer, ProductUpdateSerializer,
     ProductImageSerializer, ProductImageCreateSerializer,
     ProductVariantSerializer, ProductVariantCreateSerializer,
     ProductPublicSerializer
@@ -17,7 +17,6 @@ from .serializers import (
 class CategoryListCreateView(generics.ListCreateAPIView):
     """View для управління категоріями"""
     
-    serializer_class = CategorySerializer
     permission_classes = [permissions.IsAuthenticated]
     
     def get_queryset(self):
@@ -26,6 +25,11 @@ class CategoryListCreateView(generics.ListCreateAPIView):
         print(f"Store ID: {self.kwargs.get('store_id')}")
         store = get_object_or_404(Store, id=self.kwargs['store_id'], owner=self.request.user)
         return Category.objects.filter(store=store)
+    
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return CategoryCreateSerializer
+        return CategorySerializer
     
     def get_serializer_context(self):
         context = super().get_serializer_context()
