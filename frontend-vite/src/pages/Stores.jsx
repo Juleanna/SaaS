@@ -618,15 +618,12 @@ const Stores = () => {
               className="bg-white rounded-3xl max-w-5xl w-full max-h-[95vh] overflow-hidden shadow-2xl relative z-[10000]"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="bg-gradient-to-r from-blue-500/10 via-purple-500/5 to-pink-500/10 px-8 py-6 border-b border-gray-200">
+              <div className="bg-gradient-to-r from-blue-500/10 via-purple-500/5 to-pink-500/10 px-6 py-4 border-b border-gray-200">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-2xl font-bold gradient-text-blue">
+                    <h3 className="text-xl font-bold gradient-text-blue">
                       {editingStore ? 'Редагувати магазин' : 'Створити новий магазин'}
                     </h3>
-                    <p className="text-gray-600 mt-1">
-                      {editingStore ? 'Оновіть інформацію про ваш магазин' : 'Налаштуйте свій магазин за декілька простих кроків'}
-                    </p>
                   </div>
                   <button
                     onClick={() => {
@@ -641,9 +638,9 @@ const Stores = () => {
                 </div>
               </div>
             
-              <div className="overflow-y-auto max-h-[calc(95vh-140px)]">
-                <div className="p-8">
-                  <div className="mb-8">
+              <div className="overflow-y-auto max-h-[calc(95vh-120px)]">
+                <div className="p-6">
+                  <div className="mb-6">
                     <div className="flex flex-wrap gap-2">
                       {[
                         { id: 'basic', name: 'Основне', icon: '📝' },
@@ -659,7 +656,7 @@ const Stores = () => {
                           key={tab.id}
                           type="button"
                           onClick={() => setActiveTab(tab.id)}
-                          className={`px-4 py-3 rounded-xl font-medium text-sm transition-all duration-200 flex items-center space-x-2 ${
+                          className={`px-3 py-2 rounded-lg font-medium text-sm transition-all duration-200 flex items-center space-x-2 ${
                             activeTab === tab.id
                               ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg transform scale-105'
                               : 'bg-white/60 text-gray-700 hover:bg-white/80 hover:shadow-md'
@@ -1215,11 +1212,11 @@ const Stores = () => {
                     )}
                     
                     {/* Кнопки дій */}
-                    <div className="flex space-x-4 pt-8 border-t border-gray-200 mt-8">
+                    <div className="flex space-x-4 pt-6 border-t border-gray-200 mt-6">
                       <button
                         type="submit"
                         disabled={isLoading}
-                        className="btn-primary flex-1 flex items-center justify-center text-lg py-4 relative overflow-hidden whitespace-nowrap"
+                        className="btn-primary flex-1 flex items-center justify-center text-base py-3 relative overflow-hidden whitespace-nowrap"
                       >
                         <div className="flex items-center">
                           {isLoading && (
@@ -1238,7 +1235,7 @@ const Stores = () => {
                           setActiveTab('basic');
                         }}
                         disabled={isLoading}
-                        className="btn-outline px-8 py-4 text-lg whitespace-nowrap"
+                        className="btn-outline px-6 py-3 text-base whitespace-nowrap"
                       >
                         Скасувати
                       </button>

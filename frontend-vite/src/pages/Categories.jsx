@@ -6,7 +6,8 @@ import {
   TrashIcon, 
   MagnifyingGlassIcon,
   FolderIcon,
-  ChartBarIcon
+  ChartBarIcon,
+  BuildingStorefrontIcon
 } from '@heroicons/react/24/outline';
 import api from '../services/api';
 import { useAuthStore } from '../stores/authStore';
@@ -25,86 +26,80 @@ const Categories = () => {
   const [editingCategory, setEditingCategory] = useState(null);
   const [userStores, setUserStores] = useState([]);
   const [storesLoading, setStoresLoading] = useState(true);
+  const [selectedStoreId, setSelectedStoreId] = useState(storeId);
   
-  // Get store ID (from URL or user's first store)
-  console.log('Full user object:', user);
-  console.log('User stores from token:', user?.stores);
-  console.log('User stores from API:', userStores);
-  
-  const currentStoreId = storeId || userStores?.[0]?.id || user?.stores?.[0]?.id;
+  // Отримуємо ID магазину
+  const currentStoreId = selectedStoreId || userStores?.[0]?.id;
 
-  // Якщо завантажуються магазини
-  if (storesLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-        <p className="ml-4 text-gray-600">Завантажуємо магазини...</p>
-      </div>
-    );
-  }
+  // Функція завантаження магазинів
+  const fetchUserStores = async () => {
+    try {
+      console.log('Fetching stores from API...');
+      const response = await api.get('/stores/');
+      const stores = response.data.results || response.data || [];
+      console.log('API response for stores:', response.data);
+      setUserStores(stores);
+      
+      // Встановлюємо перший магазин як вибраний, якщо не вибрано з URL
+      if (!selectedStoreId && stores.length > 0) {
+        setSelectedStoreId(stores[0].id);
+      }
+      
+      if (stores.length === 0) {
+        setError('У вас немає створених магазинів');
+      }
+    } catch (error) {
+      console.error('Error fetching stores:', error);
+      setError(`Помилка завантаження магазинів: ${error.response?.status || error.message}`);
+      setUserStores([]);
+    } finally {
+      setStoresLoading(false);
+    }
+  };
 
-  // Якщо немає Store ID, показуємо повідомлення
-  if (!currentStoreId || userStores.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <div className="text-yellow-500 mb-4">
-          <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Немає доступних магазинів</h3>
-        <p className="text-gray-600 mb-4">Спочатку створіть магазин, щоб керувати категоріями.</p>
-        <button
-          onClick={() => navigate('/admin/stores')}
-          className="btn-primary"
-        >
-          Створити магазин
-        </button>
-      </div>
-    );
-  }
-
+  // Функція завантаження категорій
   const fetchCategories = async () => {
+    if (!currentStoreId) {
+      setError('Не вказано ID магазину');
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
+      console.log(`Fetching categories for store: ${currentStoreId}`);
+      
       const params = new URLSearchParams();
       if (searchTerm) params.append('search', searchTerm);
       
-      console.log('Fetching categories with storeId:', currentStoreId);
-      
-      if (!currentStoreId) {
-        throw new Error('Немає ID магазину');
-      }
-      console.log('User:', user);
-      
       const response = await api.get(`/products/stores/${currentStoreId}/categories/?${params}`);
-      setCategories(response.data.results || response.data);
+      setCategories(response.data.results || response.data || []);
+      setError(null);
     } catch (error) {
       console.error('Error fetching categories:', error);
-      console.error('Error response:', error.response?.data);
-      console.error('Error status:', error.response?.status);
-      
-      // Показуємо детальнішу помилку
-      const errorMessage = error.response?.data?.detail || error.response?.data?.message || 'Помилка завантаження категорій';
-      setError(`${errorMessage} (Store ID: ${currentStoreId})`);
-      setCategories([]); // Показуємо порожній список замість fallback даних
+      setError(`Помилка завантаження категорій: ${error.response?.data?.detail || error.message}`);
+      setCategories([]);
     } finally {
       setLoading(false);
     }
   };
 
+  // Видалення категорії
   const handleDelete = async (categoryId) => {
-    if (window.confirm('Ви впевнені, що хочете видалити цю категорію? Всі товари в цій категорії будуть переміщені в "Без категорії".')) {
-      try {
-        await api.delete(`/products/stores/${currentStoreId}/categories/${categoryId}/`);
-        fetchCategories();
-      } catch (error) {
-        console.error('Error deleting category:', error);
-        alert('Помилка видалення категорії');
-      }
+    if (!window.confirm('Ви впевнені, що хочете видалити цю категорію?')) {
+      return;
+    }
+
+    try {
+      await api.delete(`/products/stores/${currentStoreId}/categories/${categoryId}/`);
+      fetchCategories();
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      alert('Помилка видалення категорії');
     }
   };
 
+  // Зміна статусу категорії
   const handleToggleStatus = async (category) => {
     try {
       await api.patch(`/products/stores/${currentStoreId}/categories/${category.id}/`, {
@@ -117,19 +112,7 @@ const Categories = () => {
     }
   };
 
-  const fetchUserStores = async () => {
-    try {
-      setStoresLoading(true);
-      const response = await api.get('/stores/');
-      setUserStores(response.data.results || response.data || []);
-    } catch (error) {
-      console.error('Error fetching user stores:', error);
-      setUserStores([]);
-    } finally {
-      setStoresLoading(false);
-    }
-  };
-
+  // Ефекти
   useEffect(() => {
     fetchUserStores();
   }, []);
@@ -140,21 +123,25 @@ const Categories = () => {
     }
   }, [currentStoreId, searchTerm, storesLoading]);
 
-  const filteredCategories = categories.filter(category => 
-    category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    category.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Оновлюємо URL при зміні магазину
+  useEffect(() => {
+    if (currentStoreId && currentStoreId !== storeId) {
+      navigate(`/admin/categories/${currentStoreId}`, { replace: true });
+    }
+  }, [currentStoreId, storeId, navigate]);
 
-  if (loading) {
+  // Показуємо завантаження магазинів
+  if (storesLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-        <p className="ml-4 text-gray-600">Завантажуємо категорії з API...</p>
+        <p className="ml-4 text-gray-600">Завантаження магазинів...</p>
       </div>
     );
   }
 
-  if (error) {
+  // Показуємо помилку або відсутність магазинів
+  if (error && userStores.length === 0) {
     return (
       <div className="text-center py-12">
         <div className="text-red-500 mb-4">
@@ -164,18 +151,33 @@ const Categories = () => {
         </div>
         <h3 className="text-lg font-medium text-gray-900 mb-2">Помилка завантаження</h3>
         <p className="text-gray-600 mb-4">{error}</p>
-        <button
-          onClick={() => {
-            setError(null);
-            fetchCategories();
-          }}
-          className="btn-primary"
-        >
-          Спробувати знову
-        </button>
+        <div className="space-x-4">
+
+          <button
+            onClick={() => navigate('/admin/stores')}
+            className="btn-primary"
+          >
+            Створити магазин
+          </button>
+        </div>
       </div>
     );
   }
+
+  // Показуємо завантаження категорій
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <p className="ml-4 text-gray-600">Завантаження категорій...</p>
+      </div>
+    );
+  }
+
+  const filteredCategories = categories.filter(category => 
+    category.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    category.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">
@@ -186,11 +188,39 @@ const Categories = () => {
           <p className="mt-1 text-sm text-gray-500">
             Керуйте категоріями товарів вашого магазину
           </p>
+          {userStores.length > 1 && (
+            <div className="mt-3">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Виберіть магазин
+              </label>
+              <select
+                value={selectedStoreId || ''}
+                onChange={(e) => setSelectedStoreId(e.target.value)}
+                className="block w-64 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              >
+                <option value="">Оберіть магазин...</option>
+                {userStores.map((store) => (
+                  <option key={store.id} value={store.id}>
+                    <BuildingStorefrontIcon className="h-4 w-4 mr-2 inline" />
+                    {store.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          {userStores.length === 1 && (
+            <div className="mt-2 flex items-center text-sm text-gray-600">
+              <BuildingStorefrontIcon className="h-4 w-4 mr-2" />
+              {userStores[0].name}
+            </div>
+          )}
         </div>
         <div className="flex space-x-3">
           <button 
             onClick={() => setShowCreateModal(true)}
-            className="btn-primary"
+            disabled={!currentStoreId}
+            className={`${currentStoreId ? 'btn-primary' : 'btn-disabled'}`}
+            title={!currentStoreId ? 'Оберіть магазин для створення категорії' : 'Додати категорію'}
           >
             <PlusIcon className="h-4 w-4 mr-2" />
             Додати категорію
@@ -198,7 +228,7 @@ const Categories = () => {
         </div>
       </div>
 
-      {/* Search and Filters */}
+      {/* Search */}
       <div className="card">
         <div className="card-body">
           <div className="flex items-center space-x-4">
@@ -226,18 +256,10 @@ const Categories = () => {
         <div className="card">
           <div className="card-body">
             <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <FolderIcon className="h-8 w-8 text-blue-600" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Всього категорій
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {filteredCategories.length}
-                  </dd>
-                </dl>
+              <FolderIcon className="h-8 w-8 text-blue-600 mr-4" />
+              <div>
+                <dt className="text-sm font-medium text-gray-500">Всього категорій</dt>
+                <dd className="text-lg font-medium text-gray-900">{filteredCategories.length}</dd>
               </div>
             </div>
           </div>
@@ -246,18 +268,12 @@ const Categories = () => {
         <div className="card">
           <div className="card-body">
             <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="text-2xl">✅</div>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Активні
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {filteredCategories.filter(c => c.is_active).length}
-                  </dd>
-                </dl>
+              <div className="text-2xl mr-4">✅</div>
+              <div>
+                <dt className="text-sm font-medium text-gray-500">Активні</dt>
+                <dd className="text-lg font-medium text-gray-900">
+                  {filteredCategories.filter(c => c.is_active).length}
+                </dd>
               </div>
             </div>
           </div>
@@ -266,18 +282,12 @@ const Categories = () => {
         <div className="card">
           <div className="card-body">
             <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="text-2xl">❌</div>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Неактивні
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {filteredCategories.filter(c => !c.is_active).length}
-                  </dd>
-                </dl>
+              <div className="text-2xl mr-4">❌</div>
+              <div>
+                <dt className="text-sm font-medium text-gray-500">Неактивні</dt>
+                <dd className="text-lg font-medium text-gray-900">
+                  {filteredCategories.filter(c => !c.is_active).length}
+                </dd>
               </div>
             </div>
           </div>
@@ -286,18 +296,12 @@ const Categories = () => {
         <div className="card">
           <div className="card-body">
             <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <ChartBarIcon className="h-8 w-8 text-green-600" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Всього товарів
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {filteredCategories.reduce((sum, c) => sum + (c.products_count || 0), 0)}
-                  </dd>
-                </dl>
+              <ChartBarIcon className="h-8 w-8 text-green-600 mr-4" />
+              <div>
+                <dt className="text-sm font-medium text-gray-500">Всього товарів</dt>
+                <dd className="text-lg font-medium text-gray-900">
+                  {filteredCategories.reduce((sum, c) => sum + (c.products_count || 0), 0)}
+                </dd>
               </div>
             </div>
           </div>
@@ -332,10 +336,8 @@ const Categories = () => {
                 <tr key={category.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="flex-shrink-0">
-                        <FolderIcon className="h-10 w-10 text-gray-400" />
-                      </div>
-                      <div className="ml-4">
+                      <FolderIcon className="h-10 w-10 text-gray-400 mr-4" />
+                      <div>
                         <div className="text-sm font-medium text-gray-900">
                           {category.name}
                         </div>
@@ -402,7 +404,7 @@ const Categories = () => {
             </tbody>
           </table>
           
-          {filteredCategories.length === 0 && (
+          {filteredCategories.length === 0 && !loading && (
             <div className="text-center py-12">
               <FolderIcon className="mx-auto h-12 w-12 text-gray-400" />
               <h3 className="mt-2 text-sm font-medium text-gray-900">Немає категорій</h3>
