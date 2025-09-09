@@ -16,6 +16,7 @@ import {
   FolderIcon,
   CreditCardIcon,
   DocumentTextIcon,
+  GlobeAltIcon,
 } from '@heroicons/react/24/outline';
 
 const Layout = () => {
@@ -45,7 +46,8 @@ const Layout = () => {
 
   const navigation = [
     { name: 'Головна', href: '/', icon: HomeIcon },
-    { name: 'Магазини', href: '/admin/stores', icon: ShoppingBagIcon },
+    { name: 'Маркетплейс', href: '/marketplace', icon: GlobeAltIcon },
+    { name: 'Магазини', href: '/stores', icon: ShoppingBagIcon },
     { name: 'Товари', href: '/products', icon: CubeIcon, 
       submenu: [
         { name: 'Всі товари', href: '/products' },

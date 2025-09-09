@@ -156,7 +156,7 @@ const Categories = () => {
         <div className="space-x-4">
 
           <button
-            onClick={() => navigate('/admin/stores')}
+            onClick={() => navigate('/stores')}
             className="btn-primary"
           >
             Створити магазин

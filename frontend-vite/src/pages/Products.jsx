@@ -28,6 +28,7 @@ const Products = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [sortBy, setSortBy] = useState('-created_at');
   const [sortDirection, setSortDirection] = useState('desc');
@@ -237,6 +238,15 @@ const Products = () => {
     }
   }, [currentStoreId, searchTerm, selectedCategory, sortBy, statusFilter, storesLoading, pageSize]);
 
+  const handleSearch = () => {
+    setSearchTerm(searchInput);
+  };
+
+  const clearSearch = () => {
+    setSearchInput('');
+    setSearchTerm('');
+  };
+
   if (storesLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -257,7 +267,7 @@ const Products = () => {
         <h3 className="text-lg font-medium text-gray-900 mb-2">Немає доступних магазинів</h3>
         <p className="text-gray-600 mb-4">Спочатку створіть магазин, щоб керувати товарами.</p>
         <button
-          onClick={() => navigate('/admin/stores')}
+          onClick={() => navigate('/stores')}
           className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 border border-transparent rounded-xl text-sm font-semibold text-white hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-4 focus:ring-blue-500/20 transition-all duration-200 shadow-lg transform hover:scale-105 active:scale-95 relative overflow-hidden group"
         >
           <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500"></div>
@@ -396,40 +406,62 @@ const Products = () => {
         </div>
       </div>
 
-      {/* Фільтри та пошук */}
-      <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/50 p-6">
-        <div className="flex items-center mb-6">
-          <svg className="w-5 h-5 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      {/* Пошук */}
+      <div className="bg-white/70 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/50 p-4">
+        <div className="flex items-center mb-3">
+          <MagnifyingGlassIcon className="h-4 w-4 text-gray-500 mr-2" />
+          <h3 className="text-sm font-semibold text-gray-800">Пошук товарів</h3>
+        </div>
+        <div className="flex items-center space-x-2 max-w-lg">
+          <div className="relative flex-1">
+            <MagnifyingGlassIcon className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Назва, опис, SKU..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              className="pl-9 w-full px-3 py-2 border border-gray-200 rounded-lg bg-white/70 backdrop-blur-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 hover:border-gray-400 text-sm"
+            />
+            {searchInput && (
+              <button
+                onClick={clearSearch}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+          <button
+            onClick={handleSearch}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm font-medium"
+          >
+            <MagnifyingGlassIcon className="h-4 w-4" />
+            <span>Шукати</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Фільтри */}
+      <div className="bg-white/70 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/50 p-4">
+        <div className="flex items-center mb-3">
+          <svg className="w-4 h-4 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
           </svg>
-          <h3 className="text-lg font-semibold text-gray-800">Фільтри та пошук</h3>
+          <h3 className="text-sm font-semibold text-gray-800">Фільтри</h3>
         </div>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Пошук
-            </label>
-            <div className="relative">
-              <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Назва, опис, SKU..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 hover:border-gray-400"
-              />
-            </div>
-          </div>
-            
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-xs font-medium text-gray-700 mb-1">
               Категорія
             </label>
             <div className="relative">
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 hover:border-gray-400 appearance-none cursor-pointer"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-white/70 backdrop-blur-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 hover:border-gray-400 appearance-none cursor-pointer text-sm"
               >
                 <option value="">Всі категорії</option>
                 {categories.map(category => (
@@ -438,8 +470,8 @@ const Products = () => {
                   </option>
                 ))}
               </select>
-              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </div>
@@ -447,22 +479,22 @@ const Products = () => {
           </div>
             
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-xs font-medium text-gray-700 mb-1">
               Статус
             </label>
             <div className="relative">
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 hover:border-gray-400 appearance-none cursor-pointer"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-white/70 backdrop-blur-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 hover:border-gray-400 appearance-none cursor-pointer text-sm"
               >
                 <option value="all">Всі</option>
                 <option value="active">Активні</option>
                 <option value="inactive">Неактивні</option>
                 <option value="featured">Рекомендовані</option>
               </select>
-              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </div>
@@ -470,37 +502,14 @@ const Products = () => {
           </div>
             
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Розмір сторінки
-            </label>
-            <div className="relative">
-              <select
-                value={pageSize}
-                onChange={(e) => setPageSize(parseInt(e.target.value))}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 hover:border-gray-400 appearance-none cursor-pointer"
-              >
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-              </select>
-              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-xs font-medium text-gray-700 mb-1">
               Сортування
             </label>
             <div className="relative">
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 hover:border-gray-400 appearance-none cursor-pointer"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-white/70 backdrop-blur-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 hover:border-gray-400 appearance-none cursor-pointer text-sm"
               >
                 <option value="name">За назвою (А-Я)</option>
                 <option value="-name">За назвою (Я-А)</option>
@@ -509,8 +518,31 @@ const Products = () => {
                 <option value="price">За ціною (зростання)</option>
                 <option value="-price">За ціною (спадання)</option>
               </select>
-              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">
+              На сторінку
+            </label>
+            <div className="relative">
+              <select
+                value={pageSize}
+                onChange={(e) => setPageSize(parseInt(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-white/70 backdrop-blur-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 hover:border-gray-400 appearance-none cursor-pointer text-sm"
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </div>

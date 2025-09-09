@@ -246,19 +246,26 @@ const ProductModal = ({
 
   const tabs = [
     { id: 'basic', name: 'Основна інформація' },
+    { id: 'pricing', name: 'Ціноутворення' },
+    { id: 'logistics', name: 'Логістика' },
     { id: 'images', name: 'Зображення' },
     { id: 'variants', name: 'Варіанти' },
   ];
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto backdrop-blur-sm">
-      <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex items-start justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        {/* Backdrop */}
         <div 
-          className="fixed inset-0 bg-gradient-to-br from-gray-900/80 via-gray-800/70 to-slate-900/80 transition-all duration-300" 
+          className="fixed inset-0 bg-gradient-to-br from-gray-900/80 via-gray-800/70 to-slate-900/80 transition-all duration-300 backdrop-blur-sm" 
           onClick={onClose}
         ></div>
 
-        <div className="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all duration-300 sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full relative z-10 backdrop-blur-sm border border-gray-200/50">
+        {/* Invisible element to center modal */}
+        <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+        {/* Modal */}
+        <div className="relative z-10 inline-block align-bottom bg-white rounded-2xl text-left shadow-2xl transform transition-all duration-300 sm:my-8 sm:align-middle w-full max-w-4xl border border-gray-200/50 overflow-hidden">
           <form onSubmit={handleSubmit}>
             <div className="bg-gradient-to-br from-white via-gray-50/50 to-blue-50/30 px-6 pt-6 pb-4 sm:p-8 sm:pb-6">
               <div className="flex items-center justify-between mb-8">
@@ -425,20 +432,62 @@ const ProductModal = ({
                     )}
                   </div>
 
+                  <div className="sm:col-span-2">
+                    <div className="space-y-3">
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          name="is_active"
+                          checked={formData.is_active}
+                          onChange={handleInputChange}
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                        <label className="ml-2 block text-sm text-gray-700">
+                          Активний товар
+                        </label>
+                      </div>
+                      
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          name="is_featured"
+                          checked={formData.is_featured}
+                          onChange={handleInputChange}
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                        <label className="ml-2 block text-sm text-gray-700">
+                          Рекомендований товар
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Pricing Tab */}
+              {activeTab === 'pricing' && (
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Валюта
                     </label>
-                    <select
-                      name="currency"
-                      value={formData.currency}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="UAH">Гривня (₴)</option>
-                      <option value="USD">Долар ($)</option>
-                      <option value="EUR">Євро (€)</option>
-                    </select>
+                    <div className="relative">
+                      <select
+                        name="currency"
+                        value={formData.currency}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 hover:border-gray-400 appearance-none cursor-pointer"
+                      >
+                        <option value="UAH">Гривня (₴)</option>
+                        <option value="USD">Долар ($)</option>
+                        <option value="EUR">Євро (€)</option>
+                      </select>
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
                   </div>
 
                   <div>
@@ -473,23 +522,29 @@ const ProductModal = ({
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Акційна ціна
                     </label>
-                    <input
-                      type="number"
-                      name="sale_price"
-                      value={formData.sale_price}
-                      onChange={handleInputChange}
-                      step="0.01"
-                      min="0"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="0.00"
-                    />
+                    <div className="relative">
+                      <input
+                        type="number"
+                        name="sale_price"
+                        value={formData.sale_price}
+                        onChange={handleInputChange}
+                        step="0.01"
+                        min="0"
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 hover:border-gray-400"
+                        placeholder="0.00"
+                      />
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                        <span className="text-gray-500 font-medium">₴</span>
+                      </div>
+                    </div>
+                    <p className="mt-1 text-xs text-gray-500">Залишіть пустим, якщо знижки немає</p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Мінімальна кількість замовлення
                     </label>
                     <input
@@ -499,13 +554,13 @@ const ProductModal = ({
                       onChange={handleInputChange}
                       step="0.001"
                       min="0.001"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 hover:border-gray-400"
                       placeholder="1"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Максимальна кількість замовлення
                     </label>
                     <input
@@ -515,13 +570,14 @@ const ProductModal = ({
                       onChange={handleInputChange}
                       step="0.001"
                       min="0.001"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 hover:border-gray-400"
                       placeholder="Необмежено"
                     />
+                    <p className="mt-1 text-xs text-gray-500">Залишіть пустим для необмеженої кількості</p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Крок замовлення
                     </label>
                     <input
@@ -531,29 +587,40 @@ const ProductModal = ({
                       onChange={handleInputChange}
                       step="0.001"
                       min="0.001"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 hover:border-gray-400"
                       placeholder="1"
                     />
+                    <p className="mt-1 text-xs text-gray-500">На скільки одиниць може збільшуватися кількість</p>
                   </div>
+                </div>
+              )}
 
+              {/* Logistics Tab */}
+              {activeTab === 'logistics' && (
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Вага (кг)
                     </label>
-                    <input
-                      type="number"
-                      name="weight"
-                      value={formData.weight}
-                      onChange={handleInputChange}
-                      step="0.001"
-                      min="0"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="0.000"
-                    />
+                    <div className="relative">
+                      <input
+                        type="number"
+                        name="weight"
+                        value={formData.weight}
+                        onChange={handleInputChange}
+                        step="0.001"
+                        min="0"
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 hover:border-gray-400"
+                        placeholder="0.000"
+                      />
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                        <span className="text-gray-500 font-medium text-sm">кг</span>
+                      </div>
+                    </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Розміри
                     </label>
                     <input
@@ -561,37 +628,31 @@ const ProductModal = ({
                       name="dimensions"
                       value={formData.dimensions}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 hover:border-gray-400"
                       placeholder="Д x Ш x В (см)"
                     />
+                    <p className="mt-1 text-xs text-gray-500">Наприклад: 30 x 20 x 15</p>
                   </div>
 
                   <div className="sm:col-span-2">
-                    <div className="space-y-3">
-                      <div className="flex items-center">
-                        <input
-                          type="checkbox"
-                          name="is_active"
-                          checked={formData.is_active}
-                          onChange={handleInputChange}
-                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                        />
-                        <label className="ml-2 block text-sm text-gray-700">
-                          Активний товар
-                        </label>
-                      </div>
-                      
-                      <div className="flex items-center">
-                        <input
-                          type="checkbox"
-                          name="is_featured"
-                          checked={formData.is_featured}
-                          onChange={handleInputChange}
-                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                        />
-                        <label className="ml-2 block text-sm text-gray-700">
-                          Рекомендований товар
-                        </label>
+                    <div className="bg-blue-50/50 rounded-xl p-4 border border-blue-200/50">
+                      <div className="flex items-start">
+                        <div className="flex-shrink-0">
+                          <svg className="h-5 w-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <div className="ml-3">
+                          <h3 className="text-sm font-medium text-blue-800">Інформація про логістику</h3>
+                          <div className="mt-2 text-sm text-blue-700">
+                            <p>Вага та розміри використовуються для:</p>
+                            <ul className="list-disc list-inside mt-1 space-y-1">
+                              <li>Розрахунку вартості доставки</li>
+                              <li>Визначення способу доставки</li>
+                              <li>Оптимізації пакування</li>
+                            </ul>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>

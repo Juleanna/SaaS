@@ -610,66 +610,78 @@ const Stores = () => {
 
       {/* Модальне вікно для створення/редагування магазину */}
       {showModal && (
-        <div className="fixed inset-0 z-[9999]">
-          <div className="fixed inset-0 bg-black/70" onClick={() => { setShowModal(false); setActiveTab('basic'); }}></div>
-          
-          <div className="fixed inset-0 flex items-center justify-center p-4 animate-fade-in-scale">
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-start justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            {/* Backdrop */}
             <div 
-              className="bg-white rounded-3xl max-w-5xl w-full max-h-[95vh] overflow-hidden shadow-2xl relative z-[10000]"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="bg-gradient-to-r from-blue-500/10 via-purple-500/5 to-pink-500/10 px-6 py-4 border-b border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-xl font-bold gradient-text-blue">
-                      {editingStore ? 'Редагувати магазин' : 'Створити новий магазин'}
-                    </h3>
+              className="fixed inset-0 bg-gradient-to-br from-gray-900/80 via-gray-800/70 to-slate-900/80 transition-all duration-300 backdrop-blur-sm" 
+              onClick={() => { setShowModal(false); setActiveTab('basic'); }}
+            ></div>
+
+            {/* Invisible element to center modal */}
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            {/* Modal */}
+            <div className="relative z-10 inline-block align-bottom bg-white rounded-2xl text-left shadow-2xl transform transition-all duration-300 sm:my-8 sm:align-middle w-full max-w-5xl border border-gray-200/50 overflow-hidden">
+              <div className="bg-gradient-to-br from-white via-gray-50/50 to-blue-50/30 px-6 pt-6 pb-4 sm:p-8 sm:pb-6">
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-2m-2 0H7m5 0v-5a2 2 0 00-2-2H8a2 2 0 00-2 2v5m5 0V9a1 1 0 00-1-1H9a1 1 0 00-1 1v10" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+                        {editingStore ? 'Редагувати магазин' : 'Створити магазин'}
+                      </h3>
+                      <p className="text-sm text-gray-500 mt-1">
+                        {editingStore ? 'Оновіть інформацію про ваш магазин' : 'Створіть новий магазин для продажу товарів'}
+                      </p>
+                    </div>
                   </div>
                   <button
+                    type="button"
                     onClick={() => {
                       setShowModal(false);
                       setActiveTab('basic');
                     }}
-                    disabled={isLoading}
-                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                    className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all duration-200"
                   >
-                    <XMarkIcon className="h-6 w-6 text-gray-500" />
+                    <XMarkIcon className="h-6 w-6" />
                   </button>
                 </div>
-              </div>
+
+                {/* Tabs */}
+                <div className="border-b border-gray-200/60 mb-8">
+                  <nav className="-mb-px flex space-x-4">
+                    {[
+                      { id: 'basic', name: 'Основна інформація' },
+                      { id: 'contact', name: 'Контакти' },
+                      { id: 'design', name: 'Дизайн' },
+                      { id: 'landing', name: 'Лендинг' },
+                      { id: 'social', name: 'Соцмережі' },
+                      { id: 'blocks', name: 'Контент' },
+                      { id: 'seo', name: 'SEO' },
+                      { id: 'settings', name: 'Налаштування' }
+                    ].map((tab) => (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`py-3 px-4 border-b-2 font-semibold text-sm rounded-t-lg transition-all duration-200 ${
+                          activeTab === tab.id
+                            ? 'border-blue-500 text-blue-600 bg-blue-50/50'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50/50'
+                        }`}
+                      >
+                        {tab.name}
+                      </button>
+                    ))}
+                  </nav>
+                </div>
             
-              <div className="overflow-y-auto max-h-[calc(95vh-120px)]">
-                <div className="p-6">
-                  <div className="mb-6">
-                    <div className="flex flex-wrap gap-2">
-                      {[
-                        { id: 'basic', name: 'Основне', icon: '📝' },
-                        { id: 'contact', name: 'Контакти', icon: '📞' },
-                        { id: 'design', name: 'Дизайн', icon: '🎨' },
-                        { id: 'landing', name: 'Лендинг', icon: '🖼️' },
-                        { id: 'social', name: 'Соцмережі', icon: '📱' },
-                        { id: 'blocks', name: 'Контент', icon: '📑' },
-                        { id: 'seo', name: 'SEO', icon: '🔍' },
-                        { id: 'settings', name: 'Налаштування', icon: '⚙️' }
-                      ].map((tab) => (
-                        <button
-                          key={tab.id}
-                          type="button"
-                          onClick={() => setActiveTab(tab.id)}
-                          className={`px-3 py-2 rounded-lg font-medium text-sm transition-all duration-200 flex items-center space-x-2 ${
-                            activeTab === tab.id
-                              ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg transform scale-105'
-                              : 'bg-white/60 text-gray-700 hover:bg-white/80 hover:shadow-md'
-                          }`}
-                        >
-                          <span>{tab.icon}</span>
-                          <span>{tab.name}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-            
-                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                  <form id="store-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                     {/* Основна інформація */}
                     {activeTab === 'basic' && (
                       <div className="space-y-4">
@@ -1211,41 +1223,49 @@ const Stores = () => {
                       </div>
                     )}
                     
-                    {/* Кнопки дій */}
-                    <div className="flex space-x-4 pt-6 border-t border-gray-200 mt-6">
-                      <button
-                        type="submit"
-                        disabled={isLoading}
-                        className="btn-primary flex-1 flex items-center justify-center text-base py-3 relative overflow-hidden whitespace-nowrap"
-                      >
-                        <div className="flex items-center">
-                          {isLoading && (
-                            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                          )}
-                          {isLoading ? 'Збереження...' : (editingStore ? '✏️ Оновити магазин' : '🎉 Створити магазин')}
-                        </div>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowModal(false);
-                          setActiveTab('basic');
-                        }}
-                        disabled={isLoading}
-                        className="btn-outline px-6 py-3 text-base whitespace-nowrap"
-                      >
-                        Скасувати
-                      </button>
-                    </div>
                   </form>
+                </div>
+
+                <div className="bg-gradient-to-r from-gray-50/80 to-blue-50/30 px-6 py-4 sm:px-8 sm:flex sm:flex-row-reverse border-t border-gray-200/50">
+                  <button
+                    type="submit"
+                    form="store-form"
+                    disabled={isLoading}
+                    className="w-full inline-flex justify-center items-center rounded-xl border border-transparent shadow-lg px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-base font-semibold text-white hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-4 focus:ring-blue-500/20 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 active:scale-95"
+                  >
+                    {isLoading ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Збереження...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        {editingStore ? 'Оновити' : 'Створити'}
+                      </>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowModal(false);
+                      setActiveTab('basic');
+                    }}
+                    className="mt-3 w-full inline-flex justify-center items-center rounded-xl border-2 border-gray-200 shadow-sm px-6 py-3 bg-white/80 backdrop-blur-sm text-base font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-4 focus:ring-gray-500/20 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-all duration-200 transform hover:scale-105 active:scale-95"
+                  >
+                    <XMarkIcon className="w-4 h-4 mr-2" />
+                    Скасувати
+                  </button>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        
       )}
 
       {/* Модальне вікно підтвердження видалення */}

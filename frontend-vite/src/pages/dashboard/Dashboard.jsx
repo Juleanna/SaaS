@@ -222,7 +222,7 @@ const Dashboard = () => {
   const quickActions = [
     {
       name: 'Створити магазин',
-      href: '/admin/stores',
+      href: '/stores',
       icon: ShoppingBagIcon,
       description: 'Створіть новий магазин для продажів',
       color: 'bg-blue-500',

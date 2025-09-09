@@ -32,7 +32,7 @@ function App() {
     <div className="App">
       <Routes>
         {/* Public routes */}
-        <Route path="/stores" element={<PublicStoresList />} />
+        <Route path="/marketplace" element={<PublicStoresList />} />
         <Route path="/store/:storeSlug" element={<PublicStore />} />
         
         <Route path="/login" element={<Login />} />
@@ -42,7 +42,7 @@ function App() {
           <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />
             <Route path="profile" element={<Profile />} />
-            <Route path="admin/stores" element={<Stores />} />
+            <Route path="stores" element={<Stores />} />
             <Route path="stores/:storeId" element={<StoreDetails />} />
             <Route path="stores/:storeId/products" element={<Products />} />
             <Route path="stores/:storeId/orders" element={<Orders />} />
