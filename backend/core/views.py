@@ -1,11 +1,18 @@
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from django.db.models import Count, Sum
 from decimal import Decimal
 from stores.models import Store
 from products.models import Product
 from orders.models import Order
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def health(request):
+    """Простейший healthcheck для балансировщика/оркестратора."""
+    return Response({"status": "ok"})
 
 
 @api_view(['GET'])

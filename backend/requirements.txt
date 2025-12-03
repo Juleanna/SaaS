@@ -8,10 +8,10 @@ django-cors-headers==4.3.1
 django-filter==24.3
 
 # Database
-psycopg2-binary==2.9.7
+psycopg2-binary
 
 # Media/File handling
-Pillow==10.1.0
+Pillow
 
 # Caching & Background Tasks
 redis==5.0.1

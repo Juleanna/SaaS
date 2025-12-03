@@ -1,10 +1,12 @@
-from rest_framework import generics, status, permissions
+﻿from rest_framework import generics, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from stores.models import Store
+from stores.tenancy import StoreScopedMixin
+from stores.permissions import IsStoreOwnerOrStaff
 from .models import Category, Product, ProductImage, ProductVariant
 from .serializers import (
     CategorySerializer, CategoryCreateSerializer, ProductSerializer, ProductCreateSerializer, ProductUpdateSerializer,
@@ -14,44 +16,34 @@ from .serializers import (
 )
 
 
-class CategoryListCreateView(generics.ListCreateAPIView):
-    """View для управління категоріями"""
+class CategoryListCreateView(StoreScopedMixin, generics.ListCreateAPIView):
+    """View ???>?? ???????????>?-?????? ????'????????-??????"""
     
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, IsStoreOwnerOrStaff]
     
     def get_queryset(self):
-        print(f"User: {self.request.user}")
-        print(f"Is authenticated: {self.request.user.is_authenticated}")
-        print(f"Store ID: {self.kwargs.get('store_id')}")
-        store = get_object_or_404(Store, id=self.kwargs['store_id'], owner=self.request.user)
-        return Category.objects.filter(store=store)
+        return Category.objects.filter(store=self.store)
     
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return CategoryCreateSerializer
         return CategorySerializer
-    
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context['store'] = get_object_or_404(Store, id=self.kwargs['store_id'], owner=self.request.user)
-        return context
 
 
-class CategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
-    """View для управління окремою категорією"""
+class CategoryDetailView(StoreScopedMixin, generics.RetrieveUpdateDestroyAPIView):
+    """View ???>?? ???????????>?-?????? ???????????? ????'????????-?"??"""
     
     serializer_class = CategorySerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, IsStoreOwnerOrStaff]
     
     def get_queryset(self):
-        store = get_object_or_404(Store, id=self.kwargs['store_id'], owner=self.request.user)
-        return Category.objects.filter(store=store)
+        return self.filter_queryset_by_store(Category.objects.all())
 
 
-class ProductListCreateView(generics.ListCreateAPIView):
-    """View для управління товарами"""
+class ProductListCreateView(StoreScopedMixin, generics.ListCreateAPIView):
+    """View ???>?? ???????????>?-?????? ?'??????????????"""
     
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, IsStoreOwnerOrStaff]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['category', 'is_active', 'is_featured']
     search_fields = ['name', 'description', 'sku']
@@ -59,28 +51,21 @@ class ProductListCreateView(generics.ListCreateAPIView):
     ordering = ['-created_at']
     
     def get_queryset(self):
-        store = get_object_or_404(Store, id=self.kwargs['store_id'], owner=self.request.user)
-        return Product.objects.filter(store=store)
+        return self.filter_queryset_by_store(Product.objects.all())
     
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return ProductCreateSerializer
         return ProductSerializer
-    
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context['store'] = get_object_or_404(Store, id=self.kwargs['store_id'], owner=self.request.user)
-        return context
 
 
-class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
-    """View для управління окремим товаром"""
+class ProductDetailView(StoreScopedMixin, generics.RetrieveUpdateDestroyAPIView):
+    """View ???>?? ???????????>?-?????? ??????????? ?'????????????"""
     
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, IsStoreOwnerOrStaff]
     
     def get_queryset(self):
-        store = get_object_or_404(Store, id=self.kwargs['store_id'], owner=self.request.user)
-        return Product.objects.filter(store=store)
+        return self.filter_queryset_by_store(Product.objects.all())
     
     def get_serializer_class(self):
         if self.request.method in ['PUT', 'PATCH']:
@@ -89,7 +74,7 @@ class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class ProductPublicView(generics.RetrieveAPIView):
-    """Публічний view для перегляду товару"""
+    """?????+?>?-?????? view ???>?? ?????????>?????? ?'??????????"""
     
     queryset = Product.objects.filter(is_active=True)
     serializer_class = ProductPublicSerializer
@@ -97,16 +82,17 @@ class ProductPublicView(generics.RetrieveAPIView):
     lookup_field = 'slug'
 
 
-class ProductImageListCreateView(generics.ListCreateAPIView):
-    """View для управління зображеннями товару"""
+class ProductImageListCreateView(StoreScopedMixin, generics.ListCreateAPIView):
+    """View ???>?? ???????????>?-?????? ����?+???��??? ?'??????????"""
     
     serializer_class = ProductImageSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, IsStoreOwnerOrStaff]
+    
+    def get_product(self):
+        return get_object_or_404(Product, id=self.kwargs['product_id'], store=self.store)
     
     def get_queryset(self):
-        store = get_object_or_404(Store, id=self.kwargs['store_id'], owner=self.request.user)
-        product = get_object_or_404(Product, id=self.kwargs['product_id'], store=store)
-        return ProductImage.objects.filter(product=product)
+        return ProductImage.objects.filter(product=self.get_product())
     
     def get_serializer_class(self):
         if self.request.method == 'POST':
@@ -115,33 +101,37 @@ class ProductImageListCreateView(generics.ListCreateAPIView):
     
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        store = get_object_or_404(Store, id=self.kwargs['store_id'], owner=self.request.user)
-        context['product'] = get_object_or_404(Product, id=self.kwargs['product_id'], store=store)
+        context['product'] = self.get_product()
         return context
+    
+    def perform_create(self, serializer):
+        serializer.save(product=self.get_product())
 
 
-class ProductImageDetailView(generics.RetrieveUpdateDestroyAPIView):
-    """View для управління окремим зображенням товару"""
+class ProductImageDetailView(StoreScopedMixin, generics.RetrieveUpdateDestroyAPIView):
+    """View ???>?? ???????????>?-?????? ??????????? ����?+???��??? ?'??????????"""
     
     serializer_class = ProductImageSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, IsStoreOwnerOrStaff]
+    
+    def get_product(self):
+        return get_object_or_404(Product, id=self.kwargs['product_id'], store=self.store)
     
     def get_queryset(self):
-        store = get_object_or_404(Store, id=self.kwargs['store_id'], owner=self.request.user)
-        product = get_object_or_404(Product, id=self.kwargs['product_id'], store=store)
-        return ProductImage.objects.filter(product=product)
+        return ProductImage.objects.filter(product=self.get_product())
 
 
-class ProductVariantListCreateView(generics.ListCreateAPIView):
-    """View для управління варіантами товару"""
+class ProductVariantListCreateView(StoreScopedMixin, generics.ListCreateAPIView):
+    """View ???>?? ???????????>?-?????? ???�??-???'??? ?'??????????"""
     
     serializer_class = ProductVariantSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, IsStoreOwnerOrStaff]
+    
+    def get_product(self):
+        return get_object_or_404(Product, id=self.kwargs['product_id'], store=self.store)
     
     def get_queryset(self):
-        store = get_object_or_404(Store, id=self.kwargs['store_id'], owner=self.request.user)
-        product = get_object_or_404(Product, id=self.kwargs['product_id'], store=store)
-        return ProductVariant.objects.filter(product=product)
+        return ProductVariant.objects.filter(product=self.get_product())
     
     def get_serializer_class(self):
         if self.request.method == 'POST':
@@ -150,41 +140,44 @@ class ProductVariantListCreateView(generics.ListCreateAPIView):
     
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        store = get_object_or_404(Store, id=self.kwargs['store_id'], owner=self.request.user)
-        context['product'] = get_object_or_404(Product, id=self.kwargs['product_id'], store=store)
+        context['product'] = self.get_product()
         return context
+    
+    def perform_create(self, serializer):
+        serializer.save(product=self.get_product())
 
 
-class ProductVariantDetailView(generics.RetrieveUpdateDestroyAPIView):
-    """View для управління окремим варіантом товару"""
+class ProductVariantDetailView(StoreScopedMixin, generics.RetrieveUpdateDestroyAPIView):
+    """View ???>?? ???????????>?-?????? ??????????? ???�??-???'?? ?'??????????"""
     
     serializer_class = ProductVariantSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, IsStoreOwnerOrStaff]
+    
+    def get_product(self):
+        return get_object_or_404(Product, id=self.kwargs['product_id'], store=self.store)
     
     def get_queryset(self):
-        store = get_object_or_404(Store, id=self.kwargs['store_id'], owner=self.request.user)
-        product = get_object_or_404(Product, id=self.kwargs['product_id'], store=store)
-        return ProductVariant.objects.filter(product=product)
+        return ProductVariant.objects.filter(product=self.get_product())
 
 
 @api_view(['GET'])
 @permission_classes([permissions.AllowAny])
 def store_products(request, store_slug):
-    """Отримання товарів магазину для публічного доступу"""
+    """???'????????????? ?'?????????-?? ??????????????? ???>?? ?????+?>?-????????? ???????'??????"""
     store = get_object_or_404(Store, slug=store_slug, is_active=True)
     products = Product.objects.filter(store=store, is_active=True)
     
-    # Фільтрація
+    # ???-?>???'?????o-??
     category_id = request.GET.get('category')
     if category_id:
         products = products.filter(category_id=category_id)
     
-    # Пошук
+    # ??????????
     search = request.GET.get('search')
     if search:
         products = products.filter(name__icontains=search)
     
-    # Сортування
+    # ???????'????????????
     ordering = request.GET.get('ordering', '-created_at')
     products = products.order_by(ordering)
     
@@ -195,45 +188,8 @@ def store_products(request, store_slug):
 @api_view(['GET'])
 @permission_classes([permissions.AllowAny])
 def product_by_slug(request, store_slug, product_slug):
-    """Отримання товару за slug для публічного доступу"""
+    """???'????????????? ?'?????????? ???? slug ???>?? ?????+?>?-????????? ???????'??????"""
     store = get_object_or_404(Store, slug=store_slug, is_active=True)
     product = get_object_or_404(Product, store=store, slug=product_slug, is_active=True)
     serializer = ProductPublicSerializer(product)
     return Response(serializer.data)
-
-
-@api_view(['POST'])
-@permission_classes([permissions.IsAuthenticated])
-def toggle_product_status(request, store_id, product_id):
-    """Перемикання статусу товару"""
-    store = get_object_or_404(Store, id=store_id, owner=request.user)
-    product = get_object_or_404(Product, id=product_id, store=store)
-    product.is_active = not product.is_active
-    product.save()
-    
-    return Response({
-        'message': f'Товар {"активовано" if product.is_active else "деактивовано"}',
-        'is_active': product.is_active
-    })
-
-
-@api_view(['GET'])
-@permission_classes([permissions.IsAuthenticated])
-def top_products(request):
-    """Отримання топ товарів користувача"""
-    user_stores = Store.objects.filter(owner=request.user)
-    limit = int(request.GET.get('limit', 5))
-    
-    from django.db.models import Count
-    from orders.models import OrderItem
-    
-    # Топ товари за кількістю замовлень
-    top_products = Product.objects.filter(
-        store__in=user_stores,
-        is_active=True
-    ).annotate(
-        order_count=Count('orderitem')
-    ).order_by('-order_count')[:limit]
-    
-    serializer = ProductSerializer(top_products, many=True, context={'request': request})
-    return Response(serializer.data) 

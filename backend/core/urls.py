@@ -4,9 +4,10 @@ from django.conf import settings
 from django.conf.urls.static import static
 from core.admin import dashboard_view
 from core import feature_flags_views
-from core.views import dashboard_stats
+from core.views import dashboard_stats, health
 
 urlpatterns = [
+    path('api/health/', health, name='health'),
     path('admin/dashboard/', dashboard_view, name='admin_dashboard'),
     path('admin/', admin.site.urls),
     path('api/auth/', include('accounts.urls')),

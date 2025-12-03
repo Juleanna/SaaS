@@ -53,10 +53,12 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'core.cache_utils.CacheHeadersMiddleware',
+    'core.request_id.RequestIDMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'core.tenancy.StoreContextMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -184,6 +186,10 @@ CORS_ALLOW_CREDENTIALS = True
 
 # Redis settings
 REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+
+# Stripe
+STRIPE_API_KEY = os.getenv('STRIPE_API_KEY', '')
+STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '')
 
 # Cache settings
 CACHES = {

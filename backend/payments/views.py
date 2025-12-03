@@ -1,140 +1,263 @@
-from rest_framework import generics, status, permissions
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.response import Response
-from django.shortcuts import get_object_or_404
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.filters import SearchFilter, OrderingFilter
-from django.utils import timezone
+﻿from decimal import Decimal
+
+import stripe
+from django.conf import settings
 from django.db import models
-from decimal import Decimal
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import generics, permissions, status
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.response import Response
 
 from stores.models import Store
+from stores.tenancy import StoreScopedMixin
+from stores.permissions import IsStoreOwnerOrStaff
 from orders.models import Order
 from .models import Payment, PaymentMethod, Refund
 from .serializers import (
-    PaymentSerializer, PaymentCreateSerializer, PaymentStatusUpdateSerializer,
-    PaymentMethodSerializer, PaymentMethodCreateSerializer, PaymentMethodPublicSerializer,
-    RefundSerializer, RefundCreateSerializer
+    PaymentCreateSerializer,
+    PaymentMethodCreateSerializer,
+    PaymentMethodPublicSerializer,
+    PaymentMethodSerializer,
+    PaymentSerializer,
+    PaymentStatusUpdateSerializer,
+    RefundCreateSerializer,
+    RefundSerializer,
 )
 
 
-class PaymentListCreateView(generics.ListCreateAPIView):
-    """View для управління платежами магазину"""
-    
+class PaymentListCreateView(StoreScopedMixin, generics.ListCreateAPIView):
+    """���⥦� �� ��������."""
+
+    permission_classes = [permissions.IsAuthenticated, IsStoreOwnerOrStaff]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['payment_method', 'status', 'currency']
     search_fields = ['order__order_number', 'transaction_id', 'external_payment_id']
     ordering_fields = ['created_at', 'amount', 'status']
     ordering = ['-created_at']
-    
+
     def get_queryset(self):
-        store = get_object_or_404(Store, id=self.kwargs['store_id'], owner=self.request.user)
-        return Payment.objects.filter(order__store=store).select_related('order')
-    
+        return Payment.objects.filter(order__store=self.store).select_related('order')
+
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return PaymentCreateSerializer
         return PaymentSerializer
 
 
-class PaymentDetailView(generics.RetrieveUpdateDestroyAPIView):
-    """View для управління окремим платежем"""
-    
+class PaymentDetailView(StoreScopedMixin, generics.RetrieveUpdateDestroyAPIView):
+    """��⠫� ���⥦�."""
+
     serializer_class = PaymentSerializer
-    
+    permission_classes = [permissions.IsAuthenticated, IsStoreOwnerOrStaff]
+
     def get_queryset(self):
-        store = get_object_or_404(Store, id=self.kwargs['store_id'], owner=self.request.user)
-        return Payment.objects.filter(order__store=store)
+        return Payment.objects.filter(order__store=self.store)
 
 
-class PaymentMethodListCreateView(generics.ListCreateAPIView):
-    """View для управління методами оплати магазину"""
-    
+class PaymentMethodListCreateView(StoreScopedMixin, generics.ListCreateAPIView):
+    """���ᮡ� ������ ��������."""
+
+    permission_classes = [permissions.IsAuthenticated, IsStoreOwnerOrStaff]
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_fields = ['method_type', 'is_active']
     ordering_fields = ['sort_order', 'display_name', 'created_at']
     ordering = ['sort_order', 'display_name']
-    
+
     def get_queryset(self):
-        store = get_object_or_404(Store, id=self.kwargs['store_id'], owner=self.request.user)
-        return PaymentMethod.objects.filter(store=store)
-    
+        return PaymentMethod.objects.filter(store=self.store)
+
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return PaymentMethodCreateSerializer
         return PaymentMethodSerializer
-    
+
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context['store'] = get_object_or_404(Store, id=self.kwargs['store_id'], owner=self.request.user)
+        context['store'] = self.store
         return context
 
 
-class PaymentMethodDetailView(generics.RetrieveUpdateDestroyAPIView):
-    """View для управління окремим методом оплати"""
-    
+class PaymentMethodDetailView(StoreScopedMixin, generics.RetrieveUpdateDestroyAPIView):
+    """��⠫� ᯮᮡ� ������."""
+
     serializer_class = PaymentMethodSerializer
-    
+    permission_classes = [permissions.IsAuthenticated, IsStoreOwnerOrStaff]
+
     def get_queryset(self):
-        store = get_object_or_404(Store, id=self.kwargs['store_id'], owner=self.request.user)
-        return PaymentMethod.objects.filter(store=store)
+        return PaymentMethod.objects.filter(store=self.store)
 
 
-class RefundListCreateView(generics.ListCreateAPIView):
-    """View для управління поверненнями коштів"""
-    
+class RefundListCreateView(StoreScopedMixin, generics.ListCreateAPIView):
+    """������ �� ��������."""
+
+    permission_classes = [permissions.IsAuthenticated, IsStoreOwnerOrStaff]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['status', 'payment__payment_method']
     search_fields = ['payment__order__order_number', 'reason']
     ordering_fields = ['created_at', 'amount', 'status']
     ordering = ['-created_at']
-    
+
     def get_queryset(self):
-        store = get_object_or_404(Store, id=self.kwargs['store_id'], owner=self.request.user)
-        return Refund.objects.filter(payment__order__store=store).select_related(
-            'payment__order', 'initiated_by'
-        )
-    
+        return Refund.objects.filter(payment__order__store=self.store).select_related('payment__order', 'initiated_by')
+
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return RefundCreateSerializer
         return RefundSerializer
 
 
-class RefundDetailView(generics.RetrieveUpdateAPIView):
-    """View для управління окремим поверненням"""
-    
+class RefundDetailView(StoreScopedMixin, generics.RetrieveUpdateAPIView):
+    """��⠫� �������."""
+
     serializer_class = RefundSerializer
-    
+    permission_classes = [permissions.IsAuthenticated, IsStoreOwnerOrStaff]
+
     def get_queryset(self):
-        store = get_object_or_404(Store, id=self.kwargs['store_id'], owner=self.request.user)
-        return Refund.objects.filter(payment__order__store=store)
+        return Refund.objects.filter(payment__order__store=self.store)
 
 
-# Публічні API (для покупців)
+# �����⠭� API (����㠭�)
 class PaymentMethodPublicListView(generics.ListAPIView):
-    """Публічний список методів оплати для магазину"""
-    
+    """�������� ������ �������� ��������."""
+
     serializer_class = PaymentMethodPublicSerializer
     permission_classes = [permissions.AllowAny]
     ordering = ['sort_order', 'display_name']
-    
+
     def get_queryset(self):
         store = get_object_or_404(Store, slug=self.kwargs['store_slug'], is_active=True)
         return PaymentMethod.objects.filter(store=store, is_active=True)
 
 
 @api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def create_stripe_session(request, store_slug):
+    """Создать Stripe Checkout Session для заказа."""
+    if not settings.STRIPE_API_KEY:
+        return Response({'error': 'Stripe API key not configured'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    stripe.api_key = settings.STRIPE_API_KEY
+
+    order_number = request.data.get('order_number')
+    success_url = request.data.get('success_url')
+    cancel_url = request.data.get('cancel_url')
+
+    if not order_number or not success_url or not cancel_url:
+        return Response({'error': 'order_number, success_url, cancel_url обязательны'}, status=status.HTTP_400_BAD_REQUEST)
+
+    order = get_object_or_404(Order, store__slug=store_slug, store__is_active=True, order_number=order_number)
+
+    payment, _ = Payment.objects.get_or_create(
+        order=order,
+        payment_method='stripe',
+        defaults={'amount': order.total_amount, 'currency': order.currency, 'status': 'pending'},
+    )
+    # Обновляем сумму/валюту на случай изменений заказа
+    payment.amount = order.total_amount
+    payment.currency = order.currency
+    payment.status = 'pending'
+    payment.save(update_fields=['amount', 'currency', 'status'])
+
+    idempotency_key = request.META.get('HTTP_IDEMPOTENCY_KEY') or getattr(request, 'request_id', None)
+
+    session = stripe.checkout.Session.create(
+        mode='payment',
+        success_url=success_url,
+        cancel_url=cancel_url,
+        line_items=[
+            {
+                'price_data': {
+                    'currency': order.currency.lower(),
+                    'product_data': {'name': f"Order {order.order_number}"},
+                    'unit_amount': int(order.total_amount * 100),
+                },
+                'quantity': 1,
+            }
+        ],
+        metadata={
+            'order_id': str(order.id),
+            'store_id': str(order.store_id),
+            'payment_id': str(payment.id),
+        },
+        idempotency_key=idempotency_key,
+    )
+
+    payment.external_payment_id = session.id
+    payment.metadata = payment.metadata or {}
+    payment.metadata['checkout_session'] = session.id
+    payment.save()
+
+    return Response({'session_id': session.id, 'url': session.url})
+
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def stripe_webhook(request):
+    """Обработчик Stripe webhook (checkout.session.completed / payment_intent)."""
+    if not settings.STRIPE_WEBHOOK_SECRET:
+        return Response({'error': 'Stripe webhook secret not configured'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    payload = request.body
+    sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
+    try:
+        event = stripe.Webhook.construct_event(payload, sig_header, settings.STRIPE_WEBHOOK_SECRET)
+    except ValueError:
+        return Response({'error': 'Invalid payload'}, status=status.HTTP_400_BAD_REQUEST)
+    except stripe.error.SignatureVerificationError:
+        return Response({'error': 'Invalid signature'}, status=status.HTTP_400_BAD_REQUEST)
+
+    event_type = event.get('type')
+    data_object = event['data']['object']
+    metadata = data_object.get('metadata', {}) if isinstance(data_object, dict) else {}
+
+    payment = None
+    payment_id = metadata.get('payment_id')
+    if payment_id:
+        payment = Payment.objects.filter(id=payment_id).select_related('order').first()
+    elif data_object.get('id'):
+        payment = Payment.objects.filter(external_payment_id=data_object['id']).select_related('order').first()
+
+    if not payment:
+        return Response({'status': 'ignored'}, status=status.HTTP_200_OK)
+
+    if event_type in ['checkout.session.completed', 'payment_intent.succeeded']:
+        payment.status = 'completed'
+        payment.paid_at = payment.paid_at or timezone.now()
+        payment.external_payment_id = payment.external_payment_id or data_object.get('id', '')
+        payment.save()
+
+        if payment.order.payment_status != 'paid':
+            payment.order.payment_status = 'paid'
+            payment.order.save()
+
+    elif event_type in ['payment_intent.payment_failed', 'checkout.session.expired']:
+        payment.status = 'failed'
+        reason = data_object.get('last_payment_error', {}).get('message') if isinstance(data_object, dict) else ''
+        payment.metadata = payment.metadata or {}
+        if reason:
+            payment.metadata['failure_reason'] = reason
+        payment.save()
+        if payment.order.payment_status != 'failed':
+            payment.order.payment_status = 'failed'
+            payment.order.save()
+
+    return Response({'status': 'ok'})
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated, IsStoreOwnerOrStaff])
 def update_payment_status(request, store_id, payment_id):
-    """Оновлення статусу платежу"""
+    """�������� ����� ���⥦� �������楬."""
     store = get_object_or_404(Store, id=store_id, owner=request.user)
     payment = get_object_or_404(Payment, id=payment_id, order__store=store)
-    
+
     serializer = PaymentStatusUpdateSerializer(data=request.data)
     if serializer.is_valid():
         old_status = payment.status
-        
-        # Оновлюємо дані платежу
+
         payment.status = serializer.validated_data['status']
         if serializer.validated_data.get('external_payment_id'):
             payment.external_payment_id = serializer.validated_data['external_payment_id']
@@ -142,183 +265,70 @@ def update_payment_status(request, store_id, payment_id):
             payment.transaction_id = serializer.validated_data['transaction_id']
         if serializer.validated_data.get('metadata'):
             payment.metadata.update(serializer.validated_data['metadata'])
-        
-        # Встановлюємо дату оплати
+
         if payment.status == 'completed' and not payment.paid_at:
             payment.paid_at = timezone.now()
-        
+
         payment.save()
-        
-        # Оновлюємо статус замовлення
+
         if payment.status == 'completed':
             payment.order.payment_status = 'paid'
             payment.order.save()
         elif payment.status == 'failed':
             payment.order.payment_status = 'failed'
             payment.order.save()
-        
-        return Response({
-            'message': f'Статус платежу змінено з "{old_status}" на "{payment.status}"',
-            'status': payment.status,
-            'paid_at': payment.paid_at
-        })
-    
+
+        return Response(
+            {
+                'message': f'����� ���⥦� ������ � "{old_status}" �� "{payment.status}"',
+                'status': payment.status,
+                'paid_at': payment.paid_at,
+            }
+        )
+
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated, IsStoreOwnerOrStaff])
 def mark_payment_as_paid(request, store_id, payment_id):
-    """Позначити платіж як оплачений"""
+    """�ਭ㤨⥫쭮 �⬥��� ����� ��� ����祭��."""
     store = get_object_or_404(Store, id=store_id, owner=request.user)
     payment = get_object_or_404(Payment, id=payment_id, order__store=store)
-    
+
     if payment.status in ['completed', 'refunded']:
         return Response(
-            {'error': 'Платіж вже оплачений або повернений'}, 
-            status=status.HTTP_400_BAD_REQUEST
+            {'error': '����� 㦥 ������� ��� �������'}, status=status.HTTP_400_BAD_REQUEST
         )
-    
+
     payment.mark_as_paid()
-    
-    return Response({
-        'message': 'Платіж успішно позначено як оплачений',
-        'status': payment.status,
-        'paid_at': payment.paid_at
-    })
+
+    return Response(
+        {
+            'message': '����� �⬥祭 ��� ����祭',
+            'status': payment.status,
+            'paid_at': payment.paid_at,
+        }
+    )
 
 
 @api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated, IsStoreOwnerOrStaff])
 def process_refund(request, store_id, refund_id):
-    """Обробити повернення коштів"""
+    """��ࠡ���� ������ ������."""
     store = get_object_or_404(Store, id=store_id, owner=request.user)
     refund = get_object_or_404(Refund, id=refund_id, payment__order__store=store)
-    
+
     if refund.status != 'pending':
         return Response(
-            {'error': 'Повернення вже оброблено або скасовано'}, 
-            status=status.HTTP_400_BAD_REQUEST
+            {'error': '������ 㦥 ��ࠡ�⠭'}, status=status.HTTP_400_BAD_REQUEST
         )
-    
-    # Тут має бути логіка інтеграції з платіжною системою
-    # Поки що просто позначаємо як завершене
+
     refund.status = 'completed'
-    refund.processed_at = timezone.now()
+    refund.completed_at = timezone.now()
     refund.save()
-    
-    # Оновлюємо статус оригінального платежу
-    if refund.amount >= refund.payment.amount:
-        refund.payment.status = 'refunded'
-        refund.payment.save()
-    
-    return Response({
-        'message': 'Повернення коштів успішно оброблено',
-        'status': refund.status,
-        'processed_at': refund.processed_at
-    })
 
+    payment = refund.payment
+    payment.refund(amount=refund.amount)
 
-@api_view(['GET'])
-def payment_analytics(request, store_id):
-    """Аналітика платежів для магазину"""
-    store = get_object_or_404(Store, id=store_id, owner=request.user)
-    
-    payments = Payment.objects.filter(order__store=store)
-    
-    # Загальна статистика
-    total_payments = payments.count()
-    completed_payments = payments.filter(status='completed').count()
-    total_revenue = payments.filter(status='completed').aggregate(
-        total=models.Sum('amount')
-    )['total'] or Decimal('0.00')
-    
-    # Статистика за способами оплати
-    payment_methods_stats = {}
-    for method_code, method_name in Payment.PAYMENT_METHODS:
-        count = payments.filter(payment_method=method_code).count()
-        revenue = payments.filter(
-            payment_method=method_code, 
-            status='completed'
-        ).aggregate(total=models.Sum('amount'))['total'] or Decimal('0.00')
-        
-        payment_methods_stats[method_code] = {
-            'name': method_name,
-            'count': count,
-            'revenue': revenue
-        }
-    
-    # Статистика за статусами
-    status_stats = {}
-    for status_code, status_name in Payment.STATUS_CHOICES:
-        count = payments.filter(status=status_code).count()
-        status_stats[status_code] = {
-            'name': status_name,
-            'count': count
-        }
-    
-    # Повернення коштів
-    refunds = Refund.objects.filter(payment__order__store=store)
-    total_refunds = refunds.count()
-    total_refunded_amount = refunds.filter(status='completed').aggregate(
-        total=models.Sum('amount')
-    )['total'] or Decimal('0.00')
-    
-    return Response({
-        'total_payments': total_payments,
-        'completed_payments': completed_payments,
-        'success_rate': (completed_payments / total_payments * 100) if total_payments > 0 else 0,
-        'total_revenue': total_revenue,
-        'payment_methods_statistics': payment_methods_stats,
-        'status_statistics': status_stats,
-        'refunds': {
-            'total_refunds': total_refunds,
-            'total_refunded_amount': total_refunded_amount
-        }
-    })
-
-
-@api_view(['POST'])
-@permission_classes([permissions.AllowAny])
-def create_payment_for_order(request, store_slug, order_id):
-    """Створити платіж для замовлення (публічний endpoint)"""
-    store = get_object_or_404(Store, slug=store_slug, is_active=True)
-    order = get_object_or_404(Order, id=order_id, store=store)
-    
-    payment_method_id = request.data.get('payment_method_id')
-    if not payment_method_id:
-        return Response(
-            {'error': 'Необхідно вказати метод оплати'}, 
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    
-    payment_method = get_object_or_404(
-        PaymentMethod, 
-        id=payment_method_id, 
-        store=store, 
-        is_active=True
-    )
-    
-    # Перевіряємо чи валідна сума для цього методу
-    if not payment_method.is_amount_valid(order.total_amount):
-        return Response(
-            {'error': f'Сума {order.total_amount} не підходить для цього методу оплати'}, 
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    
-    # Створюємо платіж
-    payment = Payment.objects.create(
-        order=order,
-        amount=order.total_amount,
-        currency=order.currency,
-        payment_method=payment_method.method_type,
-        description=f'Оплата замовлення {order.order_number}'
-    )
-    
-    # Тут має бути логіка інтеграції з платіжною системою
-    # Поки що просто повертаємо дані платежу
-    
-    serializer = PaymentSerializer(payment)
-    return Response({
-        'message': 'Платіж створено успішно',
-        'payment': serializer.data,
-        'next_step': 'redirect_to_payment_gateway'  # Залежить від методу оплати
-    }, status=status.HTTP_201_CREATED)
+    return Response({'message': '������ �஢���', 'status': refund.status})
