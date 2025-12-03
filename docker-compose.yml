@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # PostgreSQL Database
   db:
@@ -46,17 +44,17 @@ services:
     networks:
       - saas-network
 
-  # React Frontend
+  # React Frontend (Vite)
   frontend:
-    build: ./frontend
-    command: npm start
+    build: ./frontend-vite
+    command: npm run dev -- --host 0.0.0.0 --port 3000
     volumes:
-      - ./frontend:/app
+      - ./frontend-vite:/app
       - /app/node_modules
     ports:
       - "3000:3000"
     environment:
-      - REACT_APP_API_URL=http://localhost:8000/api
+      - VITE_API_URL=http://backend:8000/api
     depends_on:
       - backend
     networks:

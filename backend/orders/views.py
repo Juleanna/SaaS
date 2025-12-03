@@ -8,6 +8,7 @@ from rest_framework import generics, permissions, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.response import Response
+from django.db.models import Count, Sum, F
 
 from stores.models import Store
 from stores.tenancy import StoreScopedMixin
@@ -242,3 +243,38 @@ def update_order_status(request, store_id, order_id):
         )
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated, IsStoreOwnerOrStaff])
+def order_statistics(request, store_id):
+    """Быстрая статистика по заказам магазина."""
+    store = get_object_or_404(Store, id=store_id)
+    qs = Order.objects.filter(store=store)
+
+    totals = qs.aggregate(
+        total_orders=Count('id'),
+        total_amount=Sum('total_amount'),
+        paid_amount=Sum('total_amount', filter=models.Q(payment_status=Order.PaymentStatus.PAID)),
+    )
+
+    by_status = qs.values('status').annotate(count=Count('id')).order_by()
+
+    return Response({
+        'totals': {
+            'orders': totals.get('total_orders') or 0,
+            'amount': totals.get('total_amount') or Decimal('0'),
+            'paid_amount': totals.get('paid_amount') or Decimal('0'),
+        },
+        'by_status': {row['status']: row['count'] for row in by_status},
+    })
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated, IsStoreOwnerOrStaff])
+def recent_orders(request):
+    """Последние заказы (до 10 шт) по магазинам пользователя."""
+    store_ids = Store.objects.filter(owner=request.user).values_list('id', flat=True)
+    qs = Order.objects.filter(store_id__in=store_ids).order_by('-created_at')[:10]
+    serializer = OrderSerializer(qs, many=True)
+    return Response(serializer.data)

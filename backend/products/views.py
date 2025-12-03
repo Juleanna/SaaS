@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
+from django.db.models import Q
 from stores.models import Store
 from stores.tenancy import StoreScopedMixin
 from stores.permissions import IsStoreOwnerOrStaff
@@ -192,4 +193,26 @@ def product_by_slug(request, store_slug, product_slug):
     store = get_object_or_404(Store, slug=store_slug, is_active=True)
     product = get_object_or_404(Product, store=store, slug=product_slug, is_active=True)
     serializer = ProductPublicSerializer(product)
+    return Response(serializer.data)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated, IsStoreOwnerOrStaff])
+def toggle_product_status(request, store_id, product_id):
+    """Вкл/выкл товар (is_active) для указанного магазина."""
+    store = get_object_or_404(Store, id=store_id)
+    product = get_object_or_404(Product, id=product_id, store=store)
+    product.is_active = not product.is_active
+    product.save(update_fields=['is_active'])
+    return Response({'id': product.id, 'is_active': product.is_active})
+
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def top_products(request):
+    """Простая выборка популярных товаров (is_featured или активные со скидкой, сортировка по дате)."""
+    queryset = Product.objects.filter(is_active=True).filter(
+        Q(is_featured=True) | Q(sale_price__isnull=False)
+    ).order_by('-updated_at')[:20]
+    serializer = ProductPublicSerializer(queryset, many=True)
     return Response(serializer.data)
