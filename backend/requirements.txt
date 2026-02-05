@@ -23,6 +23,8 @@ python-telegram-bot==20.7
 stripe==7.6.0
 requests==2.31.0
 pandas==2.2.3
+yookassa==5.0.0
+paypalrestsdk==1.7.1
 
 # Configuration & Environment
 python-dotenv==1.0.0
@@ -30,6 +32,13 @@ python-dotenv==1.0.0
 # File Storage & Static Files
 django-storages==1.14.2
 whitenoise==6.6.0
+
+# PDF Generation
+reportlab==4.0.7
+weasyprint==60.0
+
+# Email Templates
+django-templated-email==3.0.1
 
 # Production Server
 gunicorn==21.2.0

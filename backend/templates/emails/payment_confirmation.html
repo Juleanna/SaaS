@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #10B981;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            color: #10B981;
+            margin: 0;
+        }
+
+        .payment-badge {
+            display: inline-block;
+            background-color: #10B981;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 20px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+
+        .details {
+            margin: 20px 0;
+        }
+
+        .details-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .details-row:last-child {
+            border-bottom: none;
+        }
+
+        .details-label {
+            font-weight: bold;
+            color: #666;
+        }
+
+        .details-value {
+            color: #333;
+        }
+
+        .footer {
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💳 Платіж успішно оброблено</h1>
+        </div>
+
+        <p>Вітаємо {{ order.customer_name }}!</p>
+
+        <p>Ваш платіж успішно отримано та оброблено.</p>
+
+        <div style="text-align: center;">
+            <div class="payment-badge">
+                {{ payment.amount }} {{ payment.currency }}
+            </div>
+        </div>
+
+        <div class="details">
+            <div class="details-row">
+                <span class="details-label">Номер замовлення:</span>
+                <span class="details-value">{{ order.order_number }}</span>
+            </div>
+            <div class="details-row">
+                <span class="details-label">Сума платежу:</span>
+                <span class="details-value"><strong>{{ payment.amount }} {{ payment.currency }}</strong></span>
+            </div>
+            <div class="details-row">
+                <span class="details-label">Метод оплати:</span>
+                <span class="details-value">{{ payment.get_payment_method_display }}</span>
+            </div>
+            <div class="details-row">
+                <span class="details-label">ID транзакції:</span>
+                <span class="details-value">{{ payment.transaction_id }}</span>
+            </div>
+            <div class="details-row">
+                <span class="details-label">Дата оплати:</span>
+                <span class="details-value">{{ payment.paid_at|date:"d.m.Y H:i" }}</span>
+            </div>
+        </div>
+
+        <p>Ваше замовлення перейде до наступного етапу обробки. Ви отримаєте сповіщення про прогрес доставки.</p>
+
+        <div class="footer">
+            <p>Це автоматичне повідомлення. Будь ласка, не відповідайте на цей email.</p>
+            <p>&copy; 2024 SaaS Platform. Всі права захищені.</p>
+        </div>
+    </div>
+</body>
+
+</html>

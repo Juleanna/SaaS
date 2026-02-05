@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #8B5CF6;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            color: #8B5CF6;
+            margin: 0;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-box {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #8B5CF6;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .orders-table th {
+            background-color: #f0f0f0;
+            padding: 10px;
+            text-align: left;
+            border-bottom: 2px solid #ddd;
+            font-weight: bold;
+        }
+
+        .orders-table td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .footer {
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Щоденне резюме продажів</h1>
+        </div>
+
+        <p>Вітаємо {{ seller.first_name|default:seller.email }}!</p>
+
+        <p>Ось ваше щоденне резюме продажів за вчора:</p>
+
+        <div class="stats">
+            <div class="stat-box">
+                <div class="stat-number">{{ orders_count }}</div>
+                <div class="stat-label">Замовлень</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">{{ total_revenue }}</div>
+                <div class="stat-label">Загальна виручка</div>
+            </div>
+        </div>
+
+        {% if orders %}
+        <h3 style="color: #8B5CF6;">Останні замовлення:</h3>
+
+        <table class="orders-table">
+            <thead>
+                <tr>
+                    <th>Номер</th>
+                    <th>Клієнт</th>
+                    <th>Сума</th>
+                    <th>Статус</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td>{{ order.order_number }}</td>
+                    <td>{{ order.customer_name }}</td>
+                    <td>{{ order.total_amount }} {{ order.currency }}</td>
+                    <td>{{ order.get_status_display }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        <div class="footer">
+            <p>Це автоматичне повідомлення. Будь ласка, не відповідайте на цей email.</p>
+            <p>&copy; 2024 SaaS Platform. Всі права захищені.</p>
+        </div>
+    </div>
+</body>
+
+</html>

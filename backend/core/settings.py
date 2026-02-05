@@ -11,167 +11,163 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-your-secret-key-here')
+SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-your-secret-key-here")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
+DEBUG = os.getenv("DEBUG", "True").lower() == "true"
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
 # Application definition
 INSTALLED_APPS = [
-    'unfold',  # Unfold admin theme
-    'unfold.contrib.filters',  # Optional, extends the filters
-    'unfold.contrib.forms',  # Optional, form widgets
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    
+    "unfold",  # Unfold admin theme
+    "unfold.contrib.filters",  # Optional, extends the filters
+    "unfold.contrib.forms",  # Optional, form widgets
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
     # Third party apps
-    'rest_framework',
-    'rest_framework_simplejwt',
-    'corsheaders',
-    'django_filters',
-    
+    "rest_framework",
+    "rest_framework_simplejwt",
+    "corsheaders",
+    "django_filters",
     # Local apps
-    'accounts',
-    'stores',
-    'products',
-    'pricelists',
-    'orders',
-    'payments',
-    'notifications',
-    'warehouse',
-    'telegram_bot',
+    "accounts",
+    "stores",
+    "products",
+    "pricelists",
+    "orders",
+    "payments",
+    "notifications",
+    "warehouse",
+    "telegram_bot",
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
-    'core.cache_utils.CacheHeadersMiddleware',
-    'core.request_id.RequestIDMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'core.tenancy.StoreContextMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "core.cache_utils.CacheHeadersMiddleware",
+    "core.request_id.RequestIDMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "core.tenancy.StoreContextMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = 'core.urls'
+ROOT_URLCONF = "core.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "templates"],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'core.wsgi.application'
+WSGI_APPLICATION = "core.wsgi.application"
 
 # Database
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME', 'saas_platform'),
-        'USER': os.getenv('DB_USER', 'postgres'),
-        'PASSWORD': os.getenv('DB_PASSWORD', '123456'),
-        'HOST': os.getenv('DB_HOST', 'localhost'),
-        'PORT': os.getenv('DB_PORT', '5432'),
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.getenv("DB_NAME", "saas_platform"),
+        "USER": os.getenv("DB_USER", "postgres"),
+        "PASSWORD": os.getenv("DB_PASSWORD", "123456"),
+        "HOST": os.getenv("DB_HOST", "localhost"),
+        "PORT": os.getenv("DB_PORT", "5432"),
     }
 }
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
 # Internationalization
-LANGUAGE_CODE = 'uk'
-TIME_ZONE = 'Europe/Kyiv'
+LANGUAGE_CODE = "uk"
+TIME_ZONE = "Europe/Kyiv"
 USE_I18N = True
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
-STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [BASE_DIR / "static"]
 
 # Media files
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 # Default primary key field type
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # REST Framework settings
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
-    'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
-    ),
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 20,
-    'DEFAULT_FILTER_BACKENDS': (
-        'django_filters.rest_framework.DjangoFilterBackend',
-        'rest_framework.filters.SearchFilter',
-        'rest_framework.filters.OrderingFilter',
+    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 20,
+    "DEFAULT_FILTER_BACKENDS": (
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.SearchFilter",
+        "rest_framework.filters.OrderingFilter",
     ),
 }
 
 # JWT Settings
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
-    'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': True,
-    'UPDATE_LAST_LOGIN': True,
-    'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,
-    'VERIFYING_KEY': None,
-    'AUDIENCE': None,
-    'ISSUER': None,
-    'JWK_URL': None,
-    'LEEWAY': 0,
-    'AUTH_HEADER_TYPES': ('Bearer',),
-    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
-    'USER_ID_FIELD': 'id',
-    'USER_ID_CLAIM': 'user_id',
-    'USER_AUTHENTICATION_RULE': 'rest_framework_simplejwt.authentication.default_user_authentication_rule',
-    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
-    'TOKEN_TYPE_CLAIM': 'token_type',
-    'TOKEN_USER_CLASS': 'rest_framework_simplejwt.models.TokenUser',
-    'JTI_CLAIM': 'jti',
-    'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
-    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
-    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=1),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "UPDATE_LAST_LOGIN": True,
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
+    "VERIFYING_KEY": None,
+    "AUDIENCE": None,
+    "ISSUER": None,
+    "JWK_URL": None,
+    "LEEWAY": 0,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
+    "USER_AUTHENTICATION_RULE": "rest_framework_simplejwt.authentication.default_user_authentication_rule",
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+    "TOKEN_TYPE_CLAIM": "token_type",
+    "TOKEN_USER_CLASS": "rest_framework_simplejwt.models.TokenUser",
+    "JTI_CLAIM": "jti",
+    "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
+    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=5),
+    "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
 }
 
 # CORS settings
@@ -185,60 +181,104 @@ CORS_ALLOWED_ORIGINS = [
 CORS_ALLOW_CREDENTIALS = True
 
 # Redis settings
-REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
 # Stripe
-STRIPE_API_KEY = os.getenv('STRIPE_API_KEY', '')
-STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '')
+STRIPE_API_KEY = os.getenv("STRIPE_API_KEY", "")
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
 
 # Cache settings
 CACHES = {
-    'default': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': REDIS_URL,
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": REDIS_URL,
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
         },
-        'KEY_PREFIX': 'saas_platform',
-        'TIMEOUT': 300,  # 5 хвилин за замовчуванням
+        "KEY_PREFIX": "saas_platform",
+        "TIMEOUT": 300,  # 5 хвилин за замовчуванням
     }
 }
 
 # Session engine
-SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-SESSION_CACHE_ALIAS = 'default'
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "default"
 
 # Celery settings
 CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 хвилин
+
+# Celery Beat (Scheduled Tasks)
+from celery.schedules import crontab
+
+CELERY_BEAT_SCHEDULE = {
+    "clean-old-notifications": {
+        "task": "core.tasks.clean_old_notifications",
+        "schedule": crontab(hour=2, minute=0),  # Щодня о 2:00 ночі
+    },
+    "send-daily-seller-summary": {
+        "task": "core.tasks.send_daily_seller_summary",
+        "schedule": crontab(hour=9, minute=0),  # Щодня о 9:00 ранку
+    },
+    "sync-all-instagram-accounts": {
+        "task": "core.instagram_tasks.sync_all_instagram_accounts",
+        "schedule": crontab(hour="*/2"),  # Кожні 2 години
+    },
+    "process-scheduled-instagram-posts": {
+        "task": "core.instagram_tasks.process_scheduled_instagram_posts",
+        "schedule": crontab(minute=0),  # Щогодини
+    },
+    "cleanup-old-instagram-data": {
+        "task": "core.instagram_tasks.cleanup_old_instagram_data",
+        "schedule": crontab(hour=3, minute=0),  # Щодня о 3:00 ночі
+    },
+}
 
 # Telegram Bot settings
-TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '')
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 
 # Stripe settings
-STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY', '')
-STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '')
+STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY", "")
+STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+# PayPal settings
+PAYPAL_CLIENT_ID = os.getenv("PAYPAL_CLIENT_ID", "")
+PAYPAL_CLIENT_SECRET = os.getenv("PAYPAL_CLIENT_SECRET", "")
+
+# ЮKassa settings
+YOOKASSA_SHOP_ID = os.getenv("YOOKASSA_SHOP_ID", "")
+YOOKASSA_SECRET_KEY = os.getenv("YOOKASSA_SECRET_KEY", "")
+
+# Instagram settings
+INSTAGRAM_APP_ID = os.getenv("INSTAGRAM_APP_ID", "")
+INSTAGRAM_APP_SECRET = os.getenv("INSTAGRAM_APP_SECRET", "")
+INSTAGRAM_WEBHOOK_VERIFY_TOKEN = os.getenv(
+    "INSTAGRAM_WEBHOOK_VERIFY_TOKEN", "instagram_webhook_token"
+)
+SITE_URL = os.getenv("SITE_URL", "http://localhost:8000")
 
 # Email settings
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
-EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@saasplatform.com')
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@saasplatform.com")
 
 # Custom user model
-AUTH_USER_MODEL = 'accounts.User'
+AUTH_USER_MODEL = "accounts.User"
 
 # Admin site configuration
-ADMIN_SITE_HEADER = 'SaaS Platform Адміністрування'
-ADMIN_SITE_TITLE = 'SaaS Admin'
-ADMIN_INDEX_TITLE = 'Панель управління'
+ADMIN_SITE_HEADER = "SaaS Platform Адміністрування"
+ADMIN_SITE_TITLE = "SaaS Admin"
+ADMIN_INDEX_TITLE = "Панель управління"
 
 # Feature Flags налаштування
 FEATURE_FLAGS_CACHE_TIMEOUT = 300  # 5 хвилин
@@ -246,20 +286,15 @@ FEATURE_FLAGS_CACHE_TIMEOUT = 300  # 5 хвилин
 # Кастомні Feature Flags (перевизначають дефолтні)
 FEATURE_FLAGS = {
     # Увімкнуті для розробки
-    'barcode_generation': {
-        'enabled': True
-    },
-    'data_export': {
-        'enabled': True
-    },
-    
+    "barcode_generation": {"enabled": True},
+    "data_export": {"enabled": True},
     # Можна увімкнути для тестування
-    'warehouse_advanced_features': {
-        'enabled': DEBUG,  # Увімкнено тільки в development
+    "warehouse_advanced_features": {
+        "enabled": DEBUG,  # Увімкнено тільки в development
     },
-    'advanced_pricing': {
-        'enabled': DEBUG,
-    }
+    "advanced_pricing": {
+        "enabled": DEBUG,
+    },
 }
 
 # Unfold Admin settings
@@ -284,7 +319,7 @@ UNFOLD = {
         {
             "models": [
                 "products.product",
-                "products.productimage", 
+                "products.productimage",
                 "products.productvariant",
                 "products.productseo",
                 "products.productbarcode",
@@ -305,7 +340,7 @@ UNFOLD = {
                     "icon": "tune",
                     "link": "admin:products_productvariant_changelist",
                 },
-            ]
+            ],
         },
         {
             "models": [
@@ -329,8 +364,8 @@ UNFOLD = {
                     "icon": "history",
                     "link": "admin:orders_orderstatushistory_changelist",
                 },
-            ]
-        }
+            ],
+        },
     ],
     "STYLES": [
         lambda request: "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.css",
@@ -338,8 +373,12 @@ UNFOLD = {
     ],
     "SCRIPTS": [
         lambda request: "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js",
-        lambda request: static("js/unfold_navigation_fix.js"),  # Custom navigation JS fixes
-        lambda request: static("js/scroll_position_keeper.js"),  # Backup scroll position keeper
+        lambda request: static(
+            "js/unfold_navigation_fix.js"
+        ),  # Custom navigation JS fixes
+        lambda request: static(
+            "js/scroll_position_keeper.js"
+        ),  # Backup scroll position keeper
     ],
     "LOGIN": {
         "image": lambda request: static("login-bg.jpg"),  # Optional
@@ -348,7 +387,7 @@ UNFOLD = {
     "COLORS": {
         "primary": {
             "50": "250 245 255",
-            "100": "243 232 255", 
+            "100": "243 232 255",
             "200": "233 213 255",
             "300": "196 181 253",
             "400": "167 139 250",
@@ -369,7 +408,7 @@ UNFOLD = {
         },
     },
     "SIDEBAR": {
-        "show_search": True,  # Enable search in sidebar  
+        "show_search": True,  # Enable search in sidebar
         "show_all_applications": False,  # Show all applications
         "navigation_expanded": False,  # Sidebar collapsed by default to prevent scroll issues
         "navigation_fixed": True,  # Fix navigation position
@@ -397,14 +436,22 @@ UNFOLD = {
                     {
                         "title": "Користувачі",
                         "icon": "person",
-                        "link": lambda request: reverse_lazy("admin:accounts_user_changelist"),
-                        "permission": lambda request: request.user.has_perm("accounts.view_user"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:accounts_user_changelist"
+                        ),
+                        "permission": lambda request: request.user.has_perm(
+                            "accounts.view_user"
+                        ),
                     },
                     {
                         "title": "Групи",
                         "icon": "group",
-                        "link": lambda request: reverse_lazy("admin:auth_group_changelist"),
-                        "permission": lambda request: request.user.has_perm("auth.view_group"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:auth_group_changelist"
+                        ),
+                        "permission": lambda request: request.user.has_perm(
+                            "auth.view_group"
+                        ),
                     },
                 ],
             },
@@ -415,17 +462,23 @@ UNFOLD = {
                     {
                         "title": "Магазини",
                         "icon": "store",
-                        "link": lambda request: reverse_lazy("admin:stores_store_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:stores_store_changelist"
+                        ),
                     },
                     {
                         "title": "Блоки магазинів",
                         "icon": "widgets",
-                        "link": lambda request: reverse_lazy("admin:stores_storeblock_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:stores_storeblock_changelist"
+                        ),
                     },
                     {
                         "title": "Соціальні мережі",
                         "icon": "share",
-                        "link": lambda request: reverse_lazy("admin:stores_storesociallink_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:stores_storesociallink_changelist"
+                        ),
                     },
                 ],
             },
@@ -436,32 +489,44 @@ UNFOLD = {
                     {
                         "title": "Категорії",
                         "icon": "category",
-                        "link": lambda request: reverse_lazy("admin:products_category_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:products_category_changelist"
+                        ),
                     },
                     {
                         "title": "Товари",
                         "icon": "inventory",
-                        "link": lambda request: reverse_lazy("admin:products_product_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:products_product_changelist"
+                        ),
                     },
                     {
                         "title": "Зображення товарів",
                         "icon": "photo_library",
-                        "link": lambda request: reverse_lazy("admin:products_productimage_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:products_productimage_changelist"
+                        ),
                     },
                     {
                         "title": "Варіанти товарів",
                         "icon": "tune",
-                        "link": lambda request: reverse_lazy("admin:products_productvariant_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:products_productvariant_changelist"
+                        ),
                     },
                     {
                         "title": "SEO товарів",
                         "icon": "search",
-                        "link": lambda request: reverse_lazy("admin:products_productseo_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:products_productseo_changelist"
+                        ),
                     },
                     {
                         "title": "Штрихкоди товарів",
                         "icon": "qr_code",
-                        "link": lambda request: reverse_lazy("admin:products_productbarcode_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:products_productbarcode_changelist"
+                        ),
                     },
                 ],
             },
@@ -472,27 +537,37 @@ UNFOLD = {
                     {
                         "title": "Замовлення",
                         "icon": "shopping_cart",
-                        "link": lambda request: reverse_lazy("admin:orders_order_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:orders_order_changelist"
+                        ),
                     },
                     {
                         "title": "Позиції замовлень",
                         "icon": "format_list_bulleted",
-                        "link": lambda request: reverse_lazy("admin:orders_orderitem_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:orders_orderitem_changelist"
+                        ),
                     },
                     {
                         "title": "Історія статусів",
                         "icon": "history",
-                        "link": lambda request: reverse_lazy("admin:orders_orderstatushistory_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:orders_orderstatushistory_changelist"
+                        ),
                     },
                     {
                         "title": "Кошики",
                         "icon": "shopping_basket",
-                        "link": lambda request: reverse_lazy("admin:orders_cart_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:orders_cart_changelist"
+                        ),
                     },
                     {
                         "title": "Товари в кошиках",
                         "icon": "add_shopping_cart",
-                        "link": lambda request: reverse_lazy("admin:orders_cartitem_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:orders_cartitem_changelist"
+                        ),
                     },
                 ],
             },
@@ -503,17 +578,23 @@ UNFOLD = {
                     {
                         "title": "Платежі",
                         "icon": "payment",
-                        "link": lambda request: reverse_lazy("admin:payments_payment_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:payments_payment_changelist"
+                        ),
                     },
                     {
                         "title": "Методи оплати",
                         "icon": "credit_card",
-                        "link": lambda request: reverse_lazy("admin:payments_paymentmethod_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:payments_paymentmethod_changelist"
+                        ),
                     },
                     {
                         "title": "Повернення коштів",
                         "icon": "keyboard_return",
-                        "link": lambda request: reverse_lazy("admin:payments_refund_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:payments_refund_changelist"
+                        ),
                     },
                 ],
             },
@@ -524,7 +605,9 @@ UNFOLD = {
                     {
                         "title": "Сповіщення",
                         "icon": "notifications",
-                        "link": lambda request: reverse_lazy("admin:notifications_notification_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:notifications_notification_changelist"
+                        ),
                     },
                 ],
             },
@@ -535,22 +618,30 @@ UNFOLD = {
                     {
                         "title": "Боти",
                         "icon": "smart_toy",
-                        "link": lambda request: reverse_lazy("admin:telegram_bot_telegrambot_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:telegram_bot_telegrambot_changelist"
+                        ),
                     },
                     {
                         "title": "Користувачі Telegram",
                         "icon": "person",
-                        "link": lambda request: reverse_lazy("admin:telegram_bot_telegramuser_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:telegram_bot_telegramuser_changelist"
+                        ),
                     },
                     {
                         "title": "Сесії",
                         "icon": "login",
-                        "link": lambda request: reverse_lazy("admin:telegram_bot_telegramsession_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:telegram_bot_telegramsession_changelist"
+                        ),
                     },
                     {
                         "title": "Повідомлення",
                         "icon": "message",
-                        "link": lambda request: reverse_lazy("admin:telegram_bot_telegrammessage_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:telegram_bot_telegrammessage_changelist"
+                        ),
                     },
                 ],
             },
@@ -561,27 +652,37 @@ UNFOLD = {
                     {
                         "title": "Склади",
                         "icon": "warehouse",
-                        "link": lambda request: reverse_lazy("admin:warehouse_warehouse_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:warehouse_warehouse_changelist"
+                        ),
                     },
                     {
                         "title": "Залишки",
                         "icon": "inventory",
-                        "link": lambda request: reverse_lazy("admin:warehouse_stock_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:warehouse_stock_changelist"
+                        ),
                     },
                     {
                         "title": "Постачальники",
                         "icon": "business",
-                        "link": lambda request: reverse_lazy("admin:warehouse_supplier_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:warehouse_supplier_changelist"
+                        ),
                     },
                     {
                         "title": "Одиниці вимірювання",
                         "icon": "straighten",
-                        "link": lambda request: reverse_lazy("admin:warehouse_unit_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:warehouse_unit_changelist"
+                        ),
                     },
                     {
                         "title": "Фасування",
                         "icon": "inventory_2",
-                        "link": lambda request: reverse_lazy("admin:warehouse_packaging_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:warehouse_packaging_changelist"
+                        ),
                     },
                 ],
             },
@@ -592,23 +693,33 @@ UNFOLD = {
                     {
                         "title": "Постачання",
                         "icon": "local_shipping",
-                        "link": lambda request: reverse_lazy("admin:warehouse_supply_changelist"),
-                        "permission": lambda request: request.user.has_perm("warehouse.view_supply"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:warehouse_supply_changelist"
+                        ),
+                        "permission": lambda request: request.user.has_perm(
+                            "warehouse.view_supply"
+                        ),
                     },
                     {
                         "title": "Переміщення",
                         "icon": "swap_horiz",
-                        "link": lambda request: reverse_lazy("admin:warehouse_movement_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:warehouse_movement_changelist"
+                        ),
                     },
                     {
                         "title": "Списання",
                         "icon": "delete_sweep",
-                        "link": lambda request: reverse_lazy("admin:warehouse_writeoff_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:warehouse_writeoff_changelist"
+                        ),
                     },
                     {
                         "title": "Інвентаризація",
                         "icon": "fact_check",
-                        "link": lambda request: reverse_lazy("admin:warehouse_inventory_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:warehouse_inventory_changelist"
+                        ),
                     },
                 ],
             },
@@ -619,23 +730,33 @@ UNFOLD = {
                     {
                         "title": "Прайс-листи",
                         "icon": "receipt_long",
-                        "link": lambda request: reverse_lazy("admin:pricelists_pricelist_changelist"),
-                        "permission": lambda request: request.user.has_perm("pricelists.view_pricelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:pricelists_pricelist_changelist"
+                        ),
+                        "permission": lambda request: request.user.has_perm(
+                            "pricelists.view_pricelist"
+                        ),
                     },
                     {
                         "title": "Позиції прайс-листів",
                         "icon": "format_list_numbered",
-                        "link": lambda request: reverse_lazy("admin:pricelists_pricelistitem_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:pricelists_pricelistitem_changelist"
+                        ),
                     },
                     {
                         "title": "Масові оновлення цін",
                         "icon": "update",
-                        "link": lambda request: reverse_lazy("admin:pricelists_bulkpriceupdate_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:pricelists_bulkpriceupdate_changelist"
+                        ),
                     },
                     {
                         "title": "Історія зміни цін",
                         "icon": "history",
-                        "link": lambda request: reverse_lazy("admin:pricelists_pricehistory_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:pricelists_pricehistory_changelist"
+                        ),
                     },
                 ],
             },
@@ -646,27 +767,37 @@ UNFOLD = {
                     {
                         "title": "Методи розрахунку",
                         "icon": "calculate",
-                        "link": lambda request: reverse_lazy("admin:warehouse_costingmethod_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:warehouse_costingmethod_changelist"
+                        ),
                     },
                     {
                         "title": "Правила розрахунку",
                         "icon": "rule",
-                        "link": lambda request: reverse_lazy("admin:warehouse_costingrule_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:warehouse_costingrule_changelist"
+                        ),
                     },
                     {
                         "title": "Партії товарів",
                         "icon": "inventory_2",
-                        "link": lambda request: reverse_lazy("admin:warehouse_stockbatch_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:warehouse_stockbatch_changelist"
+                        ),
                     },
                     {
                         "title": "Рух товарів",
                         "icon": "timeline",
-                        "link": lambda request: reverse_lazy("admin:warehouse_stockmovement_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:warehouse_stockmovement_changelist"
+                        ),
                     },
                     {
                         "title": "Розрахунки собівартості",
                         "icon": "assessment",
-                        "link": lambda request: reverse_lazy("admin:warehouse_costcalculation_changelist"),
+                        "link": lambda request: reverse_lazy(
+                            "admin:warehouse_costcalculation_changelist"
+                        ),
                     },
                 ],
             },
@@ -681,7 +812,7 @@ UNFOLD = {
             "permission": lambda request: request.user.is_superuser,
         },
         {
-            "title": "Статус системи", 
+            "title": "Статус системи",
             "icon": "health_and_safety",
             "link": lambda request: "/admin/system-status/",
             "permission": lambda request: request.user.is_staff,
@@ -703,6 +834,7 @@ UNFOLD = {
     ],
 }
 
+
 def environment_callback(request):
     """Callback для показу середовища в адмінці"""
-    return ["Розробка", "warning"] if DEBUG else ["Продакшн", "danger"] 
+    return ["Розробка", "warning"] if DEBUG else ["Продакшн", "danger"]

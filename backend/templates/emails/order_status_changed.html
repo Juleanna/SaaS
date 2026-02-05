@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #F59E0B;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            color: #F59E0B;
+            margin: 0;
+        }
+
+        .status-badge {
+            display: inline-block;
+            background-color: #F59E0B;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 20px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+
+        .details {
+            margin: 20px 0;
+        }
+
+        .details-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .details-row:last-child {
+            border-bottom: none;
+        }
+
+        .details-label {
+            font-weight: bold;
+            color: #666;
+        }
+
+        .details-value {
+            color: #333;
+        }
+
+        .footer {
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📦 Статус замовлення оновлено</h1>
+        </div>
+
+        <p>Привіт {{ order.customer_name }}!</p>
+
+        <p>Статус вашого замовлення змінено:</p>
+
+        <div style="text-align: center;">
+            <div class="status-badge">
+                {{ status_display }}
+            </div>
+        </div>
+
+        <div class="details">
+            <div class="details-row">
+                <span class="details-label">Номер замовлення:</span>
+                <span class="details-value">{{ order.order_number }}</span>
+            </div>
+            <div class="details-row">
+                <span class="details-label">Новий статус:</span>
+                <span class="details-value"><strong>{{ status_display }}</strong></span>
+            </div>
+            <div class="details-row">
+                <span class="details-label">Час оновлення:</span>
+                <span class="details-value">{{ order.updated_at|date:"d.m.Y H:i" }}</span>
+            </div>
+            {% if order.tracking_number %}
+            <div class="details-row">
+                <span class="details-label">Номер відслідкування:</span>
+                <span class="details-value">{{ order.tracking_number }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <p>Якщо у вас виникли питання, будь ласка, зв'яжіться з магазином.</p>
+
+        <div class="footer">
+            <p>Це автоматичне повідомлення. Будь ласка, не відповідайте на цей email.</p>
+            <p>&copy; 2024 SaaS Platform. Всі права захищені.</p>
+        </div>
+    </div>
+</body>
+
+</html>

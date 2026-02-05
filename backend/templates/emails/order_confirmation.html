@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #3B82F6;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            color: #3B82F6;
+            margin: 0;
+        }
+
+        .order-number {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .details {
+            margin: 20px 0;
+        }
+
+        .details-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .details-row:last-child {
+            border-bottom: none;
+        }
+
+        .details-label {
+            font-weight: bold;
+            color: #666;
+        }
+
+        .details-value {
+            color: #333;
+        }
+
+        .button {
+            display: inline-block;
+            background-color: #3B82F6;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .button:hover {
+            background-color: #2563EB;
+        }
+
+        .footer {
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .store-info {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✓ Замовлення Підтверджено</h1>
+        </div>
+
+        <p>Вітаємо {{ order.customer_name }}!</p>
+
+        <p>Дякуємо за ваше замовлення в магазині <strong>{{ store.name }}</strong>.
+            Ми отримали вашу заявку та розпочали обробку.</p>
+
+        <div class="order-number">
+            Номер замовлення: #{{ order.order_number }}
+        </div>
+
+        <div class="details">
+            <div class="details-row">
+                <span class="details-label">Дата замовлення:</span>
+                <span class="details-value">{{ order.created_at|date:"d.m.Y H:i" }}</span>
+            </div>
+            <div class="details-row">
+                <span class="details-label">Адреса доставки:</span>
+                <span class="details-value">{{ order.shipping_address }}, {{ order.shipping_city }}</span>
+            </div>
+            <div class="details-row">
+                <span class="details-label">Сума замовлення:</span>
+                <span class="details-value"><strong>{{ order.total_amount }} {{ order.currency }}</strong></span>
+            </div>
+            <div class="details-row">
+                <span class="details-label">Статус платежу:</span>
+                <span class="details-value">{{ order.get_payment_status_display }}</span>
+            </div>
+        </div>
+
+        <div class="store-info">
+            <h3 style="margin-top: 0;">{{ store.name }}</h3>
+            <p style="margin: 5px 0;">
+                {% if store.phone %}<strong>Телефон:</strong> {{ store.phone }}<br />{% endif %}
+                {% if store.email %}<strong>Email:</strong> {{ store.email }}<br />{% endif %}
+                {% if store.address %}<strong>Адреса:</strong> {{ store.address }}{% endif %}
+            </p>
+        </div>
+
+        <p>Статус вашого замовлення можна відслідкувати на сайті магазину.</p>
+
+        <div style="text-align: center;">
+            <a href="{{ store.get_absolute_url }}" class="button">Перейти до магазину</a>
+        </div>
+
+        <div class="footer">
+            <p>Це автоматичне повідомлення. Будь ласка, не відповідайте на цей email.</p>
+            <p>&copy; 2024 SaaS Platform. Всі права захищені.</p>
+        </div>
+    </div>
+</body>
+
+</html>
