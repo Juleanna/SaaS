@@ -5,6 +5,11 @@ from django.conf.urls.static import static
 from core.admin import dashboard_view
 from core import feature_flags_views
 from core.views import dashboard_stats, health
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularRedocView,
+    SpectacularSwaggerView,
+)
 
 urlpatterns = [
     path("api/health/", health, name="health"),
@@ -51,6 +56,18 @@ urlpatterns = [
         "api/admin/feature-flags/clear-cache/",
         feature_flags_views.admin_clear_flag_cache,
         name="admin-clear-flag-cache",
+    ),
+    # API Documentation
+    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+    path(
+        "api/docs/",
+        SpectacularSwaggerView.as_view(url_name="schema"),
+        name="swagger-ui",
+    ),
+    path(
+        "api/redoc/",
+        SpectacularRedocView.as_view(url_name="schema"),
+        name="redoc",
     ),
     # Dashboard API
     path("api/dashboard/stats/", dashboard_stats, name="dashboard-stats"),

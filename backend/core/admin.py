@@ -8,6 +8,9 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from datetime import datetime, timedelta
 from accounts.models import User
+
+# Імпортувати Instagram admin для реєстрації моделей
+from core import instagram_admin  # noqa: F401
 from stores.models import Store
 from orders.models import Order
 from products.models import Product

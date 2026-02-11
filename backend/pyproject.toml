@@ -1,0 +1,50 @@
+[tool.black]
+line-length = 120
+target-version = ['py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+  | migrations
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 120
+skip_glob = ["*/migrations/*.py", "*/staticfiles/*"]
+known_django = ["django"]
+sections = ["FUTURE", "STDLIB", "DJANGO", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+
+[tool.bandit]
+exclude_dirs = ["/tests", "/migrations", "/staticfiles"]
+skips = ["B101", "B601"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "core.settings"
+python_files = ["tests.py", "test_*.py", "*_tests.py"]
+
+[tool.coverage.run]
+source = ["."]
+omit = [
+    "*/migrations/*",
+    "*/tests/*",
+    "*/staticfiles/*",
+    "*/__pycache__/*",
+    "manage.py",
+    "*/wsgi.py",
+    "*/asgi.py",
+]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false

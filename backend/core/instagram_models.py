@@ -86,10 +86,49 @@ class InstagramAccount(models.Model):
         return True
 
     def refresh_token_if_needed(self):
-        """Оновити токен якщо він збирається закінчитися"""
-        if not self.is_token_valid() and self.refresh_token:
-            # Реалізувати логіку оновлення токена
-            pass
+        """
+        Оновити токен якщо він збирається закінчитися
+
+        Перевіряє чи токен закінчується менш ніж через 7 днів
+        і автоматично оновлює його через Instagram API.
+
+        Returns:
+            bool: True якщо токен оновлено, False якщо ні або помилка
+        """
+        from datetime import timedelta
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        # Якщо токен закінчується менш ніж через 7 днів
+        if self.token_expires_at:
+            days_until_expiry = (self.token_expires_at - timezone.now()).days
+
+            if days_until_expiry < 7:
+                try:
+                    from core.instagram_handler import InstagramAPIHandler
+
+                    handler = InstagramAPIHandler(self.access_token)
+                    token_data = handler.refresh_access_token()
+
+                    # Оновити токен
+                    self.access_token = token_data["access_token"]
+                    self.token_expires_at = timezone.now() + timedelta(
+                        seconds=token_data.get("expires_in", 5184000)
+                    )
+                    self.status = "connected"
+                    self.save()
+
+                    logger.info(f"Successfully refreshed token for {self.instagram_username}")
+                    return True
+
+                except Exception as e:
+                    logger.error(f"Failed to refresh token for {self.instagram_username}: {str(e)}")
+                    self.status = "token_expired"
+                    self.save()
+                    return False
+
+        return False
 
 
 class InstagramPost(models.Model):

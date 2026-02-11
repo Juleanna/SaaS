@@ -1,0 +1,36 @@
+# Django specific
+*.log
+*.pot
+*.pyc
+__pycache__/
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+/media
+/staticfiles
+/static
+
+# Environment
+.env
+.env.*
+!env.example
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Testing
+.coverage
+.pytest_cache/
+htmlcov/
+.tox/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Migrations (optional - comment out if you want to track them)
+# */migrations/*.py
+# !*/migrations/__init__.py

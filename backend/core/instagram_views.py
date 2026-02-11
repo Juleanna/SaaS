@@ -81,6 +81,23 @@ class InstagramAccountViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        # SECURITY: Валідація store_id
+        if not store_id:
+            return Response(
+                {"error": "Missing store_id"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # SECURITY: Перевірка прав доступу до магазину
+        from stores.models import Store
+        try:
+            store = Store.objects.get(id=store_id, owner=request.user)
+        except Store.DoesNotExist:
+            return Response(
+                {"error": "Store not found or access denied"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         try:
             # Обміняти код на токен
             token_response = requests.post(
@@ -108,7 +125,7 @@ class InstagramAccountViewSet(viewsets.ModelViewSet):
                 user=request.user,
                 instagram_user_id=user_id,
                 defaults={
-                    "store_id": store_id,
+                    "store": store,  # Використати перевірений store об'єкт
                     "access_token": access_token,
                     "instagram_username": user_info.get("username"),
                     "instagram_name": user_info.get("name"),
@@ -120,6 +137,14 @@ class InstagramAccountViewSet(viewsets.ModelViewSet):
             )
 
             if not created:
+                # SECURITY: Перевірка прав при оновленні існуючого акаунту
+                if account.store.owner != request.user:
+                    return Response(
+                        {"error": "Access denied to update this account"},
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
+
+                account.store = store
                 account.access_token = access_token
                 account.status = "connected"
                 account.instagram_username = user_info.get("username")

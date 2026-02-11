@@ -18,6 +18,25 @@ DEBUG = os.getenv("DEBUG", "True").lower() == "true"
 
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
+# Security settings for production
+if not DEBUG:
+    # HTTPS settings
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+    # Only allow HTTPS in production
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+    # CSRF trusted origins for production
+    CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",") if os.getenv("CSRF_TRUSTED_ORIGINS") else []
+
 # Application definition
 INSTALLED_APPS = [
     "unfold",  # Unfold admin theme
@@ -34,6 +53,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "corsheaders",
     "django_filters",
+    "drf_spectacular",  # API documentation
     # Local apps
     "accounts",
     "stores",
@@ -52,6 +72,7 @@ MIDDLEWARE = [
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "core.cache_utils.CacheHeadersMiddleware",
     "core.request_id.RequestIDMiddleware",
+    "core.middleware.RateLimitMiddleware",  # Rate limiting для API
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -140,6 +161,42 @@ REST_FRAMEWORK = {
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ),
+    # API Documentation
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+# API Documentation settings
+SPECTACULAR_SETTINGS = {
+    "TITLE": "SaaS Mini-Store Platform API",
+    "DESCRIPTION": """
+    API документація для SaaS Mini-Store Platform
+
+    ## Основні функції:
+    - Управління користувачами та автентифікація
+    - Управління магазинами (stores)
+    - Каталог товарів
+    - Система замовлень
+    - Інтеграція з платіжними системами
+    - Складський облік
+    - Instagram інтеграція
+    - Telegram бот інтеграція
+
+    ## Автентифікація:
+    Використовується JWT (JSON Web Token) автентифікація.
+    1. Отримати токен: POST /api/auth/login/
+    2. Використовувати в headers: `Authorization: Bearer <access_token>`
+    3. Оновити токен: POST /api/auth/token/refresh/
+    """,
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "SWAGGER_UI_SETTINGS": {
+        "deepLinking": True,
+        "persistAuthorization": True,
+        "displayOperationId": True,
+        "filter": True,
+    },
+    "COMPONENT_SPLIT_REQUEST": True,
+    "SCHEMA_PATH_PREFIX": "/api",
 }
 
 # JWT Settings
@@ -838,3 +895,7 @@ UNFOLD = {
 def environment_callback(request):
     """Callback для показу середовища в адмінці"""
     return ["Розробка", "warning"] if DEBUG else ["Продакшн", "danger"]
+
+
+# Rate Limiting settings
+RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "60"))  # Максимум запитів на хвилину на IP

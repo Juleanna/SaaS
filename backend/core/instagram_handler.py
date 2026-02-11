@@ -260,6 +260,36 @@ class InstagramAPIHandler:
         )
         return data.get("data", [])
 
+    def refresh_access_token(self):
+        """
+        Оновити access token
+
+        Instagram довгострокові токени дійсні 60 днів, їх можна оновити
+        використовуючи endpoint для обміну токена.
+
+        Returns:
+            dict: Новий access token та час життя
+        """
+        try:
+            # Instagram Graph API endpoint для оновлення токена
+            response = self._make_request(
+                "GET",
+                "/access_token",
+                params={
+                    "grant_type": "ig_refresh_token",
+                    "access_token": self.access_token
+                }
+            )
+
+            return {
+                "access_token": response.get("access_token"),
+                "token_type": response.get("token_type", "Bearer"),
+                "expires_in": response.get("expires_in", 5184000)  # 60 днів за замовчуванням
+            }
+        except Exception as e:
+            logger.error(f"Error refreshing Instagram token: {str(e)}")
+            raise
+
 
 class InstagramWebhookHandler:
     """
