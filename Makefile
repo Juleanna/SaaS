@@ -13,6 +13,8 @@ help:
 	@echo "  make lint             - Перевірити код (flake8)"
 	@echo "  make format           - Форматувати код (black + isort)"
 	@echo "  make security         - Перевірити безпеку (bandit)"
+	@echo "  make hooks-install    - Встановити pre-commit hooks"
+	@echo "  make hooks-run        - Запустити pre-commit hooks вручну"
 	@echo "  make run              - Запустити dev server"
 	@echo "  make celery           - Запустити Celery worker"
 	@echo "  make celery-beat      - Запустити Celery beat"
@@ -67,6 +69,16 @@ celery:
 .PHONY: celery-beat
 celery-beat:
 	cd backend && celery -A core beat -l info
+
+.PHONY: hooks-install
+hooks-install:
+	pip install pre-commit
+	pre-commit install
+	@echo "✅ Pre-commit hooks встановлено!"
+
+.PHONY: hooks-run
+hooks-run:
+	pre-commit run --all-files
 
 .PHONY: clean
 clean:

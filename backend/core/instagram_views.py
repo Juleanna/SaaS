@@ -321,10 +321,24 @@ def instagram_webhook(request):
                                 )
                                 from django.utils import timezone
 
-                                # TODO: Знайти акаунт за sender_id та page_id
-                                account = InstagramAccount.objects.get(
-                                    status="connected"
-                                )
+                                # Знайти акаунт за instagram_user_id з entry
+                                recipient_id = entry.get("id")
+
+                                try:
+                                    account = InstagramAccount.objects.get(
+                                        instagram_user_id=recipient_id,
+                                        status="connected"
+                                    )
+                                except InstagramAccount.DoesNotExist:
+                                    logger.error(f"Instagram account with user_id {recipient_id} not found")
+                                    continue
+
+                                # Дедуплікація: перевірити чи повідомлення вже існує
+                                if InstagramDMMessage.objects.filter(
+                                    instagram_message_id=message_id
+                                ).exists():
+                                    logger.info(f"Message {message_id} already processed, skipping")
+                                    continue
 
                                 dm_message = InstagramDMMessage.objects.create(
                                     account=account,

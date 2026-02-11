@@ -1,29 +1,54 @@
+# Docker Compose для SaaS Mini-Store Platform
+# Development environment
+version: '3.8'
+
 services:
   # PostgreSQL Database
   db:
-    image: postgres:15
+    image: postgres:15-alpine
+    container_name: saas_db
     environment:
       POSTGRES_DB: saas_platform
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     networks:
       - saas-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
-  # Redis
+  # Redis Cache & Message Broker
   redis:
     image: redis:7-alpine
+    container_name: saas_redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
     ports:
       - "6379:6379"
     networks:
       - saas-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
 
   # Django Backend
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: saas_backend
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - ./backend:/app
@@ -31,22 +56,45 @@ services:
       - media_volume:/app/media
     ports:
       - "8000:8000"
+    env_file:
+      - ./backend/.env
     environment:
       - DEBUG=True
       - DB_HOST=db
+      - DB_PORT=5432
       - DB_NAME=saas_platform
       - DB_USER=postgres
       - DB_PASSWORD=postgres
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
       - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CREATE_SUPERUSER=true
+      - DJANGO_SUPERUSER_USERNAME=admin
+      - DJANGO_SUPERUSER_EMAIL=admin@example.com
+      - DJANGO_SUPERUSER_PASSWORD=admin
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - saas-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
 
   # React Frontend (Vite)
   frontend:
-    build: ./frontend-vite
+    build:
+      context: ./frontend-vite
+      dockerfile: Dockerfile
+      target: builder
+    container_name: saas_frontend
     command: npm run dev -- --host 0.0.0.0 --port 3000
     volumes:
       - ./frontend-vite:/app
@@ -54,55 +102,116 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - VITE_API_URL=http://backend:8000/api
+      - NODE_ENV=development
+      - VITE_API_URL=http://localhost:8000/api
+      - VITE_WS_URL=ws://localhost:8000
     depends_on:
       - backend
     networks:
       - saas-network
+    restart: unless-stopped
 
   # Celery Worker
-  celery:
-    build: ./backend
-    command: celery -A core worker -l info
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: saas_celery_worker
+    command: celery -A core worker -l info --concurrency=2
     volumes:
       - ./backend:/app
+      - media_volume:/app/media
+    env_file:
+      - ./backend/.env
     environment:
       - DEBUG=True
       - DB_HOST=db
+      - DB_PORT=5432
       - DB_NAME=saas_platform
       - DB_USER=postgres
       - DB_PASSWORD=postgres
-      - REDIS_URL=redis://redis:6379/0
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CELERY_BROKER_URL=redis://redis:6379/0
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - saas-network
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A core inspect ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
 
-  # Celery Beat
+  # Celery Beat (Scheduler)
   celery-beat:
-    build: ./backend
-    command: celery -A core beat -l info
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: saas_celery_beat
+    command: celery -A core beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
     volumes:
       - ./backend:/app
+    env_file:
+      - ./backend/.env
     environment:
       - DEBUG=True
       - DB_HOST=db
+      - DB_PORT=5432
       - DB_NAME=saas_platform
       - DB_USER=postgres
       - DB_PASSWORD=postgres
-      - REDIS_URL=redis://redis:6379/0
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CELERY_BROKER_URL=redis://redis:6379/0
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - saas-network
+    restart: unless-stopped
+
+  # Flower (Celery Monitoring) - Optional
+  flower:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: saas_flower
+    command: celery -A core flower --port=5555
+    ports:
+      - "5555:5555"
+    env_file:
+      - ./backend/.env
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - FLOWER_BASIC_AUTH=admin:admin
+    depends_on:
+      - redis
+      - celery-worker
+    networks:
+      - saas-network
+    restart: unless-stopped
 
 volumes:
   postgres_data:
+    driver: local
+  redis_data:
+    driver: local
   static_volume:
+    driver: local
   media_volume:
+    driver: local
 
 networks:
   saas-network:
-    driver: bridge 
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16

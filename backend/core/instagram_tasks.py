@@ -230,6 +230,7 @@ def process_instagram_dm_message(message_id):
     """
     from core.instagram_models import InstagramDMMessage, InstagramDMKeyword
     from core.instagram_handler import InstagramAPIHandler
+    import requests
 
     try:
         message = InstagramDMMessage.objects.get(id=message_id)
@@ -242,24 +243,77 @@ def process_instagram_dm_message(message_id):
         keywords = InstagramDMKeyword.objects.filter(account=account, is_active=True)
 
         response_sent = False
+        matched_keyword = None
 
         for keyword in keywords:
             if keyword.keyword.lower() in message.message_text.lower():
-                # Відправити автовідповідь
+                # Відправити автовідповідь через Instagram API
                 handler = InstagramAPIHandler(account.access_token)
 
-                # TODO: Реалізувати отримання ID розмови від message.sender_id
-                # Для цього потребується додаткова інформація
+                try:
+                    # Використати Instagram Send API для відправлення відповіді
+                    # https://developers.facebook.com/docs/messenger-platform/instagram/features/send-message
+                    response = handler._make_request(
+                        "POST",
+                        f"/{message.sender_id}/messages",
+                        data={
+                            "recipient": {"id": message.sender_id},
+                            "message": {"text": keyword.response_message}
+                        }
+                    )
 
-                logger.info(f"Auto-response sent for keyword: {keyword.keyword}")
-                message.auto_response_sent = True
-                response_sent = True
-                keyword.times_triggered += 1
-                keyword.save()
+                    logger.info(f"Auto-response sent for keyword: {keyword.keyword}")
+                    message.auto_response_sent = True
+                    response_sent = True
+                    matched_keyword = keyword
+                    keyword.times_triggered += 1
+                    keyword.save()
+                except Exception as e:
+                    logger.error(f"Failed to send auto-response: {str(e)}")
+
                 break
+
+        # Відправити Telegram сповіщення власнику магазину
+        if account.store and account.store.owner:
+            store_owner = account.store.owner
+
+            # Telegram сповіщення
+            if hasattr(settings, 'TELEGRAM_BOT_TOKEN') and settings.TELEGRAM_BOT_TOKEN:
+                try:
+                    telegram_message = (
+                        f"📩 <b>Нове повідомлення в Instagram DM</b>\n\n"
+                        f"<b>Магазин:</b> {account.store.name}\n"
+                        f"<b>Instagram:</b> @{account.instagram_username}\n"
+                        f"<b>Від:</b> {message.sender_username}\n"
+                        f"<b>Повідомлення:</b>\n{message.message_text}\n"
+                    )
+
+                    if response_sent and matched_keyword:
+                        telegram_message += (
+                            f"\n✅ <b>Автовідповідь відправлена:</b>\n"
+                            f"{matched_keyword.response_message}"
+                        )
+
+                    telegram_url = f"https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}/sendMessage"
+
+                    # Якщо є telegram_chat_id у користувача
+                    if hasattr(store_owner, 'telegram_chat_id') and store_owner.telegram_chat_id:
+                        requests.post(telegram_url, data={
+                            "chat_id": store_owner.telegram_chat_id,
+                            "text": telegram_message,
+                            "parse_mode": "HTML"
+                        })
+                        logger.info(f"Telegram notification sent to {store_owner.username}")
+                    else:
+                        logger.warning(f"User {store_owner.username} has no telegram_chat_id")
+
+                except Exception as e:
+                    logger.error(f"Failed to send Telegram notification: {str(e)}")
 
         message.is_processed = True
         message.save()
+
+        logger.info(f"DM message {message_id} processed successfully")
 
     except InstagramDMMessage.DoesNotExist:
         logger.error(f"DM message {message_id} not found")
@@ -318,3 +372,40 @@ def cleanup_old_instagram_data():
     ).delete()
 
     logger.info(f"Deleted {deleted_count} old DM messages")
+
+
+@shared_task(name="instagram.refresh_expiring_tokens")
+def refresh_expiring_instagram_tokens():
+    """
+    Оновити Instagram токени, що закінчуються протягом 7 днів
+    Запускається щодня о 01:00
+    """
+    from core.instagram_models import InstagramAccount
+
+    # Знайти акаунти з токенами що закінчуються < 7 днів
+    expiring_soon = timezone.now() + timedelta(days=7)
+
+    accounts = InstagramAccount.objects.filter(
+        status="connected",
+        token_expires_at__lte=expiring_soon,
+        token_expires_at__isnull=False
+    )
+
+    refreshed_count = 0
+    failed_count = 0
+
+    for account in accounts:
+        try:
+            if account.refresh_token_if_needed():
+                refreshed_count += 1
+                logger.info(f"Refreshed token for account @{account.instagram_username}")
+            else:
+                logger.info(f"Token for @{account.instagram_username} doesn't need refresh yet")
+        except Exception as e:
+            failed_count += 1
+            logger.error(f"Failed to refresh token for @{account.instagram_username}: {str(e)}")
+
+    logger.info(
+        f"Token refresh complete: {refreshed_count} refreshed, {failed_count} failed, "
+        f"{accounts.count()} accounts checked"
+    )

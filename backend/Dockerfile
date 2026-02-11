@@ -1,35 +1,60 @@
+# Backend Dockerfile for SaaS Mini-Store Platform
+# Python 3.11 slim image
 FROM python:3.11-slim
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+# Metadata
+LABEL maintainer="SaaS Platform Team"
+LABEL description="Django Backend for SaaS Mini-Store Platform"
+LABEL version="2.0"
 
-# Set work directory
-WORKDIR /app
+# Встановити змінні середовища
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Install system dependencies
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        postgresql-client \
-        build-essential \
-        libpq-dev \
+# Встановити системні залежності
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libpq-dev \
+    postgresql-client \
+    gettext \
+    netcat-traditional \
+    curl \
+    wait-for-it \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Створити робочу директорію
+WORKDIR /app
 
-# Copy project
+# Копіювати requirements та встановити Python залежності
+COPY requirements.txt .
+RUN pip install --upgrade pip && \
+    pip install -r requirements.txt && \
+    pip install gunicorn psycopg2-binary
+
+# Копіювати код проекту
 COPY . .
 
-# Create directories for static and media files
+# Створити директорії для статики та медіа
 RUN mkdir -p /app/staticfiles /app/media
 
-# Collect static files
-RUN python manage.py collectstatic --noinput
+# Копіювати entrypoint скрипт
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
 
-# Expose port
+# Створити non-root користувача
+RUN useradd -m -u 1000 django && \
+    chown -R django:django /app
+
+# Відкрити порт
 EXPOSE 8000
 
-# Run the application
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"] 
+# Перемкнутись на non-root користувача
+USER django
+
+# Entrypoint
+ENTRYPOINT ["/docker-entrypoint.sh"]
+
+# Команда за замовчуванням
+CMD ["gunicorn", "core.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3", "--timeout", "120"]
