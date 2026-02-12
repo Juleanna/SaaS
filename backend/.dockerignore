@@ -1,13 +1,9 @@
-# Python
+# Python bytecode
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-*.egg-info/
-dist/
-build/
-*.egg
 
 # Virtual environments
 venv/
@@ -15,12 +11,30 @@ env/
 ENV/
 .venv
 
+# Django stuff
+*.log
+db.sqlite3
+db.sqlite3-journal
+staticfiles/
+media/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+.DS_Store
 
 # Testing
 .pytest_cache/
@@ -28,39 +42,20 @@ ENV/
 htmlcov/
 .tox/
 
-# Environment
-.env
-.env.local
-.env.*.local
-
-# Database
-*.sqlite3
-db.sqlite3
-
-# Media and static (will be collected in container)
-media/
-staticfiles/
-static/
-
-# Git
-.git/
-.gitignore
-
 # Documentation
-*.md
 docs/
+*.md
 
-# Logs
-*.log
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
 
-# OS
-.DS_Store
-Thumbs.db
+# CI/CD
+.github/
+.gitlab-ci.yml
 
-# Celery
-celerybeat-schedule
-celerybeat.pid
-
-# Backup files
+# Other
 *.bak
-*.backup
+*.tmp
+*.old

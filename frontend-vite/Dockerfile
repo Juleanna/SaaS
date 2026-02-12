@@ -1,54 +1,65 @@
-# Multi-stage build for React + Vite Frontend
-# Stage 1: Build the application
+# Multi-stage build для оптимізації розміру image
+
+# ============================================
+# Stage 1: Builder - Збірка React додатку
+# ============================================
 FROM node:20-alpine AS builder
 
-# Metadata
-LABEL maintainer="SaaS Platform Team"
-LABEL description="React Frontend for SaaS Mini-Store Platform"
-LABEL version="2.0"
-
-# Set working directory
 WORKDIR /app
 
-# Copy package files
+# Встановити залежності (кешується окремо від коду)
 COPY package*.json ./
+RUN npm ci --only=production=false && npm cache clean --force
 
-# Install dependencies
-RUN npm ci --only=production=false
-
-# Copy source code
+# Копіювати код та зібрати production build
 COPY . .
-
-# Build the application
 RUN npm run build
 
-# Stage 2: Production with Nginx
-FROM nginx:1.25-alpine
+# Результат: /app/dist/ містить оптимізовані статичні файли
 
-# Copy built files from builder
-COPY --from=builder /app/dist /usr/share/nginx/html
+# ============================================
+# Stage 2: Development - Vite dev server
+# ============================================
+FROM node:20-alpine AS development
 
-# Copy custom nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+WORKDIR /app
 
-# Create non-root user
-RUN addgroup -g 1000 frontend && \
-    adduser -D -u 1000 -G frontend frontend && \
-    chown -R frontend:frontend /usr/share/nginx/html && \
-    chown -R frontend:frontend /var/cache/nginx && \
-    chown -R frontend:frontend /var/log/nginx && \
-    touch /var/run/nginx.pid && \
-    chown -R frontend:frontend /var/run/nginx.pid
+# Встановити залежності
+COPY package*.json ./
+RUN npm install && npm cache clean --force
 
-# Switch to non-root user
-USER frontend
+# Копіювати код
+COPY . .
 
-# Expose port
+# Expose порт для Vite dev server
 EXPOSE 3000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost:3000/ || exit 1
+# Команда для development (з hot reload)
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000"]
 
-# Start nginx
+# ============================================
+# Stage 3: Production - Nginx для serving
+# ============================================
+FROM nginx:1.25-alpine AS production
+
+# Копіювати build з builder stage
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Копіювати Nginx конфігурацію
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Створити non-root user для безпеки
+RUN adduser -D -u 1000 frontend && \
+    chown -R frontend:frontend /usr/share/nginx/html /var/cache/nginx /var/run /var/log/nginx && \
+    chmod -R 755 /usr/share/nginx/html
+
+# Додати healthcheck
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD wget --quiet --tries=1 --spider http://localhost:3000/ || exit 1
+
+# Expose порт
+EXPOSE 3000
+
+# Запустити Nginx
+USER frontend
 CMD ["nginx", "-g", "daemon off;"]

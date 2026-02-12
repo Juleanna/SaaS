@@ -7,8 +7,23 @@ pnpm-debug.log*
 
 # Build outputs
 dist/
+dist-ssr/
 build/
-.vite/
+.cache/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Testing
+coverage/
+.nyc_output/
+
+# Git
+.git/
+.gitignore
+.gitattributes
 
 # IDE
 .vscode/
@@ -16,39 +31,22 @@ build/
 *.swp
 *.swo
 *~
-
-# Testing
-coverage/
-.nyc_output
-
-# Environment
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Git
-.git/
-.gitignore
-
-# Documentation
-*.md
-docs/
+.DS_Store
 
 # Logs
 logs/
 *.log
 
-# OS
-.DS_Store
-Thumbs.db
+# Documentation
+*.md
+docs/
 
-# Cache
-.cache/
-.parcel-cache/
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+nginx.conf
+
+# Misc
 .eslintcache
-
-# Backup files
-*.bak
-*.backup
+.parcel-cache/
