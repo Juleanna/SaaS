@@ -28,6 +28,7 @@ import {
   UserGroupIcon,
   QrCodeIcon,
   BellIcon,
+  SparklesIcon,
 } from '@heroicons/react/24/outline';
 
 const Layout = () => {
@@ -79,6 +80,7 @@ const Layout = () => {
         { name: 'Замовлення', href: '/orders', icon: ShoppingCartIcon },
         { name: 'Платежі', href: '/payments', icon: CreditCardIcon },
         { name: 'Прайс-листи', href: '/pricelists', icon: DocumentTextIcon },
+        { name: 'Підписка', href: '/subscriptions', icon: SparklesIcon },
       ],
     },
     {

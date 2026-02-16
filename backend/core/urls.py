@@ -25,6 +25,7 @@ urlpatterns = [
     path("api/warehouse/", include("warehouse.api.urls")),
     path("api/telegram/", include("telegram_bot.urls")),
     path("api/instagram/", include("core.instagram_urls")),
+    path("api/subscriptions/", include("core.subscription_urls")),
     # Feature Flags API
     path(
         "api/feature-flags/user/",

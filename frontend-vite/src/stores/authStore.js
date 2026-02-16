@@ -114,16 +114,18 @@ export const useAuthStore = create(
       
       updateProfile: async (profileData) => {
         try {
-          const response = await api.patch('/auth/update/', profileData);
-          set({
-            user: response.data,
-          });
-          
+          await api.patch('/auth/profile/', profileData);
+          // Отримуємо повний профіль після оновлення
+          const profileResponse = await api.get('/auth/profile/');
+          set((state) => ({
+            user: { ...state.user, ...profileResponse.data },
+          }));
+
           return { success: true };
         } catch (error) {
-          return { 
-            success: false, 
-            error: error.response?.data?.message || 'Помилка оновлення профілю' 
+          return {
+            success: false,
+            error: error.response?.data?.message || 'Помилка оновлення профілю'
           };
         }
       },

@@ -271,7 +271,7 @@ def order_statistics(request, store_id):
 
 
 @api_view(['GET'])
-@permission_classes([permissions.IsAuthenticated, IsStoreOwnerOrStaff])
+@permission_classes([permissions.IsAuthenticated])
 def recent_orders(request):
     """Последние заказы (до 10 шт) по магазинам пользователя."""
     store_ids = Store.objects.filter(owner=request.user).values_list('id', flat=True)

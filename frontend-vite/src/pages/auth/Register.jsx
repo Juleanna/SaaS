@@ -51,7 +51,7 @@ const Register = () => {
             Або{' '}
             <Link
               to="/login"
-              className="font-medium text-primary-600 hover:text-primary-500"
+              className="font-medium text-blue-600 hover:text-blue-500"
             >
               увійдіть в існуючий обліковий запис
             </Link>

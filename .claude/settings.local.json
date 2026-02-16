@@ -22,7 +22,8 @@
       "Bash(venv/Scripts/python manage.py makemigrations core)",
       "Bash(npx vite build:*)",
       "Bash(while read f)",
-      "Bash(do echo \"=== $f ===\" grep -n \"className.*card\" \"$f\" done)"
+      "Bash(do echo \"=== $f ===\" grep -n \"className.*card\" \"$f\" done)",
+      "Bash(source:*)"
     ]
   }
 }

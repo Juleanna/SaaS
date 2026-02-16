@@ -23,6 +23,7 @@ import InventoryScanner from './pages/Warehouse/InventoryScanner';
 import ScannerDemo from './pages/Warehouse/ScannerDemo';
 import PriceLists from './pages/PriceLists';
 import InstagramPage from './pages/InstagramPage';
+import SubscriptionsPage from './pages/SubscriptionsPage';
 import PublicStore from './pages/public/PublicStore';
 import PublicStoresList from './pages/public/PublicStoresList';
 
@@ -54,6 +55,7 @@ function App() {
             <Route path="orders" element={<Orders />} />
             <Route path="payments" element={<Payments />} />
             <Route path="pricelists" element={<PriceLists />} />
+            <Route path="subscriptions" element={<SubscriptionsPage />} />
             <Route path="instagram" element={<InstagramPage />} />
             <Route path="warehouse" element={<WarehouseDashboard />} />
             <Route path="warehouse/management" element={<WarehouseManagement />} />
