@@ -186,7 +186,7 @@ const SupplyManagement = () => {
       {/* Заголовок */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Управління постачаннями</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Управління постачаннями</h1>
           <p className="mt-1 text-sm text-gray-500">
             Створення та відстеження постачань товарів
           </p>
@@ -195,7 +195,7 @@ const SupplyManagement = () => {
         <div className="mt-4 sm:mt-0">
           <button
             onClick={openCreateModal}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            className="btn btn-primary inline-flex items-center"
           >
             <PlusIcon className="h-4 w-4 mr-2" />
             Нове постачання
@@ -205,8 +205,8 @@ const SupplyManagement = () => {
 
       {/* Статистика */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-6">
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
+        <div className="card">
+          <div className="card-body">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <TruckIcon className="h-6 w-6 text-gray-400" />
@@ -221,8 +221,8 @@ const SupplyManagement = () => {
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
+        <div className="card">
+          <div className="card-body">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <PencilIcon className="h-6 w-6 text-gray-400" />
@@ -237,8 +237,8 @@ const SupplyManagement = () => {
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
+        <div className="card">
+          <div className="card-body">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <CheckCircleIcon className="h-6 w-6 text-blue-400" />
@@ -253,8 +253,8 @@ const SupplyManagement = () => {
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
+        <div className="card">
+          <div className="card-body">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <TruckIcon className="h-6 w-6 text-yellow-400" />
@@ -269,8 +269,8 @@ const SupplyManagement = () => {
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
+        <div className="card">
+          <div className="card-body">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <CheckCircleIcon className="h-6 w-6 text-green-400" />
@@ -285,8 +285,8 @@ const SupplyManagement = () => {
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
+        <div className="card">
+          <div className="card-body">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <XCircleIcon className="h-6 w-6 text-red-400" />
@@ -303,8 +303,8 @@ const SupplyManagement = () => {
       </div>
 
       {/* Фільтри та пошук */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-4 py-5 sm:p-6">
+      <div className="card">
+        <div className="card-body">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
             <div className="flex-1 max-w-lg">
               <div className="relative">
@@ -316,7 +316,7 @@ const SupplyManagement = () => {
                   placeholder="Пошук постачань..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  className="input pl-10"
                 />
               </div>
             </div>
@@ -325,7 +325,7 @@ const SupplyManagement = () => {
               <select
                 value={selectedWarehouse}
                 onChange={(e) => setSelectedWarehouse(e.target.value)}
-                className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                className="input"
               >
                 <option value="">Всі склади</option>
                 {warehouses.map(warehouse => (
@@ -338,7 +338,7 @@ const SupplyManagement = () => {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                className="input"
               >
                 <option value="all">Всі статуси</option>
                 <option value="draft">Чернетки</option>
@@ -353,8 +353,8 @@ const SupplyManagement = () => {
       </div>
 
       {/* Список постачань */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        <div className="px-4 py-5 sm:p-6">
+      <div className="card overflow-hidden">
+        <div className="card-body">
           <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
             Постачання ({filteredSupplies.length})
           </h3>
@@ -435,7 +435,7 @@ const SupplyManagement = () => {
                         <select
                           value={supply.status}
                           onChange={(e) => handleStatusChange(supply.id, e.target.value)}
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border-0 focus:ring-2 focus:ring-indigo-500 ${getStatusColor(supply.status)}`}
+                          className={`badge border-0 focus:ring-2 focus:ring-indigo-500 ${getStatusColor(supply.status)}`}
                         >
                           <option value="draft">Чернетка</option>
                           <option value="confirmed">Підтверджено</option>
@@ -486,27 +486,27 @@ const SupplyManagement = () => {
                   
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="form-label mb-1">
                         Номер постачання *
                       </label>
                       <input
                         type="text"
                         value={supplyForm.number}
                         onChange={(e) => setSupplyForm(prev => ({ ...prev, number: e.target.value }))}
-                        className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        className="input"
                         required
                       />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="form-label mb-1">
                           Постачальник *
                         </label>
                         <select
                           value={supplyForm.supplier}
                           onChange={(e) => setSupplyForm(prev => ({ ...prev, supplier: e.target.value }))}
-                          className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                          className="input"
                           required
                         >
                           <option value="">Оберіть постачальника</option>
@@ -519,13 +519,13 @@ const SupplyManagement = () => {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="form-label mb-1">
                           Склад *
                         </label>
                         <select
                           value={supplyForm.warehouse}
                           onChange={(e) => setSupplyForm(prev => ({ ...prev, warehouse: e.target.value }))}
-                          className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                          className="input"
                           required
                         >
                           <option value="">Оберіть склад</option>
@@ -540,40 +540,40 @@ const SupplyManagement = () => {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="form-label mb-1">
                           Дата замовлення *
                         </label>
                         <input
                           type="date"
                           value={supplyForm.order_date}
                           onChange={(e) => setSupplyForm(prev => ({ ...prev, order_date: e.target.value }))}
-                          className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                          className="input"
                           required
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="form-label mb-1">
                           Очікувана дата
                         </label>
                         <input
                           type="date"
                           value={supplyForm.expected_date}
                           onChange={(e) => setSupplyForm(prev => ({ ...prev, expected_date: e.target.value }))}
-                          className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                          className="input"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="form-label mb-1">
                         Примітки
                       </label>
                       <textarea
                         value={supplyForm.notes}
                         onChange={(e) => setSupplyForm(prev => ({ ...prev, notes: e.target.value }))}
                         rows={3}
-                        className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        className="input"
                       />
                     </div>
                   </div>
@@ -582,14 +582,14 @@ const SupplyManagement = () => {
                 <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                   <button
                     type="submit"
-                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
+                    className="btn btn-primary sm:ml-3 sm:w-auto"
                   >
                     Створити
                   </button>
                   <button
                     type="button"
                     onClick={closeCreateModal}
-                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                    className="btn btn-secondary mt-3 sm:mt-0 sm:ml-3 sm:w-auto"
                   >
                     Скасувати
                   </button>
@@ -614,7 +614,7 @@ const SupplyManagement = () => {
                   <h3 className="text-lg leading-6 font-medium text-gray-900">
                     Деталі постачання #{selectedSupply.number}
                   </h3>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(selectedSupply.status)}`}>
+                  <span className={`badge ${getStatusColor(selectedSupply.status)}`}>
                     {getStatusIcon(selectedSupply.status)}
                     <span className="ml-1">{getStatusText(selectedSupply.status)}</span>
                   </span>
@@ -623,17 +623,17 @@ const SupplyManagement = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Постачальник</label>
+                      <label className="form-label">Постачальник</label>
                       <p className="mt-1 text-sm text-gray-900">{selectedSupply.supplier?.name}</p>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Склад</label>
+                      <label className="form-label">Склад</label>
                       <p className="mt-1 text-sm text-gray-900">{selectedSupply.warehouse?.name}</p>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Дата замовлення</label>
+                      <label className="form-label">Дата замовлення</label>
                       <p className="mt-1 text-sm text-gray-900">
                         {new Date(selectedSupply.order_date).toLocaleDateString()}
                       </p>
@@ -642,7 +642,7 @@ const SupplyManagement = () => {
 
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Очікувана дата</label>
+                      <label className="form-label">Очікувана дата</label>
                       <p className="mt-1 text-sm text-gray-900">
                         {selectedSupply.expected_date ? 
                           new Date(selectedSupply.expected_date).toLocaleDateString() : 
@@ -652,7 +652,7 @@ const SupplyManagement = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Дата отримання</label>
+                      <label className="form-label">Дата отримання</label>
                       <p className="mt-1 text-sm text-gray-900">
                         {selectedSupply.received_date ? 
                           new Date(selectedSupply.received_date).toLocaleDateString() : 
@@ -662,7 +662,7 @@ const SupplyManagement = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Загальна сума</label>
+                      <label className="form-label">Загальна сума</label>
                       <p className="mt-1 text-sm text-gray-900">
                         ₴{selectedSupply.total_amount?.toLocaleString() || 0}
                       </p>
@@ -672,7 +672,7 @@ const SupplyManagement = () => {
 
                 {selectedSupply.notes && (
                   <div className="mt-6">
-                    <label className="block text-sm font-medium text-gray-700">Примітки</label>
+                    <label className="form-label">Примітки</label>
                     <p className="mt-1 text-sm text-gray-900">{selectedSupply.notes}</p>
                   </div>
                 )}
@@ -682,7 +682,7 @@ const SupplyManagement = () => {
                 <button
                   type="button"
                   onClick={closeDetailModal}
-                  className="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
+                  className="btn btn-secondary sm:ml-3 sm:w-auto"
                 >
                   Закрити
                 </button>

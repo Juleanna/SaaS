@@ -23,7 +23,7 @@ python-telegram-bot==20.7
 stripe==7.6.0
 requests==2.31.0
 pandas==2.2.3
-yookassa==5.0.0
+yookassa
 paypalrestsdk==1.7.1
 
 # Configuration & Environment
@@ -55,4 +55,7 @@ factory-boy==3.3.0
 faker==22.0.0
 
 # API Documentation
-drf-spectacular==0.27.0 
+drf-spectacular==0.27.0
+setuptools
+django-celery-beat
+

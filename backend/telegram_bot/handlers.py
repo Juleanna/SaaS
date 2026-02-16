@@ -2,7 +2,8 @@
 Обробники команд Telegram бота
 """
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 from django.utils.translation import gettext as _
 from stores.models import Store

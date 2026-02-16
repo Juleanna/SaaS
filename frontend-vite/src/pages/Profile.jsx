@@ -202,7 +202,7 @@ const Profile = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Профіль користувача</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Профіль користувача</h1>
         <p className="mt-1 text-sm text-gray-500">
           Керуйте інформацією вашого облікового запису
         </p>

@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "django_filters",
     "drf_spectacular",  # API documentation
+    "django_celery_beat",
     # Local apps
     "accounts",
     "stores",
@@ -64,6 +65,7 @@ INSTALLED_APPS = [
     "notifications",
     "warehouse",
     "telegram_bot",
+    "core",
 ]
 
 MIDDLEWARE = [
@@ -270,6 +272,7 @@ CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 хвилин
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
 # Celery Beat (Scheduled Tasks)
 from celery.schedules import crontab

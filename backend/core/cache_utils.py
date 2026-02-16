@@ -276,7 +276,7 @@ def invalidate_related_cache(sender, instance, **kwargs):
         cache_manager.delete_pattern(f"user_{instance.id}")
         cache_manager.delete_pattern(f"user_permissions:{instance.id}")
     
-    logger.debug(f"Cache invalidated for {sender.__name__} instance {instance.id}")
+    logger.debug(f"Cache invalidated for {sender.__name__} instance {getattr(instance, 'id', None)}")
 
 
 # Middleware кешування

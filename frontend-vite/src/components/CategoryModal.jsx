@@ -174,7 +174,7 @@ const CategoryModal = ({
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="form-label">
                     Назва категорії *
                   </label>
                   <input
@@ -182,18 +182,18 @@ const CategoryModal = ({
                     name="name"
                     value={formData.name}
                     onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    className={`input ${
                       errors.name ? 'border-red-300' : 'border-gray-300'
                     }`}
                     placeholder="Введіть назву категорії"
                   />
                   {errors.name && (
-                    <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+                    <p className="form-error">{errors.name}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="form-label">
                     Опис
                   </label>
                   <textarea
@@ -201,13 +201,13 @@ const CategoryModal = ({
                     value={formData.description}
                     onChange={handleInputChange}
                     rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="input"
                     placeholder="Введіть опис категорії"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="form-label">
                     URL (slug)
                   </label>
                   <input
@@ -215,13 +215,13 @@ const CategoryModal = ({
                     name="slug"
                     value={formData.slug}
                     onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    className={`input ${
                       errors.slug ? 'border-red-300' : 'border-gray-300'
                     }`}
                     placeholder="url-категории"
                   />
                   {errors.slug && (
-                    <p className="mt-1 text-sm text-red-600">{errors.slug}</p>
+                    <p className="form-error">{errors.slug}</p>
                   )}
                   <p className="mt-1 text-xs text-gray-500">
                     Автоматично генерується з назви. Тільки латинські літери, цифри та дефіси.
@@ -229,7 +229,7 @@ const CategoryModal = ({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="form-label">
                     SEO заголовок
                   </label>
                   <input
@@ -237,7 +237,7 @@ const CategoryModal = ({
                     name="meta_title"
                     value={formData.meta_title}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="input"
                     placeholder="SEO заголовок для пошукових систем"
                   />
                   <p className="mt-1 text-xs text-gray-500">
@@ -246,7 +246,7 @@ const CategoryModal = ({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="form-label">
                     SEO опис
                   </label>
                   <textarea
@@ -254,7 +254,7 @@ const CategoryModal = ({
                     value={formData.meta_description}
                     onChange={handleInputChange}
                     rows={2}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="input"
                     placeholder="Короткий опис категорії для пошукових систем"
                   />
                   <p className="mt-1 text-xs text-gray-500">
@@ -281,14 +281,14 @@ const CategoryModal = ({
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
+                className="btn btn-primary sm:ml-3 sm:w-auto disabled:opacity-50"
               >
                 {loading ? 'Збереження...' : (category ? 'Оновити' : 'Створити')}
               </button>
               <button
                 type="button"
                 onClick={onClose}
-                className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                className="btn btn-outline sm:mt-0 sm:ml-3 sm:w-auto"
               >
                 Скасувати
               </button>

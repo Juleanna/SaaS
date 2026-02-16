@@ -13,10 +13,21 @@ import {
   XMarkIcon,
   Cog6ToothIcon,
   BuildingStorefrontIcon,
-  FolderIcon,
   CreditCardIcon,
   DocumentTextIcon,
   GlobeAltIcon,
+  ChevronRightIcon,
+  ArrowRightOnRectangleIcon,
+  TagIcon,
+  TruckIcon,
+  ArchiveBoxIcon,
+  CameraIcon,
+  ChartBarIcon,
+  ClipboardDocumentListIcon,
+  Square3Stack3DIcon,
+  UserGroupIcon,
+  QrCodeIcon,
+  BellIcon,
 } from '@heroicons/react/24/outline';
 
 const Layout = () => {
@@ -25,7 +36,7 @@ const Layout = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [openSubmenu, setOpenSubmenu] = useState(null);
-  
+
   // Отримуємо актуальні дані профілю для аватару
   const { data: profileData } = useQuery({
     queryKey: ['user-profile-layout'],
@@ -34,41 +45,60 @@ const Layout = () => {
         const response = await api.get('/auth/profile/');
         return response.data;
       } catch (error) {
-        return user; // Fallback на дані з store
+        return user;
       }
     },
     retry: false,
-    staleTime: 5 * 60 * 1000, // 5 хвилин
+    staleTime: 5 * 60 * 1000,
   });
 
-  // Використовуємо дані з API або з store
   const currentUser = profileData || user;
 
-  const navigation = [
-    { name: 'Головна', href: '/', icon: HomeIcon },
-    { name: 'Маркетплейс', href: '/marketplace', icon: GlobeAltIcon },
-    { name: 'Магазини', href: '/stores', icon: ShoppingBagIcon },
-    { name: 'Товари', href: '/products', icon: CubeIcon, 
-      submenu: [
-        { name: 'Всі товари', href: '/products' },
-        { name: 'Категорії', href: '/categories' },
-      ]
+  // Навігація з секціями
+  const navigationSections = [
+    {
+      label: null, // Без заголовку — головна секція
+      items: [
+        { name: 'Дашборд', href: '/', icon: HomeIcon },
+        { name: 'Маркетплейс', href: '/marketplace', icon: GlobeAltIcon },
+      ],
     },
-    { name: 'Замовлення', href: '/stores/1/orders', icon: ShoppingCartIcon },
-    { name: 'Платежі', href: '/payments', icon: CreditCardIcon },
-    { name: 'Прайс-листи', href: '/pricelists', icon: DocumentTextIcon },
-    { name: 'Склад', href: '/warehouse', icon: BuildingStorefrontIcon, 
-      submenu: [
-        { name: 'Панель складу', href: '/warehouse' },
-        { name: 'Управління складами', href: '/warehouse/management' },
-        { name: 'Залишки', href: '/warehouse/inventory' },
-        { name: 'Партії товарів', href: '/warehouse/batches' },
-        { name: 'Постачальники', href: '/warehouse/suppliers' },
-        { name: 'Постачання', href: '/warehouse/supplies' },
-        { name: 'Демо сканер', href: '/warehouse/scanner-demo' },
-      ]
+    {
+      label: 'Управління',
+      items: [
+        { name: 'Магазини', href: '/stores', icon: BuildingStorefrontIcon },
+        {
+          name: 'Товари',
+          href: '/products',
+          icon: CubeIcon,
+          submenu: [
+            { name: 'Всі товари', href: '/products', icon: CubeIcon },
+            { name: 'Категорії', href: '/categories', icon: TagIcon },
+          ],
+        },
+        { name: 'Замовлення', href: '/orders', icon: ShoppingCartIcon },
+        { name: 'Платежі', href: '/payments', icon: CreditCardIcon },
+        { name: 'Прайс-листи', href: '/pricelists', icon: DocumentTextIcon },
+      ],
     },
-    { name: 'Профіль', href: '/profile', icon: UserIcon },
+    {
+      label: 'Склад',
+      items: [
+        { name: 'Панель складу', href: '/warehouse', icon: ChartBarIcon },
+        { name: 'Управління складами', href: '/warehouse/management', icon: BuildingStorefrontIcon },
+        { name: 'Залишки', href: '/warehouse/inventory', icon: ClipboardDocumentListIcon },
+        { name: 'Партії товарів', href: '/warehouse/batches', icon: Square3Stack3DIcon },
+        { name: 'Постачальники', href: '/warehouse/suppliers', icon: UserGroupIcon },
+        { name: 'Постачання', href: '/warehouse/supplies', icon: TruckIcon },
+        { name: 'Сканер', href: '/warehouse/scanner-demo', icon: QrCodeIcon },
+      ],
+    },
+    {
+      label: 'Інтеграції',
+      items: [
+        { name: 'Instagram', href: '/instagram', icon: CameraIcon },
+      ],
+    },
   ];
 
   const handleLogout = () => {
@@ -77,17 +107,18 @@ const Layout = () => {
   };
 
   const isActive = (href) => {
-    if (href === '/') {
-      return location.pathname === '/';
-    }
-    return location.pathname.startsWith(href);
+    if (href === '/') return location.pathname === '/';
+    return location.pathname === href || location.pathname.startsWith(href + '/');
   };
 
   const toggleSubmenu = (itemName) => {
     setOpenSubmenu(openSubmenu === itemName ? null : itemName);
   };
 
-  const renderNavigationItem = (item, isMobile = false) => {
+  // ========================================
+  // Рендер елементу навігації
+  // ========================================
+  const renderNavItem = (item, isMobile = false) => {
     const hasSubmenu = item.submenu && item.submenu.length > 0;
     const isSubmenuOpen = openSubmenu === item.name;
     const isItemActive = isActive(item.href);
@@ -97,43 +128,52 @@ const Layout = () => {
         <div key={item.name}>
           <button
             onClick={() => toggleSubmenu(item.name)}
-            className={`group flex items-center w-full px-2 py-2 text-sm font-medium rounded-md ${
+            className={`group flex items-center w-full px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 ${
               isItemActive
-                ? 'bg-primary-100 text-primary-900'
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md shadow-blue-500/25'
+                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
             }`}
           >
-            <item.icon className="mr-3 h-5 w-5" />
-            {item.name}
-            <svg
-              className={`ml-auto h-4 w-4 transition-transform ${
+            <item.icon className={`mr-3 h-5 w-5 flex-shrink-0 ${
+              isItemActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-600'
+            }`} />
+            <span className="flex-1 text-left">{item.name}</span>
+            <ChevronRightIcon
+              className={`h-4 w-4 transition-transform duration-200 ${
                 isSubmenuOpen ? 'rotate-90' : ''
-              }`}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
+              } ${isItemActive ? 'text-white/80' : 'text-gray-400'}`}
+            />
           </button>
-          {isSubmenuOpen && (
-            <div className="ml-6 mt-1 space-y-1">
-              {item.submenu.map((subItem) => (
-                <Link
-                  key={subItem.name}
-                  to={subItem.href}
-                  className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
-                    location.pathname === subItem.href
-                      ? 'bg-primary-50 text-primary-700 border-l-4 border-primary-700'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
-                  onClick={() => isMobile && setSidebarOpen(false)}
-                >
-                  {subItem.name}
-                </Link>
-              ))}
+          <div
+            className={`overflow-hidden transition-all duration-200 ${
+              isSubmenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+            }`}
+          >
+            <div className="ml-4 mt-1 space-y-0.5 border-l-2 border-gray-200 pl-3">
+              {item.submenu.map((subItem) => {
+                const isSubActive = location.pathname === subItem.href;
+                return (
+                  <Link
+                    key={subItem.name}
+                    to={subItem.href}
+                    className={`flex items-center px-3 py-2 text-sm rounded-lg transition-all duration-200 ${
+                      isSubActive
+                        ? 'bg-blue-50 text-blue-700 font-medium'
+                        : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                    onClick={() => isMobile && setSidebarOpen(false)}
+                  >
+                    {subItem.icon && (
+                      <subItem.icon className={`mr-2.5 h-4 w-4 ${
+                        isSubActive ? 'text-blue-600' : 'text-gray-400'
+                      }`} />
+                    )}
+                    {subItem.name}
+                  </Link>
+                );
+              })}
             </div>
-          )}
+          </div>
         </div>
       );
     }
@@ -142,110 +182,196 @@ const Layout = () => {
       <Link
         key={item.name}
         to={item.href}
-        className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
+        className={`group flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 ${
           isItemActive
-            ? 'bg-primary-100 text-primary-900'
-            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+            ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md shadow-blue-500/25'
+            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
         }`}
         onClick={() => isMobile && setSidebarOpen(false)}
       >
-        <item.icon className="mr-3 h-5 w-5" />
+        <item.icon className={`mr-3 h-5 w-5 flex-shrink-0 ${
+          isItemActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-600'
+        }`} />
         {item.name}
       </Link>
     );
   };
 
+  // ========================================
+  // Рендер sidebar контенту (спільний для mobile та desktop)
+  // ========================================
+  const renderSidebarContent = (isMobile = false) => (
+    <>
+      {/* Logo / Brand */}
+      <div className="flex items-center h-16 px-5 border-b border-gray-100 flex-shrink-0">
+        <div className="flex items-center space-x-3">
+          <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+            <ShoppingBagIcon className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-base font-bold text-gray-900 leading-tight">StoreHub</h1>
+            <p className="text-[11px] text-gray-400 leading-tight">Панель управління</p>
+          </div>
+        </div>
+        {isMobile && (
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="ml-auto p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <XMarkIcon className="h-5 w-5" />
+          </button>
+        )}
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
+        {navigationSections.map((section, sIdx) => (
+          <div key={sIdx}>
+            {section.label && (
+              <div className="px-3 mb-2">
+                <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+                  {section.label}
+                </span>
+              </div>
+            )}
+            <div className="space-y-1.5">
+              {section.items.map((item) => renderNavItem(item, isMobile))}
+            </div>
+          </div>
+        ))}
+      </nav>
+
+      {/* User Section at bottom */}
+      <div className="flex-shrink-0 border-t border-gray-100 p-4">
+        <Link
+          to="/profile"
+          className="flex items-center space-x-3 p-2.5 rounded-xl hover:bg-gray-50 transition-colors group"
+          onClick={() => isMobile && setSidebarOpen(false)}
+        >
+          <div className="h-10 w-10 rounded-xl overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center flex-shrink-0">
+            {currentUser?.avatar ? (
+              <img
+                src={currentUser.avatar}
+                alt="Avatar"
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <UserIcon className="h-5 w-5 text-gray-500" />
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-gray-900 truncate">
+              {currentUser?.first_name} {currentUser?.last_name}
+            </p>
+            <p className="text-xs text-gray-500 truncate">{currentUser?.email}</p>
+          </div>
+          <Cog6ToothIcon className="h-5 w-5 text-gray-400 group-hover:text-gray-600 flex-shrink-0 transition-colors" />
+        </Link>
+      </div>
+    </>
+  );
+
+  // ========================================
+  // RENDER
+  // ========================================
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Mobile sidebar */}
-      <div className={`fixed inset-0 z-50 lg:hidden ${sidebarOpen ? 'block' : 'hidden'}`}>
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
-        <div className="fixed inset-y-0 left-0 flex w-64 flex-col bg-white">
-          <div className="flex h-16 items-center justify-between px-4">
-            <h1 className="text-xl font-semibold text-gray-900">SaaS Platform</h1>
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <XMarkIcon className="h-6 w-6" />
-            </button>
-          </div>
-          <nav className="flex-1 space-y-1 px-2 py-4">
-            {navigation.map((item) => renderNavigationItem(item, true))}
-          </nav>
+      {/* Mobile sidebar overlay */}
+      <div
+        className={`fixed inset-0 z-50 xl:hidden transition-opacity duration-300 ${
+          sidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+      >
+        <div
+          className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm"
+          onClick={() => setSidebarOpen(false)}
+        />
+        <div
+          className={`fixed inset-y-0 left-0 flex w-72 flex-col bg-white shadow-2xl transition-transform duration-300 ${
+            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
+        >
+          {renderSidebarContent(true)}
         </div>
       </div>
 
       {/* Desktop sidebar */}
-      <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
-        <div className="flex flex-col flex-grow bg-white border-r border-gray-200">
-          <div className="flex h-16 items-center px-4">
-            <h1 className="text-xl font-semibold text-gray-900">SaaS Platform</h1>
-          </div>
-          <nav className="flex-1 space-y-1 px-2 py-4">
-            {navigation.map((item) => renderNavigationItem(item, false))}
-          </nav>
+      <div className="hidden xl:fixed xl:inset-y-0 xl:z-30 xl:flex xl:w-72 xl:flex-col">
+        <div className="flex flex-col h-full overflow-hidden bg-white border-r border-gray-200/80">
+          {renderSidebarContent(false)}
         </div>
       </div>
 
       {/* Main content */}
-      <div className="lg:pl-64">
+      <div className="xl:pl-72">
         {/* Top bar */}
-        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
+        <div className="sticky top-0 z-40 flex h-16 items-center gap-x-4 border-b border-gray-200/80 bg-white/80 backdrop-blur-xl px-4 sm:px-6 xl:px-8">
+          {/* Mobile menu button */}
           <button
             type="button"
-            className="-m-2.5 p-2.5 text-gray-700 lg:hidden"
+            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors xl:hidden"
             onClick={() => setSidebarOpen(true)}
           >
             <Bars3Icon className="h-6 w-6" />
           </button>
 
-          <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-            <div className="flex flex-1" />
-            <div className="flex items-center gap-x-4 lg:gap-x-6">
-              {/* Profile dropdown */}
-              <div className="relative">
-                <div className="flex items-center space-x-3">
-                  {/* Avatar */}
-                  <div className="h-8 w-8 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
-                    {currentUser?.avatar ? (
-                      <img
-                        src={currentUser.avatar}
-                        alt="Avatar"
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <UserIcon className="h-5 w-5 text-gray-400" />
-                    )}
-                  </div>
-                  
-                  <div className="text-sm">
-                    <p className="font-medium text-gray-900">{currentUser?.first_name} {currentUser?.last_name}</p>
-                    <p className="text-gray-500">{currentUser?.email}</p>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => navigate('/profile')}
-                      className="p-1 text-gray-400 hover:text-gray-600"
-                    >
-                      <Cog6ToothIcon className="h-5 w-5" />
-                    </button>
-                    <button
-                      onClick={handleLogout}
-                      className="text-sm text-gray-500 hover:text-gray-700"
-                    >
-                      Вийти
-                    </button>
-                  </div>
-                </div>
+          {/* Breadcrumb / page title area */}
+          <div className="flex-1" />
+
+          {/* Right side actions */}
+          <div className="flex items-center gap-x-3">
+            {/* Notifications */}
+            <button className="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+              <BellIcon className="h-5 w-5" />
+              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
+            </button>
+
+            {/* Separator */}
+            <div className="h-6 w-px bg-gray-200 hidden sm:block"></div>
+
+            {/* User info */}
+            <div className="hidden sm:flex items-center gap-x-3">
+              <div className="h-8 w-8 rounded-lg overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                {currentUser?.avatar ? (
+                  <img
+                    src={currentUser.avatar}
+                    alt="Avatar"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <UserIcon className="h-4 w-4 text-gray-500" />
+                )}
+              </div>
+              <div className="text-sm leading-tight">
+                <p className="font-medium text-gray-900">
+                  {currentUser?.first_name} {currentUser?.last_name}
+                </p>
               </div>
             </div>
+
+            {/* Settings */}
+            <button
+              onClick={() => navigate('/profile')}
+              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              title="Налаштування"
+            >
+              <Cog6ToothIcon className="h-5 w-5" />
+            </button>
+
+            {/* Logout */}
+            <button
+              onClick={handleLogout}
+              className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              title="Вийти"
+            >
+              <ArrowRightOnRectangleIcon className="h-5 w-5" />
+            </button>
           </div>
         </div>
 
         {/* Page content */}
         <main className="py-6">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="px-4 sm:px-6 lg:px-8">
             <Outlet />
           </div>
         </main>
@@ -254,4 +380,4 @@ const Layout = () => {
   );
 };
 
-export default Layout; 
+export default Layout;

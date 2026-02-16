@@ -6,7 +6,6 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.views.decorators.http import csrf_exempt
 from django.views.decorators.csrf import csrf_exempt as csrf_exempt_decorator
 from django.http import JsonResponse
 from django.conf import settings

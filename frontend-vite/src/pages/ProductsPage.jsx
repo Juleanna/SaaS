@@ -91,26 +91,26 @@ const ProductsPage = () => {
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors"
+            className="btn btn-primary"
           >
             + Новий товар
           </button>
         </div>
 
         {/* Пошук та фільтри */}
-        <div className="bg-white rounded-lg shadow p-6 mb-8">
+        <div className="card card-body mb-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <input
               type="text"
               placeholder="Пошук товарів..."
               value={filters.search}
               onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="input"
             />
             <select
               value={filters.category}
               onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="input"
             >
               <option value="">Всі категорії</option>
               <option value="electronics">Електроніка</option>
@@ -121,7 +121,7 @@ const ProductsPage = () => {
             </select>
             <button
               onClick={() => setFilters({ search: '', category: '' })}
-              className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-900 rounded-lg font-semibold"
+              className="btn btn-outline"
             >
               Скинути
             </button>
@@ -136,11 +136,11 @@ const ProductsPage = () => {
 
         {/* Сітка товарів */}
         {products.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-8 text-center">
+          <div className="card card-body text-center">
             <p className="text-gray-600 text-lg mb-4">Немає товарів</p>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="inline-block px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors"
+              className="btn btn-primary"
             >
               + Додати перший товар
             </button>
@@ -178,7 +178,7 @@ const ProductsPage = () => {
  */
 const ProductCard = ({ product, onEdit, onDelete }) => {
   return (
-    <div className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow overflow-hidden">
+    <div className="card overflow-hidden">
       {product.image && (
         <img
           src={product.image}
@@ -212,25 +212,21 @@ const ProductCard = ({ product, onEdit, onDelete }) => {
         </div>
 
         {product.status === 'active' ? (
-          <span className="inline-block px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold mb-4">
-            ✓ Активний
-          </span>
+          <span className="badge badge-success mb-4">Активний</span>
         ) : (
-          <span className="inline-block px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-semibold mb-4">
-            ⊘ Неактивний
-          </span>
+          <span className="badge badge-secondary mb-4">Неактивний</span>
         )}
 
         <div className="flex gap-2">
           <Link
             to={`/products/${product.id}/edit`}
-            className="flex-1 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded font-semibold text-sm transition-colors"
+            className="btn btn-primary btn-sm flex-1"
           >
             Редагувати
           </Link>
           <button
             onClick={onDelete}
-            className="flex-1 px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded font-semibold text-sm transition-colors"
+            className="btn btn-danger btn-sm flex-1"
           >
             Видалити
           </button>
@@ -292,7 +288,7 @@ const CreateProductModal = ({ onClose, storeId }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-8 max-w-md w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
         <h2 className="text-2xl font-bold text-gray-900 mb-6">
           ➕ Новий товар
         </h2>
@@ -300,7 +296,7 @@ const CreateProductModal = ({ onClose, storeId }) => {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Назва */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="form-label">
               Назва товара
             </label>
             <input
@@ -309,14 +305,14 @@ const CreateProductModal = ({ onClose, storeId }) => {
               value={formData.name}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="input"
               placeholder="Введіть назву"
             />
           </div>
 
           {/* Опис */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="form-label">
               Опис
             </label>
             <textarea
@@ -324,14 +320,14 @@ const CreateProductModal = ({ onClose, storeId }) => {
               value={formData.description}
               onChange={handleChange}
               rows={3}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="input"
               placeholder="Введіть опис товара"
             />
           </div>
 
           {/* Ціна */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="form-label">
               Ціна (₴)
             </label>
             <input
@@ -341,14 +337,14 @@ const CreateProductModal = ({ onClose, storeId }) => {
               onChange={handleChange}
               required
               step="0.01"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="input"
               placeholder="0.00"
             />
           </div>
 
           {/* Кількість */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="form-label">
               Наявна кількість
             </label>
             <input
@@ -357,21 +353,21 @@ const CreateProductModal = ({ onClose, storeId }) => {
               value={formData.stock}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="input"
               placeholder="0"
             />
           </div>
 
           {/* Категорія */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="form-label">
               Категорія
             </label>
             <select
               name="category"
               value={formData.category}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="input"
             >
               <option value="electronics">Електроніка</option>
               <option value="clothing">Одяг</option>
@@ -383,14 +379,14 @@ const CreateProductModal = ({ onClose, storeId }) => {
 
           {/* Статус */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="form-label">
               Статус
             </label>
             <select
               name="status"
               value={formData.status}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="input"
             >
               <option value="active">Активний</option>
               <option value="inactive">Неактивний</option>
@@ -409,7 +405,7 @@ const CreateProductModal = ({ onClose, storeId }) => {
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold disabled:opacity-50"
+              className="btn btn-primary flex-1 disabled:opacity-50"
             >
               {loading ? 'Створення...' : 'Створити'}
             </button>

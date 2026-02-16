@@ -49,9 +49,9 @@ const ScannerDemo = () => {
 
   const getTypeColor = (type) => {
     switch (type) {
-      case 'barcode': return 'bg-blue-100 text-blue-800';
-      case 'qr_code': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'barcode': return 'badge-info';
+      case 'qr_code': return 'badge-success';
+      default: return 'badge-secondary';
     }
   };
 
@@ -75,13 +75,13 @@ const ScannerDemo = () => {
             <ArrowLeftIcon className="h-5 w-5" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Демо сканера штрих-кодів</h1>
-            <p className="text-gray-600">Тестування функціональності сканування</p>
+            <h1 className="text-3xl font-bold text-gray-900">Демо сканера штрих-кодів</h1>
+            <p className="mt-1 text-sm text-gray-500">Тестування функціональності сканування</p>
           </div>
         </div>
         <button
           onClick={() => setIsScannerOpen(true)}
-          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          className="btn btn-primary flex items-center"
         >
           <QrCodeIcon className="h-5 w-5 mr-2" />
           Сканувати код
@@ -90,7 +90,7 @@ const ScannerDemo = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="card card-body">
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <ListBulletIcon className="h-8 w-8 text-blue-600" />
@@ -104,7 +104,7 @@ const ScannerDemo = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="card card-body">
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <QrCodeIcon className="h-8 w-8 text-green-600" />
@@ -118,7 +118,7 @@ const ScannerDemo = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="card card-body">
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <CheckCircleIcon className="h-8 w-8 text-purple-600" />
@@ -160,7 +160,7 @@ const ScannerDemo = () => {
 
       {/* Scanned Codes History */}
       {scannedCodes.length > 0 ? (
-        <div className="bg-white rounded-lg shadow">
+        <div className="card">
           <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
             <h3 className="text-lg font-medium text-gray-900">Історія сканування</h3>
             <button
@@ -204,7 +204,7 @@ const ScannerDemo = () => {
                       <div className="text-sm font-mono text-gray-900">{scan.code}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getTypeColor(scan.type)}`}>
+                      <span className={`badge ${getTypeColor(scan.type)}`}>
                         {getTypeText(scan.type)}
                       </span>
                     </td>
@@ -230,7 +230,7 @@ const ScannerDemo = () => {
           </div>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow p-12 text-center">
+        <div className="card card-body p-12 text-center">
           <QrCodeIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">Немає відсканованих кодів</h3>
           <p className="text-gray-600 mb-6">
@@ -238,7 +238,7 @@ const ScannerDemo = () => {
           </p>
           <button
             onClick={() => setIsScannerOpen(true)}
-            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="btn btn-primary inline-flex items-center"
           >
             <QrCodeIcon className="h-5 w-5 mr-2" />
             Сканувати перший код

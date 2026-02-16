@@ -218,7 +218,7 @@ const Orders = () => {
       {/* Заголовок */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Замовлення</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Замовлення</h1>
           <p className="mt-1 text-sm text-gray-500">
             Керуйте всіма замовленнями вашого магазину
           </p>
@@ -246,7 +246,7 @@ const Orders = () => {
         <div className="card-body">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="form-label">
                 Пошук
               </label>
               <div className="relative">
@@ -256,19 +256,19 @@ const Orders = () => {
                   placeholder="Номер замовлення, клієнт..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="input pl-10"
                 />
               </div>
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="form-label">
                 Статус
               </label>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="input"
               >
                 <option value="all">Всі</option>
                 <option value="pending">Очікують</option>
@@ -281,13 +281,13 @@ const Orders = () => {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="form-label">
                 Період
               </label>
               <select
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="input"
               >
                 <option value="all">Весь час</option>
                 <option value="today">Сьогодні</option>
@@ -297,7 +297,7 @@ const Orders = () => {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="form-label">
                 Дії
               </label>
               <button
@@ -306,7 +306,7 @@ const Orders = () => {
                   setStatusFilter('all');
                   setDateFilter('all');
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="btn btn-outline w-full"
               >
                 Очистити
               </button>

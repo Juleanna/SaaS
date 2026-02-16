@@ -136,7 +136,7 @@ const StockBatches = () => {
       {/* Заголовок */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Партії товарів</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Партії товарів</h1>
           <p className="mt-1 text-sm text-gray-500">
             Управління партіями товарів для FIFO/LIFO розрахунків
           </p>
@@ -149,7 +149,7 @@ const StockBatches = () => {
               const warehouse = warehouses.find(w => w.id === parseInt(e.target.value));
               handleWarehouseChange(warehouse);
             }}
-            className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+            className="input"
           >
             <option value="">Оберіть склад</option>
             {warehouses.map(warehouse => (
@@ -165,8 +165,8 @@ const StockBatches = () => {
         <>
           {/* Статистика */}
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
+            <div className="card">
+              <div className="card-body">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
                     <ChartBarIcon className="h-6 w-6 text-gray-400" />
@@ -181,8 +181,8 @@ const StockBatches = () => {
               </div>
             </div>
 
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
+            <div className="card">
+              <div className="card-body">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
                     <CheckCircleIcon className="h-6 w-6 text-green-400" />
@@ -197,8 +197,8 @@ const StockBatches = () => {
               </div>
             </div>
 
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
+            <div className="card">
+              <div className="card-body">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
                     <ClockIcon className="h-6 w-6 text-yellow-400" />
@@ -213,8 +213,8 @@ const StockBatches = () => {
               </div>
             </div>
 
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
+            <div className="card">
+              <div className="card-body">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
                     <ExclamationTriangleIcon className="h-6 w-6 text-red-400" />
@@ -229,8 +229,8 @@ const StockBatches = () => {
               </div>
             </div>
 
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
+            <div className="card">
+              <div className="card-body">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
                     <TruckIcon className="h-6 w-6 text-blue-400" />
@@ -247,8 +247,8 @@ const StockBatches = () => {
           </div>
 
           {/* Фільтри та пошук */}
-          <div className="bg-white shadow rounded-lg">
-            <div className="px-4 py-5 sm:p-6">
+          <div className="card">
+            <div className="card-body">
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
                 <div className="flex-1 max-w-lg">
                   <div className="relative">
@@ -260,7 +260,7 @@ const StockBatches = () => {
                       placeholder="Пошук партій за товаром, номером партії або постачальником..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                      className="input pl-10"
                     />
                   </div>
                 </div>
@@ -269,7 +269,7 @@ const StockBatches = () => {
                   <select
                     value={selectedProduct}
                     onChange={(e) => setSelectedProduct(e.target.value)}
-                    className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                    className="input"
                   >
                     <option value="">Всі товари</option>
                     {uniqueProducts.map(product => (
@@ -282,7 +282,7 @@ const StockBatches = () => {
                   <select
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
-                    className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                    className="input"
                   >
                     <option value="all">Всі статуси</option>
                     <option value="active">Активні</option>
@@ -315,8 +315,8 @@ const StockBatches = () => {
           )}
 
           {/* Таблиця партій */}
-          <div className="bg-white shadow rounded-lg overflow-hidden">
-            <div className="px-4 py-5 sm:p-6">
+          <div className="card overflow-hidden">
+            <div className="card-body">
               <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
                 Партії товарів ({filteredBatches.length})
               </h3>
@@ -417,7 +417,7 @@ const StockBatches = () => {
                               ) : '—'}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
+                              <span className={`badge ${getStatusColor(status)}`}>
                                 {getStatusIcon(status)}
                                 <span className="ml-1">{getStatusText(status)}</span>
                               </span>
@@ -464,7 +464,7 @@ const StockBatches = () => {
                   <h3 className="text-lg leading-6 font-medium text-gray-900">
                     Деталі партії
                   </h3>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(getBatchStatus(selectedBatch))}`}>
+                  <span className={`badge ${getStatusColor(getBatchStatus(selectedBatch))}`}>
                     {getStatusIcon(getBatchStatus(selectedBatch))}
                     <span className="ml-1">{getStatusText(getBatchStatus(selectedBatch))}</span>
                   </span>
@@ -473,29 +473,29 @@ const StockBatches = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Номер партії</label>
+                      <label className="form-label">Номер партії</label>
                       <p className="mt-1 text-sm text-gray-900">{selectedBatch.batch_number}</p>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Товар</label>
+                      <label className="form-label">Товар</label>
                       <p className="mt-1 text-sm text-gray-900">{selectedBatch.product?.name}</p>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Фасування</label>
+                      <label className="form-label">Фасування</label>
                       <p className="mt-1 text-sm text-gray-900">
                         {selectedBatch.packaging?.quantity} {selectedBatch.packaging?.unit?.short_name}
                       </p>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Постачальник</label>
+                      <label className="form-label">Постачальник</label>
                       <p className="mt-1 text-sm text-gray-900">{selectedBatch.supplier?.name || '—'}</p>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Постачання</label>
+                      <label className="form-label">Постачання</label>
                       <p className="mt-1 text-sm text-gray-900">
                         {selectedBatch.supply ? `#${selectedBatch.supply.number}` : '—'}
                       </p>
@@ -504,17 +504,17 @@ const StockBatches = () => {
 
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Початкова кількість</label>
+                      <label className="form-label">Початкова кількість</label>
                       <p className="mt-1 text-sm text-gray-900">{selectedBatch.initial_quantity}</p>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Залишок</label>
+                      <label className="form-label">Залишок</label>
                       <p className="mt-1 text-sm text-gray-900">{selectedBatch.remaining_quantity}</p>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Використано</label>
+                      <label className="form-label">Використано</label>
                       <p className="mt-1 text-sm text-gray-900">
                         {selectedBatch.initial_quantity - selectedBatch.remaining_quantity} 
                         ({(((selectedBatch.initial_quantity - selectedBatch.remaining_quantity) / selectedBatch.initial_quantity) * 100).toFixed(1)}%)
@@ -522,12 +522,12 @@ const StockBatches = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Собівартість за одиницю</label>
+                      <label className="form-label">Собівартість за одиницю</label>
                       <p className="mt-1 text-sm text-gray-900">₴{selectedBatch.unit_cost}</p>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Загальна вартість залишку</label>
+                      <label className="form-label">Загальна вартість залишку</label>
                       <p className="mt-1 text-sm text-gray-900">
                         ₴{(selectedBatch.remaining_quantity * selectedBatch.unit_cost).toLocaleString()}
                       </p>
@@ -537,14 +537,14 @@ const StockBatches = () => {
 
                 <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Дата надходження</label>
+                    <label className="form-label">Дата надходження</label>
                     <p className="mt-1 text-sm text-gray-900">
                       {new Date(selectedBatch.received_date).toLocaleString()}
                     </p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Термін придатності</label>
+                    <label className="form-label">Термін придатності</label>
                     <p className="mt-1 text-sm text-gray-900">
                       {selectedBatch.expiry_date ? new Date(selectedBatch.expiry_date).toLocaleDateString() : 'Не вказано'}
                     </p>
@@ -553,7 +553,7 @@ const StockBatches = () => {
 
                 {selectedBatch.notes && (
                   <div className="mt-6">
-                    <label className="block text-sm font-medium text-gray-700">Примітки</label>
+                    <label className="form-label">Примітки</label>
                     <p className="mt-1 text-sm text-gray-900">{selectedBatch.notes}</p>
                   </div>
                 )}
@@ -563,7 +563,7 @@ const StockBatches = () => {
                 <button
                   type="button"
                   onClick={closeDetailModal}
-                  className="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
+                  className="btn btn-secondary sm:ml-3 sm:w-auto"
                 >
                   Закрити
                 </button>

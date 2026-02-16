@@ -316,9 +316,9 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="space-y-8 p-6 bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20 min-h-screen">
+    <div className="space-y-6 overflow-hidden">
       {/* Заголовок */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center space-x-4">
           <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
             <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -326,146 +326,115 @@ const Dashboard = () => {
             </svg>
           </div>
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-              Привіт, {user?.first_name || user?.username}! 👋
+            <h1 className="text-2xl font-bold text-gray-900">
+              Привіт, {user?.first_name || user?.username}!
             </h1>
             <p className="mt-1 text-sm text-gray-500">
               Ось що відбувається у ваших магазинах сьогодні
             </p>
           </div>
         </div>
-        <div className="text-right bg-white/60 backdrop-blur-sm p-4 rounded-2xl border border-gray-200/50 shadow-lg">
+        <div className="text-right bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
           <p className="text-sm font-semibold text-gray-600">Сьогодні</p>
           <p className="text-lg font-bold text-gray-900">
-            {new Date().toLocaleDateString('uk-UA', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
+            {new Date().toLocaleDateString('uk-UA', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
             })}
           </p>
         </div>
       </div>
 
       {/* Основна статистика */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100/60 rounded-2xl p-6 shadow-lg border border-blue-200/50 backdrop-blur-sm">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-5 shadow-sm border border-blue-200/50 min-w-0 overflow-hidden">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                <ShoppingBagIcon className="h-6 w-6 text-white" />
+              <div className="w-11 h-11 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                <ShoppingBagIcon className="h-5 w-5 text-white" />
               </div>
             </div>
-            <div className="ml-4 flex-1">
-              <dt className="text-sm font-semibold text-blue-700/80 truncate">
-                Магазини
-              </dt>
-              <dd className="flex items-baseline">
-                <div className="text-2xl font-bold text-blue-900">
-                  {statsLoading ? (
-                    <div className="animate-pulse bg-blue-200 h-6 w-8 rounded"></div>
-                  ) : (
-                    dashboardStats?.stores_count || 0
-                  )}
-                </div>
+            <div className="ml-3 flex-1 min-w-0">
+              <dt className="text-xs font-semibold text-blue-700/80 truncate">Магазини</dt>
+              <dd className="flex items-baseline flex-wrap">
+                <span className="text-xl font-bold text-blue-900">
+                  {statsLoading ? '...' : (dashboardStats?.stores_count || 0)}
+                </span>
                 {dashboardStats?.trends?.stores && (
-                  <div className={`ml-2 flex items-baseline text-sm font-semibold ${getTrendColor(dashboardStats.trends.stores.direction)}`}>
-                    {React.createElement(getTrendIcon(dashboardStats.trends.stores.direction), { className: 'h-4 w-4 flex-shrink-0 self-center' })}
-                    <span className="sr-only">
-                      {dashboardStats.trends.stores.direction === 'up' ? 'Збільшення' : 'Зменшення'} на
-                    </span>
-                    {dashboardStats.trends.stores.value}%
-                  </div>
+                  <span className={`ml-2 text-xs font-semibold ${getTrendColor(dashboardStats.trends.stores.direction)}`}>
+                    {dashboardStats.trends.stores.direction === 'up' ? '\u2191' : '\u2193'}{dashboardStats.trends.stores.value}%
+                  </span>
                 )}
               </dd>
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-green-50 to-green-100/60 rounded-2xl p-6 shadow-lg border border-green-200/50 backdrop-blur-sm">
+        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-5 shadow-sm border border-green-200/50 min-w-0 overflow-hidden">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
-                <CubeIcon className="h-6 w-6 text-white" />
+              <div className="w-11 h-11 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
+                <CubeIcon className="h-5 w-5 text-white" />
               </div>
             </div>
-            <div className="ml-4 flex-1">
-              <dt className="text-sm font-semibold text-green-700/80 truncate">
-                Товари
-              </dt>
-              <dd className="flex items-baseline">
-                <div className="text-2xl font-bold text-green-900">
-                  {statsLoading ? (
-                    <div className="animate-pulse bg-green-200 h-6 w-8 rounded"></div>
-                  ) : (
-                    dashboardStats?.products_count || 0
-                  )}
-                </div>
+            <div className="ml-3 flex-1 min-w-0">
+              <dt className="text-xs font-semibold text-green-700/80 truncate">Товари</dt>
+              <dd className="flex items-baseline flex-wrap">
+                <span className="text-xl font-bold text-green-900">
+                  {statsLoading ? '...' : (dashboardStats?.products_count || 0)}
+                </span>
                 {dashboardStats?.trends?.products && (
-                  <div className={`ml-2 flex items-baseline text-sm font-semibold ${getTrendColor(dashboardStats.trends.products.direction)}`}>
-                    {React.createElement(getTrendIcon(dashboardStats.trends.products.direction), { className: 'h-4 w-4 flex-shrink-0 self-center' })}
-                    {dashboardStats.trends.products.value}%
-                  </div>
+                  <span className={`ml-2 text-xs font-semibold ${getTrendColor(dashboardStats.trends.products.direction)}`}>
+                    {dashboardStats.trends.products.direction === 'up' ? '\u2191' : '\u2193'}{dashboardStats.trends.products.value}%
+                  </span>
                 )}
               </dd>
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-yellow-50 to-yellow-100/60 rounded-2xl p-6 shadow-lg border border-yellow-200/50 backdrop-blur-sm">
+        <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-2xl p-5 shadow-sm border border-yellow-200/50 min-w-0 overflow-hidden">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl flex items-center justify-center shadow-lg">
-                <ShoppingCartIcon className="h-6 w-6 text-white" />
+              <div className="w-11 h-11 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl flex items-center justify-center">
+                <ShoppingCartIcon className="h-5 w-5 text-white" />
               </div>
             </div>
-            <div className="ml-4 flex-1">
-              <dt className="text-sm font-semibold text-yellow-700/80 truncate">
-                Замовлення
-              </dt>
-              <dd className="flex items-baseline">
-                <div className="text-2xl font-bold text-yellow-900">
-                  {statsLoading ? (
-                    <div className="animate-pulse bg-yellow-200 h-6 w-8 rounded"></div>
-                  ) : (
-                    dashboardStats?.orders_count || 0
-                  )}
-                </div>
+            <div className="ml-3 flex-1 min-w-0">
+              <dt className="text-xs font-semibold text-yellow-700/80 truncate">Замовлення</dt>
+              <dd className="flex items-baseline flex-wrap">
+                <span className="text-xl font-bold text-yellow-900">
+                  {statsLoading ? '...' : (dashboardStats?.orders_count || 0)}
+                </span>
                 {dashboardStats?.trends?.orders && (
-                  <div className={`ml-2 flex items-baseline text-sm font-semibold ${getTrendColor(dashboardStats.trends.orders.direction)}`}>
-                    {React.createElement(getTrendIcon(dashboardStats.trends.orders.direction), { className: 'h-4 w-4 flex-shrink-0 self-center' })}
-                    {dashboardStats.trends.orders.value}%
-                  </div>
+                  <span className={`ml-2 text-xs font-semibold ${getTrendColor(dashboardStats.trends.orders.direction)}`}>
+                    {dashboardStats.trends.orders.direction === 'up' ? '\u2191' : '\u2193'}{dashboardStats.trends.orders.value}%
+                  </span>
                 )}
               </dd>
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-purple-50 to-purple-100/60 rounded-2xl p-6 shadow-lg border border-purple-200/50 backdrop-blur-sm">
+        <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-5 shadow-sm border border-purple-200/50 min-w-0 overflow-hidden">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                <CurrencyDollarIcon className="h-6 w-6 text-white" />
+              <div className="w-11 h-11 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <CurrencyDollarIcon className="h-5 w-5 text-white" />
               </div>
             </div>
-            <div className="ml-4 flex-1">
-              <dt className="text-sm font-semibold text-purple-700/80 truncate">
-                Загальний дохід
-              </dt>
-              <dd className="flex items-baseline">
-                <div className="text-2xl font-bold text-purple-900">
-                  {statsLoading ? (
-                    <div className="animate-pulse bg-purple-200 h-6 w-16 rounded"></div>
-                  ) : (
-                    formatPrice(dashboardStats?.total_revenue || 0)
-                  )}
-                </div>
+            <div className="ml-3 flex-1 min-w-0">
+              <dt className="text-xs font-semibold text-purple-700/80 truncate">Загальний дохід</dt>
+              <dd className="flex items-baseline flex-wrap">
+                <span className="text-lg font-bold text-purple-900 truncate">
+                  {statsLoading ? '...' : formatPrice(dashboardStats?.total_revenue || 0)}
+                </span>
                 {dashboardStats?.trends?.revenue && (
-                  <div className={`ml-2 flex items-baseline text-sm font-semibold ${getTrendColor(dashboardStats.trends.revenue.direction)}`}>
-                    {React.createElement(getTrendIcon(dashboardStats.trends.revenue.direction), { className: 'h-4 w-4 flex-shrink-0 self-center' })}
-                    {dashboardStats.trends.revenue.value}%
-                  </div>
+                  <span className={`ml-1 text-xs font-semibold ${getTrendColor(dashboardStats.trends.revenue.direction)}`}>
+                    {dashboardStats.trends.revenue.direction === 'up' ? '\u2191' : '\u2193'}{dashboardStats.trends.revenue.value}%
+                  </span>
                 )}
               </dd>
             </div>
@@ -474,68 +443,50 @@ const Dashboard = () => {
       </div>
 
       {/* Додаткова статистика */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-        <div className="bg-gradient-to-br from-indigo-50 to-indigo-100/60 rounded-2xl p-6 shadow-lg border border-indigo-200/50 backdrop-blur-sm">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-2xl p-5 shadow-sm border border-indigo-200/50 min-w-0 overflow-hidden">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center">
                 <CurrencyDollarIcon className="h-5 w-5 text-white" />
               </div>
             </div>
-            <div className="ml-4 flex-1">
-              <dt className="text-sm font-semibold text-indigo-700/80 truncate">
-                Середній чек
-              </dt>
-              <dd className="text-lg font-bold text-indigo-900">
-                {statsLoading ? (
-                  <div className="animate-pulse bg-indigo-200 h-5 w-12 rounded"></div>
-                ) : (
-                  formatPrice(dashboardStats?.average_order_value || 0)
-                )}
+            <div className="ml-3 flex-1 min-w-0">
+              <dt className="text-xs font-semibold text-indigo-700/80 truncate">Середній чек</dt>
+              <dd className="text-lg font-bold text-indigo-900 truncate">
+                {statsLoading ? '...' : formatPrice(dashboardStats?.average_order_value || 0)}
               </dd>
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-orange-50 to-orange-100/60 rounded-2xl p-6 shadow-lg border border-orange-200/50 backdrop-blur-sm">
+        <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-5 shadow-sm border border-orange-200/50 min-w-0 overflow-hidden">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
                 <ClockIcon className="h-5 w-5 text-white" />
               </div>
             </div>
-            <div className="ml-4 flex-1">
-              <dt className="text-sm font-semibold text-orange-700/80 truncate">
-                Замовлень за тиждень
-              </dt>
+            <div className="ml-3 flex-1 min-w-0">
+              <dt className="text-xs font-semibold text-orange-700/80 truncate">Замовлень за тиждень</dt>
               <dd className="text-lg font-bold text-orange-900">
-                {statsLoading ? (
-                  <div className="animate-pulse bg-orange-200 h-5 w-8 rounded"></div>
-                ) : (
-                  dashboardStats?.weekly_orders || 0
-                )}
+                {statsLoading ? '...' : (dashboardStats?.weekly_orders || 0)}
               </dd>
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-pink-50 to-pink-100/60 rounded-2xl p-6 shadow-lg border border-pink-200/50 backdrop-blur-sm">
+        <div className="bg-gradient-to-br from-pink-50 to-pink-100 rounded-2xl p-5 shadow-sm border border-pink-200/50 min-w-0 overflow-hidden">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <div className="w-10 h-10 bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-10 h-10 bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl flex items-center justify-center">
                 <UserGroupIcon className="h-5 w-5 text-white" />
               </div>
             </div>
-            <div className="ml-4 flex-1">
-              <dt className="text-sm font-semibold text-pink-700/80 truncate">
-                Конверсія
-              </dt>
+            <div className="ml-3 flex-1 min-w-0">
+              <dt className="text-xs font-semibold text-pink-700/80 truncate">Конверсія</dt>
               <dd className="text-lg font-bold text-pink-900">
-                {statsLoading ? (
-                  <div className="animate-pulse bg-pink-200 h-5 w-10 rounded"></div>
-                ) : (
-                  `${dashboardStats?.conversion_rate || 0}%`
-                )}
+                {statsLoading ? '...' : `${dashboardStats?.conversion_rate || 0}%`}
               </dd>
             </div>
           </div>
@@ -555,7 +506,7 @@ const Dashboard = () => {
             <Link
               key={action.name}
               to={action.href}
-              className="relative group bg-white/70 backdrop-blur-sm p-6 focus-within:ring-4 focus-within:ring-blue-500/20 rounded-2xl shadow-lg hover:shadow-xl border border-gray-200/50 transition-all duration-200 transform hover:scale-105 hover:-translate-y-1"
+              className="relative group bg-white p-6 focus-within:ring-4 focus-within:ring-blue-500/20 rounded-2xl shadow-sm hover:shadow-md border border-gray-200/50 transition-all duration-200"
             >
               <div>
                 <span className={`rounded-xl inline-flex p-3 ${action.color} text-white shadow-lg group-hover:scale-110 transition-transform duration-200`}>
@@ -576,7 +527,7 @@ const Dashboard = () => {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Останні замовлення */}
-        <div className="bg-white/70 backdrop-blur-sm shadow-xl rounded-2xl border border-gray-200/50">
+        <div className="bg-white shadow-sm rounded-2xl border border-gray-200/50">
           <div className="px-6 py-6 sm:p-8">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center">
@@ -660,7 +611,7 @@ const Dashboard = () => {
         </div>
 
         {/* Популярні товари */}
-        <div className="bg-white/70 backdrop-blur-sm shadow-xl rounded-2xl border border-gray-200/50">
+        <div className="bg-white shadow-sm rounded-2xl border border-gray-200/50">
           <div className="px-6 py-6 sm:p-8">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center">

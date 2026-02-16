@@ -499,23 +499,18 @@ const Stores = () => {
   return (
     <>
       <div className="space-y-8 animate-fade-in-up">
-        {/* Hero заголовок з градієнтом */}
-        <div className="glass-strong rounded-3xl p-8 text-center relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-purple-500/5 to-pink-500/10"></div>
-          <div className="relative z-10">
-            <h1 className="text-4xl font-bold gradient-text-blue mb-4">Мої магазини</h1>
-            <p className="text-lg text-gray-600 mb-8">
+        {/* Заголовок сторінки */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Мої магазини</h1>
+            <p className="mt-1 text-sm text-gray-500">
               Створюйте, керуйте та розвивайте свої інтернет-магазини в одному місці
             </p>
-            <button onClick={handleCreateStore} className="btn-primary text-sm px-4 py-2 flex items-center justify-center whitespace-nowrap mx-auto">
-              <PlusIcon className="h-4 w-4 mr-2" />
-              Створити новий магазин
-            </button>
           </div>
-          
-          {/* Декоративні елементи */}
-          <div className="absolute top-4 right-4 w-20 h-20 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-xl"></div>
-          <div className="absolute bottom-4 left-4 w-16 h-16 bg-gradient-to-br from-pink-400/20 to-orange-400/20 rounded-full blur-xl"></div>
+          <button onClick={handleCreateStore} className="btn btn-primary flex items-center whitespace-nowrap">
+            <PlusIcon className="h-4 w-4 mr-2" />
+            Створити новий магазин
+          </button>
         </div>
 
         {/* Список магазинів */}
@@ -531,7 +526,7 @@ const Stores = () => {
               <p className="text-gray-600 mb-8 max-w-md mx-auto">
                 Почніть свій шлях в електронній комерції. Створіть красивий магазин за декілька хвилин.
               </p>
-              <button onClick={handleCreateStore} className="btn-primary text-lg px-8 py-4 flex items-center justify-center whitespace-nowrap mx-auto">
+              <button onClick={handleCreateStore} className="btn btn-primary flex items-center justify-center whitespace-nowrap mx-auto">
                 <PlusIcon className="h-5 w-5 mr-3" />
                 Створити перший магазин
               </button>
@@ -581,21 +576,21 @@ const Stores = () => {
                   <div className="flex space-x-2">
                     <Link
                       to={`/stores/${store.id}`}
-                      className="btn-outline flex-1 flex items-center justify-center text-sm py-2 whitespace-nowrap"
+                      className="btn btn-outline flex-1 flex items-center justify-center text-sm whitespace-nowrap"
                     >
                       <EyeIcon className="h-4 w-4 mr-2" />
                       Переглянути
                     </Link>
                     <button 
                       onClick={() => handleEditStore(store)}
-                      className="btn-outline px-3 py-2"
+                      className="btn btn-outline px-3"
                       title="Редагувати"
                     >
                       <PencilIcon className="h-4 w-4" />
                     </button>
                     <button 
                       onClick={() => handleDeleteStore(store)}
-                      className="btn-outline px-3 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-200"
+                      className="btn btn-outline px-3 text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-200"
                       title="Видалити"
                     >
                       <TrashIcon className="h-4 w-4" />
@@ -614,7 +609,7 @@ const Stores = () => {
           <div className="flex items-start justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             {/* Backdrop */}
             <div 
-              className="fixed inset-0 bg-gradient-to-br from-gray-900/80 via-gray-800/70 to-slate-900/80 transition-all duration-300 backdrop-blur-sm" 
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
               onClick={() => { setShowModal(false); setActiveTab('basic'); }}
             ></div>
 
@@ -622,8 +617,8 @@ const Stores = () => {
             <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
             {/* Modal */}
-            <div className="relative z-10 inline-block align-bottom bg-white rounded-2xl text-left shadow-2xl transform transition-all duration-300 sm:my-8 sm:align-middle w-full max-w-5xl border border-gray-200/50 overflow-hidden">
-              <div className="bg-gradient-to-br from-white via-gray-50/50 to-blue-50/30 px-6 pt-6 pb-4 sm:p-8 sm:pb-6">
+            <div className="relative z-10 inline-block align-bottom bg-white rounded-2xl shadow-2xl text-left transform transition-all sm:my-8 sm:align-middle w-full max-w-5xl overflow-hidden">
+              <div className="card-body">
                 <div className="flex items-center justify-between mb-8">
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -632,7 +627,7 @@ const Stores = () => {
                       </svg>
                     </div>
                     <div>
-                      <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+                      <h3 className="text-2xl font-bold text-gray-900">
                         {editingStore ? 'Редагувати магазин' : 'Створити магазин'}
                       </h3>
                       <p className="text-sm text-gray-500 mt-1">
@@ -924,7 +919,7 @@ const Stores = () => {
                           <button
                             type="button"
                             onClick={addSocialLink}
-                            className="btn-outline flex items-center whitespace-nowrap"
+                            className="btn btn-outline flex items-center whitespace-nowrap"
                           >
                             <PlusIcon className="h-4 w-4 mr-2" />
                             Додати соцмережу
@@ -937,7 +932,7 @@ const Stores = () => {
                             <button
                               type="button"
                               onClick={addSocialLink}
-                              className="btn-primary mt-4 whitespace-nowrap"
+                              className="btn btn-primary mt-4 whitespace-nowrap"
                             >
                               Додати першу соцмережу
                             </button>
@@ -1021,7 +1016,7 @@ const Stores = () => {
                           <button
                             type="button"
                             onClick={addStoreBlock}
-                            className="btn-outline flex items-center whitespace-nowrap"
+                            className="btn btn-outline flex items-center whitespace-nowrap"
                           >
                             <PlusIcon className="h-4 w-4 mr-2" />
                             Додати блок
@@ -1035,7 +1030,7 @@ const Stores = () => {
                             <button
                               type="button"
                               onClick={addStoreBlock}
-                              className="btn-primary mt-4 whitespace-nowrap"
+                              className="btn btn-primary mt-4 whitespace-nowrap"
                             >
                               Додати перший блок
                             </button>
@@ -1049,7 +1044,7 @@ const Stores = () => {
                                     <select
                                       value={block.block_type}
                                       onChange={(e) => updateStoreBlock(index, 'block_type', e.target.value)}
-                                      className="text-sm border border-gray-300 rounded px-2 py-1"
+                                      className="input text-sm w-auto"
                                     >
                                       {BLOCK_TYPES.map((type) => (
                                         <option key={type.value} value={type.value}>
@@ -1226,12 +1221,12 @@ const Stores = () => {
                   </form>
                 </div>
 
-                <div className="bg-gradient-to-r from-gray-50/80 to-blue-50/30 px-6 py-4 sm:px-8 sm:flex sm:flex-row-reverse border-t border-gray-200/50">
+                <div className="bg-gray-50 px-6 py-4 sm:px-8 sm:flex sm:flex-row-reverse border-t border-gray-200">
                   <button
                     type="submit"
                     form="store-form"
                     disabled={isLoading}
-                    className="w-full inline-flex justify-center items-center rounded-xl border border-transparent shadow-lg px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-base font-semibold text-white hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-4 focus:ring-blue-500/20 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 active:scale-95"
+                    className="btn btn-primary w-full sm:ml-3 sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isLoading ? (
                       <>
@@ -1256,7 +1251,7 @@ const Stores = () => {
                       setShowModal(false);
                       setActiveTab('basic');
                     }}
-                    className="mt-3 w-full inline-flex justify-center items-center rounded-xl border-2 border-gray-200 shadow-sm px-6 py-3 bg-white/80 backdrop-blur-sm text-base font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-4 focus:ring-gray-500/20 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-all duration-200 transform hover:scale-105 active:scale-95"
+                    className="btn btn-secondary mt-3 w-full sm:mt-0 sm:ml-3 sm:w-auto"
                   >
                     <XMarkIcon className="w-4 h-4 mr-2" />
                     Скасувати
@@ -1271,14 +1266,14 @@ const Stores = () => {
       {/* Модальне вікно підтвердження видалення */}
       {showDeleteModal && storeToDelete && (
         <div className="fixed inset-0 z-[9999]">
-          <div className="fixed inset-0 bg-black/70" onClick={cancelDelete}></div>
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={cancelDelete}></div>
           
           <div className="fixed inset-0 flex items-center justify-center p-4 animate-fade-in-scale">
             <div 
-              className="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl relative z-[10000]"
+              className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden relative z-[10000]"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="bg-gradient-to-r from-red-500/10 to-orange-500/10 px-6 py-4 border-b border-gray-200">
+              <div className="px-6 py-4 border-b border-gray-200">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
@@ -1335,7 +1330,7 @@ const Stores = () => {
                   <button
                     onClick={confirmDeleteStore}
                     disabled={deleteStoreMutation.isPending}
-                    className="btn-primary bg-red-600 hover:bg-red-700 border-red-600 hover:border-red-700 flex-1 flex items-center justify-center py-3 whitespace-nowrap"
+                    className="btn btn-danger flex-1 flex items-center justify-center whitespace-nowrap"
                   >
                     {deleteStoreMutation.isPending && (
                       <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -1349,7 +1344,7 @@ const Stores = () => {
                   <button
                     onClick={cancelDelete}
                     disabled={deleteStoreMutation.isPending}
-                    className="btn-outline flex-1 py-3 whitespace-nowrap"
+                    className="btn btn-outline flex-1 whitespace-nowrap"
                   >
                     Скасувати
                   </button>

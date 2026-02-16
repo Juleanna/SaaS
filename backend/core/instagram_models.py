@@ -3,7 +3,7 @@ Instagram Integration Models
 """
 
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 from stores.models import Store
 import requests
 import json
@@ -27,7 +27,7 @@ class InstagramAccount(models.Model):
     ]
 
     user = models.OneToOneField(
-        User, on_delete=models.CASCADE, related_name="instagram_account"
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="instagram_account"
     )
     store = models.ForeignKey(
         Store, on_delete=models.CASCADE, related_name="instagram_accounts"

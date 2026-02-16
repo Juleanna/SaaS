@@ -167,7 +167,7 @@ const PriceListModal = ({
                 {/* Basic Information */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="md:col-span-2">
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="name" className="form-label">
                       Назва прайс-листа *
                     </label>
                     <input
@@ -176,16 +176,16 @@ const PriceListModal = ({
                       name="name"
                       value={formData.name}
                       onChange={handleChange}
-                      className={`mt-1 block w-full border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                      className={`input mt-1 ${
                         errors.name ? 'border-red-300' : 'border-gray-300'
                       }`}
                       placeholder="Введіть назву прайс-листа"
                     />
-                    {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
+                    {errors.name && <p className="form-error">{errors.name}</p>}
                   </div>
 
                   <div className="md:col-span-2">
-                    <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="description" className="form-label">
                       Опис
                     </label>
                     <textarea
@@ -194,13 +194,13 @@ const PriceListModal = ({
                       rows={3}
                       value={formData.description}
                       onChange={handleChange}
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      className="input mt-1"
                       placeholder="Опис прайс-листа"
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="pricing_strategy" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="pricing_strategy" className="form-label">
                       Стратегія ціноутворення
                     </label>
                     <select
@@ -208,7 +208,7 @@ const PriceListModal = ({
                       name="pricing_strategy"
                       value={formData.pricing_strategy}
                       onChange={handleChange}
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      className="input mt-1"
                     >
                       {pricingStrategyOptions.map(option => (
                         <option key={option.value} value={option.value}>
@@ -219,7 +219,7 @@ const PriceListModal = ({
                   </div>
 
                   <div>
-                    <label htmlFor="update_frequency" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="update_frequency" className="form-label">
                       Частота оновлення
                     </label>
                     <select
@@ -227,7 +227,7 @@ const PriceListModal = ({
                       name="update_frequency"
                       value={formData.update_frequency}
                       onChange={handleChange}
-                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      className="input mt-1"
                     >
                       {updateFrequencyOptions.map(option => (
                         <option key={option.value} value={option.value}>
@@ -243,7 +243,7 @@ const PriceListModal = ({
                   <h4 className="text-md font-medium text-gray-900 mb-4">Налаштування націнки</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="default_markup_percentage" className="block text-sm font-medium text-gray-700">
+                      <label htmlFor="default_markup_percentage" className="form-label">
                         Націнка за замовчуванням (%)
                       </label>
                       <input
@@ -255,17 +255,17 @@ const PriceListModal = ({
                         step="0.01"
                         value={formData.default_markup_percentage}
                         onChange={handleChange}
-                        className={`mt-1 block w-full border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                        className={`input mt-1 ${
                           errors.default_markup_percentage ? 'border-red-300' : 'border-gray-300'
                         }`}
                       />
                       {errors.default_markup_percentage && (
-                        <p className="mt-1 text-sm text-red-600">{errors.default_markup_percentage}</p>
+                        <p className="form-error">{errors.default_markup_percentage}</p>
                       )}
                     </div>
 
                     <div>
-                      <label htmlFor="default_markup_amount" className="block text-sm font-medium text-gray-700">
+                      <label htmlFor="default_markup_amount" className="form-label">
                         Фіксована націнка (₴)
                       </label>
                       <input
@@ -276,12 +276,12 @@ const PriceListModal = ({
                         step="0.01"
                         value={formData.default_markup_amount}
                         onChange={handleChange}
-                        className={`mt-1 block w-full border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                        className={`input mt-1 ${
                           errors.default_markup_amount ? 'border-red-300' : 'border-gray-300'
                         }`}
                       />
                       {errors.default_markup_amount && (
-                        <p className="mt-1 text-sm text-red-600">{errors.default_markup_amount}</p>
+                        <p className="form-error">{errors.default_markup_amount}</p>
                       )}
                     </div>
                   </div>
@@ -292,7 +292,7 @@ const PriceListModal = ({
                   <h4 className="text-md font-medium text-gray-900 mb-4">Період дії</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="valid_from" className="block text-sm font-medium text-gray-700">
+                      <label htmlFor="valid_from" className="form-label">
                         Діє з
                       </label>
                       <input
@@ -301,12 +301,12 @@ const PriceListModal = ({
                         name="valid_from"
                         value={formData.valid_from}
                         onChange={handleChange}
-                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="input mt-1"
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="valid_until" className="block text-sm font-medium text-gray-700">
+                      <label htmlFor="valid_until" className="form-label">
                         Діє до
                       </label>
                       <input
@@ -315,12 +315,12 @@ const PriceListModal = ({
                         name="valid_until"
                         value={formData.valid_until}
                         onChange={handleChange}
-                        className={`mt-1 block w-full border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                        className={`input mt-1 ${
                           errors.valid_until ? 'border-red-300' : 'border-gray-300'
                         }`}
                       />
                       {errors.valid_until && (
-                        <p className="mt-1 text-sm text-red-600">{errors.valid_until}</p>
+                        <p className="form-error">{errors.valid_until}</p>
                       )}
                     </div>
                   </div>
@@ -380,14 +380,14 @@ const PriceListModal = ({
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
+                className="btn btn-primary sm:ml-3 sm:w-auto disabled:opacity-50"
               >
                 {loading ? 'Збереження...' : (priceList ? 'Оновити' : 'Створити')}
               </button>
               <button
                 type="button"
                 onClick={onClose}
-                className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                className="btn btn-outline sm:mt-0 sm:ml-3 sm:w-auto"
               >
                 Скасувати
               </button>

@@ -159,7 +159,7 @@ const WarehouseManagement = () => {
       {/* Заголовок */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Управління складами</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Управління складами</h1>
           <p className="mt-1 text-sm text-gray-500">
             Створення та управління складськими приміщеннями
           </p>
@@ -168,7 +168,7 @@ const WarehouseManagement = () => {
         <div className="mt-4 sm:mt-0">
           <button
             onClick={openCreateModal}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            className="btn btn-primary inline-flex items-center"
           >
             <PlusIcon className="h-4 w-4 mr-2" />
             Додати склад
@@ -178,8 +178,8 @@ const WarehouseManagement = () => {
 
       {/* Статистика */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
+        <div className="card">
+          <div className="card-body">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <BuildingStorefrontIcon className="h-6 w-6 text-gray-400" />
@@ -194,8 +194,8 @@ const WarehouseManagement = () => {
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
+        <div className="card">
+          <div className="card-body">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <CheckCircleIcon className="h-6 w-6 text-green-400" />
@@ -210,8 +210,8 @@ const WarehouseManagement = () => {
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
+        <div className="card">
+          <div className="card-body">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <XCircleIcon className="h-6 w-6 text-red-400" />
@@ -228,8 +228,8 @@ const WarehouseManagement = () => {
       </div>
 
       {/* Фільтри та пошук */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-4 py-5 sm:p-6">
+      <div className="card">
+        <div className="card-body">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
             <div className="flex-1 max-w-lg">
               <div className="relative">
@@ -241,7 +241,7 @@ const WarehouseManagement = () => {
                   placeholder="Пошук складів..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  className="input pl-10"
                 />
               </div>
             </div>
@@ -250,7 +250,7 @@ const WarehouseManagement = () => {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                className="input"
               >
                 <option value="all">Всі статуси</option>
                 <option value="active">Активні</option>
@@ -262,8 +262,8 @@ const WarehouseManagement = () => {
       </div>
 
       {/* Список складів */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        <div className="px-4 py-5 sm:p-6">
+      <div className="card overflow-hidden">
+        <div className="card-body">
           <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
             Склади ({filteredWarehouses.length})
           </h3>
@@ -276,8 +276,8 @@ const WarehouseManagement = () => {
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
                         <h4 className="text-lg font-medium text-gray-900">{warehouse.name}</h4>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          warehouse.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        <span className={`badge ${
+                          warehouse.is_active ? 'badge-success' : 'badge-danger'
                         }`}>
                           {warehouse.is_active ? 'Активний' : 'Неактивний'}
                         </span>
@@ -362,53 +362,53 @@ const WarehouseManagement = () => {
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="form-label mb-1">
                           Назва *
                         </label>
                         <input
                           type="text"
                           value={warehouseForm.name}
                           onChange={(e) => setWarehouseForm(prev => ({ ...prev, name: e.target.value }))}
-                          className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                          className="input"
                           required
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="form-label mb-1">
                           Код *
                         </label>
                         <input
                           type="text"
                           value={warehouseForm.code}
                           onChange={(e) => setWarehouseForm(prev => ({ ...prev, code: e.target.value }))}
-                          className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                          className="input"
                           required
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="form-label mb-1">
                         Адреса
                       </label>
                       <textarea
                         value={warehouseForm.address}
                         onChange={(e) => setWarehouseForm(prev => ({ ...prev, address: e.target.value }))}
                         rows={2}
-                        className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        className="input"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="form-label mb-1">
                         Опис
                       </label>
                       <textarea
                         value={warehouseForm.description}
                         onChange={(e) => setWarehouseForm(prev => ({ ...prev, description: e.target.value }))}
                         rows={3}
-                        className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        className="input"
                       />
                     </div>
 
@@ -429,14 +429,14 @@ const WarehouseManagement = () => {
                 <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                   <button
                     type="submit"
-                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
+                    className="btn btn-primary sm:ml-3 sm:w-auto"
                   >
                     Створити
                   </button>
                   <button
                     type="button"
                     onClick={closeCreateModal}
-                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                    className="btn btn-secondary mt-3 sm:mt-0 sm:ml-3 sm:w-auto"
                   >
                     Скасувати
                   </button>
@@ -465,53 +465,53 @@ const WarehouseManagement = () => {
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="form-label mb-1">
                           Назва *
                         </label>
                         <input
                           type="text"
                           value={warehouseForm.name}
                           onChange={(e) => setWarehouseForm(prev => ({ ...prev, name: e.target.value }))}
-                          className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                          className="input"
                           required
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="form-label mb-1">
                           Код *
                         </label>
                         <input
                           type="text"
                           value={warehouseForm.code}
                           onChange={(e) => setWarehouseForm(prev => ({ ...prev, code: e.target.value }))}
-                          className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                          className="input"
                           required
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="form-label mb-1">
                         Адреса
                       </label>
                       <textarea
                         value={warehouseForm.address}
                         onChange={(e) => setWarehouseForm(prev => ({ ...prev, address: e.target.value }))}
                         rows={2}
-                        className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        className="input"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="form-label mb-1">
                         Опис
                       </label>
                       <textarea
                         value={warehouseForm.description}
                         onChange={(e) => setWarehouseForm(prev => ({ ...prev, description: e.target.value }))}
                         rows={3}
-                        className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        className="input"
                       />
                     </div>
 
@@ -532,14 +532,14 @@ const WarehouseManagement = () => {
                 <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                   <button
                     type="submit"
-                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
+                    className="btn btn-primary sm:ml-3 sm:w-auto"
                   >
                     Зберегти
                   </button>
                   <button
                     type="button"
                     onClick={closeEditModal}
-                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                    className="btn btn-secondary mt-3 sm:mt-0 sm:ml-3 sm:w-auto"
                   >
                     Скасувати
                   </button>
@@ -581,14 +581,14 @@ const WarehouseManagement = () => {
                 <button
                   type="button"
                   onClick={handleDeleteWarehouse}
-                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
+                  className="btn btn-danger sm:ml-3 sm:w-auto"
                 >
                   Видалити
                 </button>
                 <button
                   type="button"
                   onClick={closeDeleteModal}
-                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                  className="btn btn-secondary mt-3 sm:mt-0 sm:ml-3 sm:w-auto"
                 >
                   Скасувати
                 </button>

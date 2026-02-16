@@ -201,15 +201,15 @@ const PriceLists = () => {
 
   const getStatusBadge = (priceList) => {
     if (!priceList.is_active) {
-      return <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">Неактивний</span>;
+      return <span className="badge badge-secondary">Неактивний</span>;
     }
     if (priceList.is_default) {
-      return <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">За замовчуванням</span>;
+      return <span className="badge badge-primary">За замовчуванням</span>;
     }
     if (priceList.is_valid) {
-      return <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">Активний</span>;
+      return <span className="badge badge-success">Активний</span>;
     }
-    return <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">Неактуальний</span>;
+    return <span className="badge badge-warning">Неактуальний</span>;
   };
 
   return (
@@ -217,12 +217,12 @@ const PriceLists = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Прайс-листи</h1>
-          <p className="text-gray-600">Управління цінами товарів</p>
+          <h1 className="text-3xl font-bold text-gray-900">Прайс-листи</h1>
+          <p className="mt-1 text-sm text-gray-500">Управління цінами товарів</p>
         </div>
         <button
           onClick={() => setIsCreateModalOpen(true)}
-          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          className="btn btn-primary"
         >
           <PlusIcon className="h-5 w-5 mr-2" />
           Створити прайс-лист
@@ -230,15 +230,15 @@ const PriceLists = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-4 rounded-lg shadow space-y-4">
+      <div className="card card-body space-y-4">
         <div className="flex flex-col sm:flex-row gap-4">
           {/* Store Selection */}
           <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Магазин</label>
+            <label className="form-label">Магазин</label>
             <select
               value={selectedStore}
               onChange={(e) => setSelectedStore(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="input"
             >
               <option value="">Оберіть магазин</option>
               {stores.map(store => (
@@ -251,7 +251,7 @@ const PriceLists = () => {
 
           {/* Search */}
           <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Пошук</label>
+            <label className="form-label">Пошук</label>
             <div className="relative">
               <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-2.5 text-gray-400" />
               <input
@@ -259,18 +259,18 @@ const PriceLists = () => {
                 placeholder="Пошук прайс-листів..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="input pl-10"
               />
             </div>
           </div>
 
           {/* Status Filter */}
           <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Статус</label>
+            <label className="form-label">Статус</label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="input"
             >
               <option value="all">Всі</option>
               <option value="active">Активні</option>
@@ -289,8 +289,8 @@ const PriceLists = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredPriceLists.map(priceList => (
-            <div key={priceList.id} className="bg-white rounded-lg shadow hover:shadow-md transition-shadow">
-              <div className="p-6">
+            <div key={priceList.id} className="card">
+              <div className="card-body">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">{priceList.name}</h3>
@@ -363,7 +363,7 @@ const PriceLists = () => {
           {selectedStore && (
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="btn btn-primary"
             >
               <PlusIcon className="h-5 w-5 mr-2" />
               Створити прайс-лист

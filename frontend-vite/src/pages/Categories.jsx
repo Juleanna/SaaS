@@ -173,18 +173,18 @@ const Categories = () => {
         {/* Header з вибором магазину */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Категорії</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Категорії</h1>
             <p className="mt-1 text-sm text-gray-500">
               Керуйте категоріями товарів вашого магазину
             </p>
             <div className="mt-3">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="form-label">
                 Виберіть магазин
               </label>
               <select
                 value={selectedStoreId || ''}
                 onChange={(e) => setSelectedStoreId(e.target.value)}
-                className="block w-64 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="input w-64"
               >
                 <option value="">Оберіть магазин...</option>
                 {userStores.map((store) => (
@@ -228,21 +228,21 @@ const Categories = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Категорії</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Категорії</h1>
           <p className="mt-1 text-sm text-gray-500">
             Керуйте категоріями товарів вашого магазину
           </p>
           {userStores.length > 0 && (
             console.log('Rendering store selector, stores:', userStores) ||
             <div className="mt-3">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="form-label">
                 {userStores.length > 1 ? 'Виберіть магазин' : 'Магазин'}
               </label>
               {userStores.length > 1 ? (
                 <select
                   value={selectedStoreId || ''}
                   onChange={(e) => setSelectedStoreId(e.target.value)}
-                  className="block w-64 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="input w-64"
                 >
                   <option value="">Оберіть магазин...</option>
                   {userStores.map((store) => (
@@ -278,7 +278,7 @@ const Categories = () => {
         <div className="card-body">
           <div className="flex items-center space-x-4">
             <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="form-label">
                 Пошук
               </label>
               <div className="relative">
@@ -288,7 +288,7 @@ const Categories = () => {
                   placeholder="Назва категорії..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="input pl-10"
                 />
               </div>
             </div>

@@ -22,6 +22,7 @@ import SupplyManagement from './pages/Warehouse/SupplyManagement';
 import InventoryScanner from './pages/Warehouse/InventoryScanner';
 import ScannerDemo from './pages/Warehouse/ScannerDemo';
 import PriceLists from './pages/PriceLists';
+import InstagramPage from './pages/InstagramPage';
 import PublicStore from './pages/public/PublicStore';
 import PublicStoresList from './pages/public/PublicStoresList';
 
@@ -50,8 +51,10 @@ function App() {
             <Route path="products/:productId" element={<ProductDetail />} />
             <Route path="categories" element={<Categories />} />
             <Route path="categories/:storeId" element={<Categories />} />
+            <Route path="orders" element={<Orders />} />
             <Route path="payments" element={<Payments />} />
             <Route path="pricelists" element={<PriceLists />} />
+            <Route path="instagram" element={<InstagramPage />} />
             <Route path="warehouse" element={<WarehouseDashboard />} />
             <Route path="warehouse/management" element={<WarehouseManagement />} />
             <Route path="warehouse/inventory" element={<InventoryManagement />} />

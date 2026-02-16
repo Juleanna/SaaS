@@ -39,19 +39,20 @@ const InstagramPage = ({ storeId }) => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        setStatistics(detailRes.data.statistics || []);
+        const stats = detailRes.data?.statistics;
+        setStatistics(Array.isArray(stats) ? stats : []);
 
         // Отримати пости
         const postsRes = await axios.get('/api/instagram/posts/', {
           headers: { Authorization: `Bearer ${token}` }
         });
-        setRecentPosts(postsRes.data);
+        setRecentPosts(Array.isArray(postsRes.data) ? postsRes.data : postsRes.data?.results || []);
 
         // Отримати автопости
         const autoPostsRes = await axios.get('/api/instagram/auto-posts/', {
           headers: { Authorization: `Bearer ${token}` }
         });
-        setAutoPosts(autoPostsRes.data);
+        setAutoPosts(Array.isArray(autoPostsRes.data) ? autoPostsRes.data : autoPostsRes.data?.results || []);
 
         // Отримати DM ключові слова
         const keywordsRes = await axios.get('/api/instagram/dm-keywords/', {
@@ -138,12 +139,12 @@ const InstagramPage = ({ storeId }) => {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">📸 Instagram</h1>
-            <p className="text-gray-600 mt-2">Інтеграція з Instagram</p>
+            <p className="mt-1 text-sm text-gray-500">Інтеграція з Instagram</p>
           </div>
           {account && (
             <button
               onClick={handleDisconnect}
-              className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors"
+              className="btn btn-danger"
             >
               Відключити акаунт
             </button>
@@ -152,7 +153,7 @@ const InstagramPage = ({ storeId }) => {
 
         {!account ? (
           // Не підключено
-          <div className="bg-white rounded-lg shadow p-12 text-center">
+          <div className="card card-body text-center">
             <div className="text-6xl mb-4">📸</div>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
               Підключіть Instagram
@@ -181,7 +182,7 @@ const InstagramPage = ({ storeId }) => {
 
             <button
               onClick={handleConnect}
-              className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors"
+              className="btn btn-primary"
             >
               🔗 Підключити Instagram
             </button>
@@ -190,7 +191,7 @@ const InstagramPage = ({ storeId }) => {
           // Підключено
           <div className="space-y-8">
             {/* Інформація акаунту */}
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="card card-body">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   {account.profile_picture_url && (
@@ -206,13 +207,13 @@ const InstagramPage = ({ storeId }) => {
                     </h2>
                     <p className="text-gray-600">{account.instagram_name}</p>
                     <p className="text-gray-600 mt-2">
-                      👥 {account.followers_count.toLocaleString()} підписників
+                      👥 {(account.followers_count || 0).toLocaleString()} підписників
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={handleSyncMedia}
-                  className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold transition-colors"
+                  className="btn btn-primary"
                 >
                   🔄 Синхронізувати
                 </button>
@@ -251,7 +252,7 @@ const InstagramPage = ({ storeId }) => {
 
             {/* График статистики */}
             {statistics.length > 0 && (
-              <div className="bg-white rounded-lg shadow p-6">
+              <div className="card card-body">
                 <h3 className="text-xl font-bold text-gray-900 mb-6">
                   📈 Статистика останніх 30 днів
                 </h3>
@@ -299,7 +300,7 @@ const InstagramPage = ({ storeId }) => {
 
             {/* Останні пости */}
             {recentPosts.length > 0 && (
-              <div className="bg-white rounded-lg shadow p-6">
+              <div className="card card-body">
                 <h3 className="text-xl font-bold text-gray-900 mb-6">
                   📸 Останні пости
                 </h3>
@@ -325,7 +326,7 @@ const InstagramPage = ({ storeId }) => {
             )}
 
             {/* Налаштування */}
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="card card-body">
               <h3 className="text-xl font-bold text-gray-900 mb-6">⚙️ Налаштування</h3>
 
               <div className="space-y-4">
@@ -356,7 +357,7 @@ const InstagramPage = ({ storeId }) => {
 
               {account.hashtags && (
                 <div className="mt-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="form-label">
                     Хештеги для постів
                   </label>
                   <p className="text-gray-700">{account.hashtags}</p>
@@ -364,7 +365,7 @@ const InstagramPage = ({ storeId }) => {
               )}
 
               <button
-                className="mt-6 px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold transition-colors"
+                className="btn btn-primary mt-6"
               >
                 Редагувати налаштування
               </button>
@@ -380,13 +381,13 @@ const InstagramPage = ({ storeId }) => {
  * Карточка статистики
  */
 const StatCard = ({ title, value, icon }) => (
-  <div className="bg-white rounded-lg shadow p-6">
+  <div className="card card-body">
     <div className="flex items-center justify-between">
       <div>
         <p className="text-gray-600 text-sm">{title}</p>
-        <p className="text-2xl font-bold text-gray-900 mt-2">{value}</p>
+        <p className="text-xl font-bold text-gray-900 mt-1">{value}</p>
       </div>
-      <div className="text-4xl opacity-30">{icon}</div>
+      <div className="text-2xl opacity-30">{icon}</div>
     </div>
   </div>
 );

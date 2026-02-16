@@ -235,7 +235,7 @@ const CheckoutModal = ({
                   </h4>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="form-label">
                       Ім'я та прізвище *
                     </label>
                     <input
@@ -243,18 +243,18 @@ const CheckoutModal = ({
                       name="customer_name"
                       value={formData.customer_name}
                       onChange={handleInputChange}
-                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      className={`input ${
                         errors.customer_name ? 'border-red-300' : 'border-gray-300'
                       }`}
                       placeholder="Введіть ваше ім'я"
                     />
                     {errors.customer_name && (
-                      <p className="mt-1 text-sm text-red-600">{errors.customer_name}</p>
+                      <p className="form-error">{errors.customer_name}</p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="form-label">
                       Телефон *
                     </label>
                     <div className="relative">
@@ -264,19 +264,19 @@ const CheckoutModal = ({
                         name="customer_phone"
                         value={formData.customer_phone}
                         onChange={handleInputChange}
-                        className={`pl-10 w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        className={`pl-10 input ${
                           errors.customer_phone ? 'border-red-300' : 'border-gray-300'
                         }`}
                         placeholder="+380 XX XXX XX XX"
                       />
                     </div>
                     {errors.customer_phone && (
-                      <p className="mt-1 text-sm text-red-600">{errors.customer_phone}</p>
+                      <p className="form-error">{errors.customer_phone}</p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="form-label">
                       Email (необов'язково)
                     </label>
                     <div className="relative">
@@ -286,14 +286,14 @@ const CheckoutModal = ({
                         name="customer_email"
                         value={formData.customer_email}
                         onChange={handleInputChange}
-                        className={`pl-10 w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        className={`pl-10 input ${
                           errors.customer_email ? 'border-red-300' : 'border-gray-300'
                         }`}
                         placeholder="your@email.com"
                       />
                     </div>
                     {errors.customer_email && (
-                      <p className="mt-1 text-sm text-red-600">{errors.customer_email}</p>
+                      <p className="form-error">{errors.customer_email}</p>
                     )}
                   </div>
                 </div>
@@ -335,7 +335,7 @@ const CheckoutModal = ({
 
                   {formData.delivery_method === 'delivery' && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="form-label">
                         Адреса доставки *
                       </label>
                       <div className="relative">
@@ -345,20 +345,20 @@ const CheckoutModal = ({
                           value={formData.shipping_address}
                           onChange={handleInputChange}
                           rows={3}
-                          className={`pl-10 w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          className={`pl-10 input ${
                             errors.shipping_address ? 'border-red-300' : 'border-gray-300'
                           }`}
                           placeholder="Місто, вулиця, будинок, квартира"
                         />
                       </div>
                       {errors.shipping_address && (
-                        <p className="mt-1 text-sm text-red-600">{errors.shipping_address}</p>
+                        <p className="form-error">{errors.shipping_address}</p>
                       )}
                     </div>
                   )}
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="form-label">
                       Примітки до замовлення
                     </label>
                     <textarea
@@ -366,7 +366,7 @@ const CheckoutModal = ({
                       value={formData.notes}
                       onChange={handleInputChange}
                       rows={2}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="input"
                       placeholder="Додаткова інформація..."
                     />
                   </div>
@@ -397,7 +397,7 @@ const CheckoutModal = ({
                     ))}
                   </div>
                   {errors.payment_method && (
-                    <p className="mt-1 text-sm text-red-600">{errors.payment_method}</p>
+                    <p className="form-error">{errors.payment_method}</p>
                   )}
 
                   {/* Order Summary */}
@@ -430,7 +430,7 @@ const CheckoutModal = ({
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
+                  className="btn btn-primary sm:ml-3 sm:w-auto disabled:opacity-50"
                 >
                   {loading ? 'Створення замовлення...' : 'Підтвердити замовлення'}
                 </button>
@@ -438,26 +438,26 @@ const CheckoutModal = ({
                 <button
                   type="button"
                   onClick={handleNextStep}
-                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
+                  className="btn btn-primary sm:ml-3 sm:w-auto"
                 >
                   Далі
                 </button>
               )}
-              
+
               {step > 1 && (
                 <button
                   type="button"
                   onClick={handlePrevStep}
-                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                  className="btn btn-outline sm:mt-0 sm:ml-3 sm:w-auto"
                 >
                   Назад
                 </button>
               )}
-              
+
               <button
                 type="button"
                 onClick={onClose}
-                className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                className="btn btn-outline sm:mt-0 sm:ml-3 sm:w-auto"
               >
                 Скасувати
               </button>

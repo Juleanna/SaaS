@@ -233,12 +233,12 @@ const InventoryScanner = () => {
             <ArrowLeftIcon className="h-5 w-5" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-3xl font-bold text-gray-900">
               Сканування: {inventory?.number}
             </h1>
-            <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
+            <div className="flex items-center space-x-4 mt-1 text-sm text-gray-500">
               <span>Склад: {inventory?.warehouse?.name}</span>
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(inventory?.status)}`}>
+              <span className={`badge ${getStatusColor(inventory?.status)}`}>
                 {inventory?.status === 'in_progress' ? 'В процесі' : inventory?.status}
               </span>
             </div>
@@ -246,7 +246,7 @@ const InventoryScanner = () => {
         </div>
         <button
           onClick={() => setIsScannerOpen(true)}
-          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          className="btn btn-primary flex items-center"
         >
           <QrCodeIcon className="h-5 w-5 mr-2" />
           Сканувати
@@ -256,7 +256,7 @@ const InventoryScanner = () => {
       {/* Stats Cards */}
       {scanSummary && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="card card-body">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <ListBulletIcon className="h-8 w-8 text-blue-600" />
@@ -270,7 +270,7 @@ const InventoryScanner = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="card card-body">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <QrCodeIcon className="h-8 w-8 text-green-600" />
@@ -284,7 +284,7 @@ const InventoryScanner = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="card card-body">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <ChartBarIcon className="h-8 w-8 text-yellow-600" />
@@ -298,7 +298,7 @@ const InventoryScanner = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="card card-body">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <ClockIcon className="h-8 w-8 text-purple-600" />
@@ -315,7 +315,7 @@ const InventoryScanner = () => {
       )}
 
       {/* Scan Mode Controls */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="card card-body">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-medium text-gray-900">Режим сканування</h3>
           <div className="flex items-center space-x-4">
@@ -344,7 +344,7 @@ const InventoryScanner = () => {
 
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
-            <label className="text-sm font-medium text-gray-700">Кількість:</label>
+            <label className="form-label">Кількість:</label>
             <div className="flex items-center border border-gray-300 rounded-lg">
               <button
                 onClick={() => setCurrentQuantity(Math.max(1, currentQuantity - 1))}
@@ -372,7 +372,7 @@ const InventoryScanner = () => {
 
       {/* Scanned Items */}
       {scannedItems.length > 0 && (
-        <div className="bg-white rounded-lg shadow">
+        <div className="card">
           <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
             <h3 className="text-lg font-medium text-gray-900">
               {scanMode === 'single' ? 'Останні відскановані товари' : 'Товари для пакетного сканування'}
@@ -381,7 +381,7 @@ const InventoryScanner = () => {
               <button
                 onClick={handleBulkSubmit}
                 disabled={bulkScanMutation.isLoading}
-                className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                className="btn btn-primary flex items-center disabled:opacity-50"
               >
                 <CheckCircleIcon className="h-5 w-5 mr-2" />
                 {bulkScanMutation.isLoading ? 'Обробка...' : 'Підтвердити всі'}
@@ -445,11 +445,11 @@ const InventoryScanner = () => {
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                        item.scan_method === 'barcode' ? 'bg-blue-100 text-blue-800' :
-                        item.scan_method === 'qr_code' ? 'bg-green-100 text-green-800' :
-                        item.scan_method === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-gray-100 text-gray-800'
+                      <span className={`badge ${
+                        item.scan_method === 'barcode' ? 'badge-info' :
+                        item.scan_method === 'qr_code' ? 'badge-success' :
+                        item.scan_method === 'pending' ? 'badge-warning' :
+                        'badge-secondary'
                       }`}>
                         {item.scan_method === 'barcode' ? 'Штрих-код' :
                          item.scan_method === 'qr_code' ? 'QR код' :

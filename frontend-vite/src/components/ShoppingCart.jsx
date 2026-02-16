@@ -162,7 +162,7 @@ const ShoppingCart = ({
                       <ul className="-my-6 divide-y divide-gray-200">
                         {cart.items.map((item) => (
                           <li key={item.id} className="flex py-6">
-                            <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border border-gray-200">
+                            <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl border border-gray-200">
                               {item.product.images && item.product.images.length > 0 ? (
                                 <img
                                   src={item.product.images[0].image || item.product.images[0].url}
@@ -193,16 +193,16 @@ const ShoppingCart = ({
                                 <div className="flex items-center space-x-2">
                                   <button
                                     onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                    className="p-1 text-gray-400 hover:text-gray-600 border border-gray-300 rounded"
+                                    className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 border border-gray-200 rounded-lg transition-colors"
                                   >
                                     <MinusIcon className="h-4 w-4" />
                                   </button>
-                                  <span className="text-gray-900 font-medium px-2">
+                                  <span className="text-gray-900 font-semibold px-3 min-w-[2rem] text-center">
                                     {item.quantity}
                                   </span>
                                   <button
                                     onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                    className="p-1 text-gray-400 hover:text-gray-600 border border-gray-300 rounded"
+                                    className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 border border-gray-200 rounded-lg transition-colors"
                                   >
                                     <PlusIcon className="h-4 w-4" />
                                   </button>
@@ -212,7 +212,7 @@ const ShoppingCart = ({
                                   <button
                                     type="button"
                                     onClick={() => removeItem(item.id)}
-                                    className="font-medium text-red-600 hover:text-red-500"
+                                    className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
                                   >
                                     <TrashIcon className="h-4 w-4" />
                                   </button>
@@ -243,7 +243,7 @@ const ShoppingCart = ({
                   <div className="mt-6 space-y-3">
                     <button
                       onClick={handleCheckout}
-                      className="flex w-full items-center justify-center rounded-md border border-transparent bg-blue-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-blue-700"
+                      className="btn btn-primary w-full"
                     >
                       <CreditCardIcon className="h-5 w-5 mr-2" />
                       Оформити замовлення
@@ -251,7 +251,7 @@ const ShoppingCart = ({
                     
                     <button
                       onClick={clearCart}
-                      className="flex w-full items-center justify-center rounded-md border border-gray-300 bg-white px-6 py-3 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+                      className="btn btn-outline w-full"
                     >
                       <TrashIcon className="h-5 w-5 mr-2" />
                       Очистити кошик
@@ -268,7 +268,7 @@ const ShoppingCart = ({
                 </p>
                 <button
                   onClick={onClose}
-                  className="mt-6 btn-primary"
+                  className="mt-6 btn btn-primary"
                 >
                   Продовжити покупки
                 </button>
