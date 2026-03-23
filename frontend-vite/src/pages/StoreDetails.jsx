@@ -1,14 +1,34 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeftIcon, CubeIcon, ShoppingCartIcon, ChartBarIcon, PencilIcon } from '@heroicons/react/24/outline';
+import {
+  ArrowLeftIcon,
+  CubeIcon,
+  ShoppingCartIcon,
+  ChartBarIcon,
+  PencilIcon,
+  GlobeAltIcon,
+  PhoneIcon,
+  EnvelopeIcon,
+  MapPinIcon,
+  ClipboardDocumentIcon,
+  CheckIcon,
+  LinkIcon,
+  Cog6ToothIcon,
+  EyeIcon,
+  SwatchIcon,
+  DocumentTextIcon,
+  ChatBubbleLeftRightIcon,
+  CameraIcon,
+  ArrowTopRightOnSquareIcon,
+} from '@heroicons/react/24/outline';
 import api from '../services/api';
 
 const StoreDetails = () => {
   const { storeId } = useParams();
   const navigate = useNavigate();
+  const [copiedSlug, setCopiedSlug] = useState(false);
 
-  // Отримуємо дані магазину з API
   const { data: store, isLoading, error } = useQuery({
     queryKey: ['store', storeId],
     queryFn: async () => {
@@ -17,13 +37,13 @@ const StoreDetails = () => {
         return response.data;
       } catch (error) {
         console.error('Store fetch error:', error);
-        // Fallback на мокові дані
         return {
           id: parseInt(storeId),
           name: 'Мій інтернет-магазин',
           slug: 'my-online-store',
           description: 'Продаж електроніки та аксесуарів',
           status: 'active',
+          is_active: true,
           products_count: 12,
           orders_count: 8,
           revenue: 15600,
@@ -34,557 +54,376 @@ const StoreDetails = () => {
     retry: false,
   });
 
+  const copySlug = () => {
+    navigator.clipboard.writeText(`${window.location.origin}/store/${store.slug}`);
+    setCopiedSlug(true);
+    setTimeout(() => setCopiedSlug(false), 2000);
+  };
+
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-64">
-        <div className="text-gray-500">Завантаження магазину...</div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <p className="text-gray-500 text-sm">Завантаження магазину...</p>
+        </div>
       </div>
     );
   }
 
   if (error || !store) {
     return (
-      <div className="text-center py-12">
-        <div className="text-gray-500 mb-4">Магазин не знайдено</div>
-        <Link to="/stores" className="btn-primary">
-          Повернутися до списку
+      <div className="text-center py-16">
+        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <CubeIcon className="h-8 w-8 text-gray-400" />
+        </div>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Магазин не знайдено</h3>
+        <p className="text-gray-500 mb-6">Перевірте посилання або поверніться до списку</p>
+        <Link to="/stores" className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors">
+          <ArrowLeftIcon className="h-4 w-4 mr-2" />
+          До списку магазинів
         </Link>
       </div>
     );
   }
 
+  const isActive = store.is_active || store.status === 'active';
+  const stats = [
+    {
+      label: 'Товарів',
+      value: store.products_count || store.products || 0,
+      icon: CubeIcon,
+      color: 'blue',
+      link: `/stores/${store.id}/products`,
+    },
+    {
+      label: 'Замовлень',
+      value: store.orders_count || store.orders || 0,
+      icon: ShoppingCartIcon,
+      color: 'green',
+      link: `/stores/${store.id}/orders`,
+    },
+    {
+      label: 'Дохід',
+      value: `${(store.revenue || 0).toLocaleString('uk-UA')} ₴`,
+      icon: ChartBarIcon,
+      color: 'purple',
+    },
+  ];
+
+  const gradients = {
+    blue: 'from-blue-500 to-blue-600',
+    green: 'from-emerald-500 to-emerald-600',
+    purple: 'from-purple-500 to-violet-600',
+    orange: 'from-orange-500 to-amber-600',
+  };
+
+  const bgLight = {
+    blue: 'bg-blue-50',
+    green: 'bg-emerald-50',
+    purple: 'bg-purple-50',
+    orange: 'bg-orange-50',
+  };
+
+  const textColor = {
+    blue: 'text-blue-600',
+    green: 'text-emerald-600',
+    purple: 'text-purple-600',
+    orange: 'text-orange-600',
+  };
+
   return (
-    <div className="space-y-8 animate-fade-in-up">
-      {/* Навігація назад */}
+    <div className="space-y-6 max-w-6xl mx-auto">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <button
           onClick={() => navigate('/stores')}
-          className="btn-outline flex items-center hover:scale-105 transition-transform"
+          className="inline-flex items-center text-sm text-gray-500 hover:text-gray-900 transition-colors"
         >
-          <ArrowLeftIcon className="h-4 w-4 mr-2" />
-          Назад до магазинів
+          <ArrowLeftIcon className="h-4 w-4 mr-1.5" />
+          Магазини
         </button>
-        
-        <div className="flex items-center space-x-3">
+
+        <div className="flex items-center gap-2">
+          {store.slug && (
+            <a
+              href={`/store/${store.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center px-3.5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+            >
+              <EyeIcon className="h-4 w-4 mr-1.5" />
+              Переглянути
+            </a>
+          )}
           <button
             onClick={() => navigate('/stores', { state: { editStore: store } })}
-            className="btn-primary flex items-center"
+            className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl hover:shadow-lg hover:shadow-blue-500/25 transition-all"
           >
-            <PencilIcon className="h-4 w-4 mr-2" />
-            Редагувати магазин
+            <PencilIcon className="h-4 w-4 mr-1.5" />
+            Редагувати
           </button>
         </div>
       </div>
 
-      {/* Hero секція з банером та інформацією */}
-      <div className="glass-strong rounded-3xl overflow-hidden shadow-2xl">
-        {/* Банер */}
-        {store.banner_image && (
-          <div className="h-64 relative overflow-hidden">
-            <img
-              src={store.banner_image}
-              alt="Store banner"
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
-          </div>
-        )}
-        
-        {/* Головна інформація */}
-        <div className="p-8 relative">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center space-x-6">
-              {/* Логотип */}
-              <div className="flex-shrink-0">
-                {store.logo ? (
-                  <img
-                    src={store.logo}
-                    alt="Store logo"
-                    className="w-20 h-20 object-cover rounded-2xl border-4 border-white shadow-lg"
-                  />
-                ) : (
-                  <div className="w-20 h-20 bg-gradient-to-br from-blue-400 to-purple-500 rounded-2xl flex items-center justify-center shadow-lg border-4 border-white">
-                    <span className="text-white font-bold text-2xl">
-                      {store.name.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                )}
-              </div>
-              
-              <div>
-                <h1 className="text-4xl font-bold gradient-text-blue mb-2">{store.name}</h1>
-                <p className="text-lg text-gray-600 mb-4 max-w-2xl">
-                  {store.description || 'Опис магазину не вказано'}
-                </p>
-                <div className="flex items-center space-x-6">
-                  <span className={`badge text-sm px-4 py-2 ${(store.is_active || store.status === 'active') ? 'badge-success' : 'badge-warning'}`}>
-                    {(store.is_active || store.status === 'active') ? '🟢 Активний' : '🟡 Неактивний'}
-                  </span>
-                  <span className="text-sm text-gray-500 flex items-center">
-                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3a4 4 0 118 0v4m-4 12v-8m-8 4h16"/>
-                    </svg>
-                    Створено: {new Date(store.created_at).toLocaleDateString('uk-UA')}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Статистика з анімацією */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-        <div className="card hover:scale-105 transition-transform duration-300 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-          <div className="card-body text-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <CubeIcon className="h-8 w-8 text-white" />
-            </div>
-            <div className="text-3xl font-bold text-gray-900 mb-2">
-              {store.products_count || store.products || 0}
-            </div>
-            <div className="text-sm text-gray-600 font-medium">Товари в асортименті</div>
-            <div className="mt-2">
-              <Link
-                to={`/stores/${store.id}/products`}
-                className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-              >
-                Переглянути →
-              </Link>
-            </div>
-          </div>
+      {/* Store Hero Card */}
+      <div className="bg-white rounded-2xl border border-gray-200/80 overflow-hidden">
+        {/* Banner gradient */}
+        <div className="h-32 relative overflow-hidden">
+          {store.banner_image ? (
+            <img src={store.banner_image} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-r from-blue-600 via-purple-600 to-violet-600"></div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
         </div>
 
-        <div className="card hover:scale-105 transition-transform duration-300 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-          <div className="card-body text-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <ShoppingCartIcon className="h-8 w-8 text-white" />
-            </div>
-            <div className="text-3xl font-bold text-gray-900 mb-2">
-              {store.orders_count || store.orders || 0}
-            </div>
-            <div className="text-sm text-gray-600 font-medium">Всього замовлень</div>
-            <div className="mt-2">
-              <Link
-                to={`/stores/${store.id}/orders`}
-                className="text-green-600 hover:text-green-700 text-sm font-medium"
-              >
-                Переглянути →
-              </Link>
+        {/* Store info */}
+        <div className="px-6 pb-6 -mt-10 relative">
+          <div className="flex items-end gap-5">
+            {/* Logo */}
+            {store.logo ? (
+              <img
+                src={store.logo}
+                alt={store.name}
+                className="w-20 h-20 rounded-2xl object-cover border-4 border-white shadow-lg"
+              />
+            ) : (
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center border-4 border-white shadow-lg">
+                <span className="text-white font-bold text-2xl">{store.name.charAt(0).toUpperCase()}</span>
+              </div>
+            )}
+
+            <div className="flex-1 pb-1">
+              <div className="flex items-center gap-3 mb-1">
+                <h1 className="text-2xl font-bold text-gray-900">{store.name}</h1>
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${isActive ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+                  {isActive ? 'Активний' : 'Неактивний'}
+                </span>
+              </div>
+              {store.description && (
+                <p className="text-gray-500 text-sm">{store.description}</p>
+              )}
             </div>
           </div>
-        </div>
 
-        <div className="card hover:scale-105 transition-transform duration-300 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-          <div className="card-body text-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <ChartBarIcon className="h-8 w-8 text-white" />
+          {/* URL bar */}
+          <div className="mt-4 flex items-center gap-2">
+            <div className="flex-1 flex items-center bg-gray-50 rounded-xl px-4 py-2.5 border border-gray-100">
+              <LinkIcon className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+              <code className="text-sm text-blue-600 font-mono truncate">{window.location.origin}/store/{store.slug}</code>
             </div>
-            <div className="text-3xl font-bold text-gray-900 mb-2">
-              {store.revenue || 0}₴
-            </div>
-            <div className="text-sm text-gray-600 font-medium">Загальний дохід</div>
-            <div className="mt-2">
-              <span className="text-purple-600 text-sm font-medium">
-                За весь час
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Швидкі дії з покращеним дизайном */}
-      <div className="card animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-        <div className="card-body">
-          <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Швидкі дії</h2>
-            <p className="text-gray-600">Керуйте вашим магазином</p>
-          </div>
-          
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Link
-              to={`/stores/${store.id}/products`}
-              className="group bg-gradient-to-br from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 rounded-2xl p-6 text-center transition-all duration-300 hover:scale-105 hover:shadow-lg"
-            >
-              <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                <CubeIcon className="h-6 w-6 text-white" />
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-1">Товари</h3>
-              <p className="text-sm text-gray-600">Керування асортиментом</p>
-            </Link>
-
-            <Link
-              to={`/stores/${store.id}/orders`}
-              className="group bg-gradient-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 rounded-2xl p-6 text-center transition-all duration-300 hover:scale-105 hover:shadow-lg"
-            >
-              <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                <ShoppingCartIcon className="h-6 w-6 text-white" />
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-1">Замовлення</h3>
-              <p className="text-sm text-gray-600">Обробка замовлень</p>
-            </Link>
-
-            <Link
-              to={`/stores/${store.id}/analytics`}
-              className="group bg-gradient-to-br from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 rounded-2xl p-6 text-center transition-all duration-300 hover:scale-105 hover:shadow-lg"
-            >
-              <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                <ChartBarIcon className="h-6 w-6 text-white" />
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-1">Аналітика</h3>
-              <p className="text-sm text-gray-600">Звіти та статистика</p>
-            </Link>
-
             <button
-              onClick={() => navigate('/stores', { state: { editStore: store } })}
-              className="group bg-gradient-to-br from-orange-50 to-orange-100 hover:from-orange-100 hover:to-orange-200 rounded-2xl p-6 text-center transition-all duration-300 hover:scale-105 hover:shadow-lg"
+              onClick={copySlug}
+              className={`inline-flex items-center px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${copiedSlug ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
             >
-              <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                <PencilIcon className="h-6 w-6 text-white" />
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-1">Налаштування</h3>
-              <p className="text-sm text-gray-600">Редагування магазину</p>
+              {copiedSlug ? <CheckIcon className="h-4 w-4 mr-1" /> : <ClipboardDocumentIcon className="h-4 w-4 mr-1" />}
+              {copiedSlug ? 'Скопійовано' : 'Копіювати'}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Детальна інформація */}
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-        {/* Основна інформація */}
-        <div className="card animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
-          <div className="card-body">
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mr-4">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {stats.map((stat, i) => (
+          <div key={i} className="bg-white rounded-2xl border border-gray-200/80 p-5 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-3">
+              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradients[stat.color]} flex items-center justify-center`}>
+                <stat.icon className="h-5 w-5 text-white" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900">Основна інформація</h2>
+              {stat.link && (
+                <Link to={stat.link} className={`text-xs font-medium ${textColor[stat.color]} hover:underline`}>
+                  Переглянути
+                </Link>
+              )}
             </div>
-            
-            <div className="space-y-6">
-              <div>
-                <label className="form-label flex items-center">
-                  <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
-                  </svg>
-                  URL адреса
-                </label>
-                <div className="mt-2 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 border">
-                  <code className="text-blue-600 font-mono text-sm">{store.slug}</code>
-                  <button 
-                    onClick={() => navigator.clipboard.writeText(store.slug)}
-                    className="ml-3 text-xs text-gray-500 hover:text-gray-700 transition-colors"
-                  >
-                    📋 Копіювати
-                  </button>
-                </div>
-              </div>
-              
-              <div>
-                <label className="form-label flex items-center">
-                  <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                  </svg>
-                  Статус
-                </label>
-                <div className="mt-2">
-                  <span className={`badge text-sm px-4 py-2 ${(store.is_active || store.status === 'active') ? 'badge-success' : 'badge-warning'}`}>
-                    {(store.is_active || store.status === 'active') ? '🟢 Активний' : '🟡 Неактивний'}
-                  </span>
-                </div>
-              </div>
-              
-              <div>
-                <label className="form-label flex items-center">
-                  <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"/>
-                  </svg>
-                  Опис
-                </label>
-                <div className="mt-2 bg-gray-50 rounded-xl p-4 text-gray-700">
-                  {store.description || 'Опис магазину не вказано'}
-                </div>
-              </div>
-            </div>
+            <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
+            <div className="text-sm text-gray-500 mt-0.5">{stat.label}</div>
           </div>
-        </div>
+        ))}
+      </div>
 
-        {/* Контактна інформація */}
-        <div className="card animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
-          <div className="card-body">
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mr-4">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-                </svg>
-              </div>
-              <h2 className="text-xl font-bold text-gray-900">Контактна інформація</h2>
+      {/* Quick Actions */}
+      <div className="bg-white rounded-2xl border border-gray-200/80 p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Швидкі дії</h2>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {[
+            { label: 'Додати товар', desc: 'Новий товар в каталог', icon: CubeIcon, color: 'blue', link: `/products` },
+            { label: 'Замовлення', desc: 'Переглянути замовлення', icon: ShoppingCartIcon, color: 'green', link: `/orders` },
+            { label: 'Аналітика', desc: 'Звіти та графіки', icon: ChartBarIcon, color: 'purple', link: `/stores/${store.id}/analytics` },
+            { label: 'Налаштування', desc: 'Параметри магазину', icon: Cog6ToothIcon, color: 'orange', action: () => navigate('/stores', { state: { editStore: store } }) },
+          ].map((item, i) => {
+            const Wrapper = item.link ? Link : 'button';
+            const props = item.link ? { to: item.link } : { onClick: item.action };
+            return (
+              <Wrapper key={i} {...props} className={`group flex flex-col items-center p-4 rounded-xl ${bgLight[item.color]} hover:shadow-md transition-all text-center`}>
+                <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradients[item.color]} flex items-center justify-center mb-2.5 group-hover:scale-110 transition-transform`}>
+                  <item.icon className="h-5 w-5 text-white" />
+                </div>
+                <span className="text-sm font-medium text-gray-900">{item.label}</span>
+                <span className="text-xs text-gray-500 mt-0.5">{item.desc}</span>
+              </Wrapper>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Details grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Contact Info */}
+        <div className="bg-white rounded-2xl border border-gray-200/80 p-6">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center">
+              <PhoneIcon className="h-4.5 w-4.5 text-white" />
             </div>
-            
-            <div className="space-y-6">
-              <div>
-                <label className="form-label flex items-center">
-                  <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-                  </svg>
-                  Телефон
-                </label>
-                <div className="mt-2 bg-gray-50 rounded-xl p-4">
-                  {store.phone ? (
-                    <a href={`tel:${store.phone}`} className="text-green-600 hover:text-green-700 font-medium">
-                      {store.phone}
-                    </a>
+            <h2 className="text-lg font-semibold text-gray-900">Контакти</h2>
+          </div>
+          <div className="space-y-3">
+            {[
+              { icon: PhoneIcon, label: 'Телефон', value: store.phone, href: store.phone ? `tel:${store.phone}` : null },
+              { icon: EnvelopeIcon, label: 'Email', value: store.email, href: store.email ? `mailto:${store.email}` : null },
+              { icon: MapPinIcon, label: 'Адреса', value: store.address },
+            ].map((item, i) => (
+              <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50/80">
+                <item.icon className="h-4.5 w-4.5 text-gray-400 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs text-gray-400 mb-0.5">{item.label}</div>
+                  {item.value ? (
+                    item.href ? (
+                      <a href={item.href} className="text-sm text-blue-600 hover:underline">{item.value}</a>
+                    ) : (
+                      <span className="text-sm text-gray-900">{item.value}</span>
+                    )
                   ) : (
-                    <span className="text-gray-500">Не вказано</span>
+                    <span className="text-sm text-gray-400 italic">Не вказано</span>
                   )}
                 </div>
               </div>
-              
-              <div>
-                <label className="form-label flex items-center">
-                  <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                  </svg>
-                  Email
-                </label>
-                <div className="mt-2 bg-gray-50 rounded-xl p-4">
-                  {store.email ? (
-                    <a href={`mailto:${store.email}`} className="text-blue-600 hover:text-blue-700 font-medium">
-                      {store.email}
-                    </a>
-                  ) : (
-                    <span className="text-gray-500">Не вказано</span>
-                  )}
-                </div>
-              </div>
-              
-              <div>
-                <label className="form-label flex items-center">
-                  <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                  </svg>
-                  Адреса
-                </label>
-                <div className="mt-2 bg-gray-50 rounded-xl p-4 text-gray-700">
-                  {store.address || 'Адреса не вказана'}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Дизайн і SEO */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Кольорова схема */}
-        <div className="card">
-          <div className="card-body">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Кольорова схема</h2>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="text-center">
-                <div 
-                  className="w-16 h-16 rounded-lg mx-auto mb-2 border"
-                  style={{ backgroundColor: store.primary_color || '#3B82F6' }}
-                ></div>
-                <div className="text-xs text-gray-500">Основний</div>
-                <div className="text-xs font-mono">{store.primary_color || '#3B82F6'}</div>
-              </div>
-              <div className="text-center">
-                <div 
-                  className="w-16 h-16 rounded-lg mx-auto mb-2 border"
-                  style={{ backgroundColor: store.secondary_color || '#1F2937' }}
-                ></div>
-                <div className="text-xs text-gray-500">Додатковий</div>
-                <div className="text-xs font-mono">{store.secondary_color || '#1F2937'}</div>
-              </div>
-              <div className="text-center">
-                <div 
-                  className="w-16 h-16 rounded-lg mx-auto mb-2 border"
-                  style={{ backgroundColor: store.accent_color || '#F59E0B' }}
-                ></div>
-                <div className="text-xs text-gray-500">Акцентний</div>
-                <div className="text-xs font-mono">{store.accent_color || '#F59E0B'}</div>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
 
-        {/* SEO налаштування */}
-        <div className="card">
-          <div className="card-body">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">SEO налаштування</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="form-label">Meta Title</label>
-                <div className="mt-1 text-sm text-gray-900">
-                  {store.meta_title || 'Не вказано'}
-                </div>
-              </div>
-              
-              <div>
-                <label className="form-label">Meta Description</label>
-                <div className="mt-1 text-sm text-gray-900">
-                  {store.meta_description || 'Не вказано'}
-                </div>
-              </div>
+        {/* Design */}
+        <div className="bg-white rounded-2xl border border-gray-200/80 p-6">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center">
+              <SwatchIcon className="h-4.5 w-4.5 text-white" />
             </div>
+            <h2 className="text-lg font-semibold text-gray-900">Дизайн</h2>
           </div>
-        </div>
-      </div>
 
-      {/* Налаштування лендингу */}
-      <div className="card">
-        <div className="card-body">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Налаштування лендингу</h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="flex items-center">
-              <div className={`w-4 h-4 rounded ${store.show_telegram_button !== false ? 'bg-green-500' : 'bg-gray-300'} mr-3`}></div>
-              <span className="text-sm text-gray-900">Показувати кнопку Telegram</span>
-            </div>
-            
-            <div className="flex items-center">
-              <div className={`w-4 h-4 rounded ${store.show_instagram_feed ? 'bg-green-500' : 'bg-gray-300'} mr-3`}></div>
-              <span className="text-sm text-gray-900">Показувати Instagram стрічку</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Зображення */}
-      {(store.logo || store.banner_image) && (
-        <div className="card">
-          <div className="card-body">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Зображення магазину</h2>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              {store.logo && (
-                <div>
-                  <label className="form-label">Логотип</label>
-                  <div className="mt-2">
-                    <img
-                      src={store.logo}
-                      alt="Store logo"
-                      className="w-32 h-32 object-cover rounded-lg border border-gray-200"
-                    />
+          {/* Colors */}
+          <div className="mb-5">
+            <div className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Кольорова схема</div>
+            <div className="flex items-center gap-3">
+              {[
+                { label: 'Основний', color: store.primary_color || '#3B82F6' },
+                { label: 'Додатковий', color: store.secondary_color || '#1F2937' },
+                { label: 'Акцент', color: store.accent_color || '#F59E0B' },
+              ].map((c, i) => (
+                <div key={i} className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 flex-1">
+                  <div className="w-6 h-6 rounded-md border border-gray-200 shadow-sm flex-shrink-0" style={{ backgroundColor: c.color }}></div>
+                  <div>
+                    <div className="text-xs text-gray-500">{c.label}</div>
+                    <div className="text-xs font-mono text-gray-700">{c.color}</div>
                   </div>
                 </div>
-              )}
-              
-              {store.banner_image && (
-                <div>
-                  <label className="form-label">Банер</label>
-                  <div className="mt-2">
-                    <img
-                      src={store.banner_image}
-                      alt="Store banner"
-                      className="w-full max-w-md h-32 object-cover rounded-lg border border-gray-200"
-                    />
-                  </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Toggles */}
+          <div className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Елементи</div>
+          <div className="space-y-2">
+            {[
+              { label: 'Кнопка Telegram', icon: ChatBubbleLeftRightIcon, active: store.show_telegram_button !== false },
+              { label: 'Instagram стрічка', icon: CameraIcon, active: store.show_instagram_feed },
+            ].map((item, i) => (
+              <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-gray-50/80">
+                <div className="flex items-center gap-2.5">
+                  <item.icon className="h-4 w-4 text-gray-400" />
+                  <span className="text-sm text-gray-700">{item.label}</span>
                 </div>
-              )}
+                <div className={`w-8 h-5 rounded-full flex items-center transition-colors ${item.active ? 'bg-emerald-500 justify-end' : 'bg-gray-300 justify-start'}`}>
+                  <div className="w-3.5 h-3.5 bg-white rounded-full mx-0.5 shadow-sm"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* SEO */}
+      {(store.meta_title || store.meta_description) && (
+        <div className="bg-white rounded-2xl border border-gray-200/80 p-6">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center">
+              <DocumentTextIcon className="h-4.5 w-4.5 text-white" />
+            </div>
+            <h2 className="text-lg font-semibold text-gray-900">SEO</h2>
+          </div>
+          <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+            <div className="text-blue-700 text-base font-medium mb-1 truncate">
+              {store.meta_title || store.name}
+            </div>
+            <div className="text-emerald-700 text-xs mb-1 truncate">
+              {window.location.origin}/store/{store.slug}
+            </div>
+            <div className="text-gray-600 text-sm line-clamp-2">
+              {store.meta_description || store.description || 'Опис не вказано'}
             </div>
           </div>
         </div>
       )}
 
-      {/* Соціальні мережі */}
-      {store.social_links && store.social_links.length > 0 && (
-        <div className="card">
-          <div className="card-body">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Соціальні мережі</h2>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {store.social_links
-                .filter(link => link.is_active)
-                .map((link) => {
-                  const getSocialIcon = (type) => {
-                    const icons = {
-                      instagram: '📷',
-                      telegram: '📱',
-                      facebook: '📘',
-                      twitter: '🐦',
-                      youtube: '📺',
-                      website: '🌐'
-                    };
-                    return icons[type] || '🔗';
-                  };
-
-                  const getSocialName = (type) => {
-                    const names = {
-                      instagram: 'Instagram',
-                      telegram: 'Telegram',
-                      facebook: 'Facebook',
-                      twitter: 'Twitter',
-                      youtube: 'YouTube',
-                      website: 'Веб-сайт'
-                    };
-                    return names[type] || type;
-                  };
-
-                  return (
-                    <a
-                      key={link.id}
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      <span className="text-xl mr-3">{getSocialIcon(link.social_type)}</span>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-gray-900">
-                          {link.title || getSocialName(link.social_type)}
-                        </div>
-                        <div className="text-xs text-gray-500 truncate">
-                          {link.url}
-                        </div>
-                      </div>
-                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-                      </svg>
-                    </a>
-                  );
-                })}
+      {/* Social Links */}
+      {store.social_links && store.social_links.filter(l => l.is_active).length > 0 && (
+        <div className="bg-white rounded-2xl border border-gray-200/80 p-6">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+              <GlobeAltIcon className="h-4.5 w-4.5 text-white" />
             </div>
+            <h2 className="text-lg font-semibold text-gray-900">Соціальні мережі</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            {store.social_links.filter(l => l.is_active).map((link) => (
+              <a
+                key={link.id}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors group"
+              >
+                <div className="text-sm font-medium text-gray-900 flex-1 truncate">
+                  {link.title || link.social_type}
+                </div>
+                <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5 text-gray-400 group-hover:text-gray-600" />
+              </a>
+            ))}
           </div>
         </div>
       )}
 
-      {/* Блоки контенту */}
-      {store.blocks && store.blocks.length > 0 && (
-        <div className="space-y-6">
-          {store.blocks
-            .filter(block => block.is_active)
-            .sort((a, b) => a.order - b.order)
-            .map((block) => {
-              const getBlockIcon = (type) => {
-                const icons = {
-                  about: '📝',
-                  contact: '📞',
-                  faq: '❓',
-                  custom: '🔧'
-                };
-                return icons[type] || '📄';
-              };
-
-              return (
-                <div key={block.id} className="card">
-                  <div className="card-body">
-                    <div className="flex items-center mb-4">
-                      <span className="text-xl mr-3">{getBlockIcon(block.block_type)}</span>
-                      <h2 className="text-lg font-medium text-gray-900">{block.title}</h2>
-                    </div>
-                    
-                    <div 
-                      className="text-gray-700 prose prose-sm max-w-none"
-                      dangerouslySetInnerHTML={{ __html: block.content }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
+      {/* Content Blocks */}
+      {store.blocks && store.blocks.filter(b => b.is_active).length > 0 && (
+        <div className="space-y-4">
+          {store.blocks.filter(b => b.is_active).sort((a, b) => a.order - b.order).map((block) => (
+            <div key={block.id} className="bg-white rounded-2xl border border-gray-200/80 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-3">{block.title}</h2>
+              <div className="text-gray-600 text-sm prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: block.content }} />
+            </div>
+          ))}
         </div>
       )}
+
+      {/* Footer meta */}
+      <div className="text-center pb-4">
+        <p className="text-xs text-gray-400">
+          Створено {new Date(store.created_at).toLocaleDateString('uk-UA', { year: 'numeric', month: 'long', day: 'numeric' })}
+        </p>
+      </div>
     </div>
   );
 };
