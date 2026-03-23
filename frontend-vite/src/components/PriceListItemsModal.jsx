@@ -32,7 +32,7 @@ const PriceListItemsModal = ({
     queryFn: async () => {
       if (!priceList?.id || !storeId) return [];
       try {
-        const response = await api.get(`/pricelists/api/stores/${storeId}/pricelists/${priceList.id}/items/`);
+        const response = await api.get(`/pricelists/stores/${storeId}/pricelists/${priceList.id}/items/`);
         return response.data.results || response.data;
       } catch (error) {
         console.error('Error fetching price list items:', error);
@@ -113,7 +113,7 @@ const PriceListItemsModal = ({
   // Додавання товару до прайс-листа
   const addItemMutation = useMutation({
     mutationFn: async (data) => {
-      const response = await api.post(`/pricelists/api/stores/${storeId}/pricelists/${priceList.id}/items/`, data);
+      const response = await api.post(`/pricelists/stores/${storeId}/pricelists/${priceList.id}/items/`, data);
       return response.data;
     },
     onSuccess: () => {
@@ -130,7 +130,7 @@ const PriceListItemsModal = ({
   // Оновлення позиції прайс-листа
   const updateItemMutation = useMutation({
     mutationFn: async ({ itemId, data }) => {
-      const response = await api.patch(`/pricelists/api/stores/${storeId}/pricelists/${priceList.id}/items/${itemId}/`, data);
+      const response = await api.patch(`/pricelists/stores/${storeId}/pricelists/${priceList.id}/items/${itemId}/`, data);
       return response.data;
     },
     onSuccess: () => {
@@ -147,7 +147,7 @@ const PriceListItemsModal = ({
   // Видалення позиції
   const deleteItemMutation = useMutation({
     mutationFn: async (itemId) => {
-      await api.delete(`/pricelists/api/stores/${storeId}/pricelists/${priceList.id}/items/${itemId}/`);
+      await api.delete(`/pricelists/stores/${storeId}/pricelists/${priceList.id}/items/${itemId}/`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['pricelist-items', priceList?.id]);

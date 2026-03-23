@@ -24,7 +24,7 @@ const ShoppingCart = ({
     
     try {
       setLoading(true);
-      const response = await api.get(`/orders/api/public/${storeSlug}/cart/`);
+      const response = await api.get(`/orders/public/${storeSlug}/cart/`);
       setCart(response.data);
     } catch (error) {
       console.error('Error fetching cart:', error);
@@ -79,7 +79,7 @@ const ShoppingCart = ({
     }
 
     try {
-      await api.patch(`/orders/api/public/${storeSlug}/cart/items/${itemId}/`, {
+      await api.patch(`/orders/public/${storeSlug}/cart/items/${itemId}/`, {
         quantity: newQuantity
       });
       fetchCart();
@@ -91,7 +91,7 @@ const ShoppingCart = ({
 
   const removeItem = async (itemId) => {
     try {
-      await api.delete(`/orders/api/public/${storeSlug}/cart/items/${itemId}/`);
+      await api.delete(`/orders/public/${storeSlug}/cart/items/${itemId}/`);
       fetchCart();
     } catch (error) {
       console.error('Error removing item:', error);
@@ -104,7 +104,7 @@ const ShoppingCart = ({
       try {
         // Delete all items
         const deletePromises = cart.items.map(item => 
-          api.delete(`/orders/api/public/${storeSlug}/cart/items/${item.id}/`)
+          api.delete(`/orders/public/${storeSlug}/cart/items/${item.id}/`)
         );
         await Promise.all(deletePromises);
         fetchCart();

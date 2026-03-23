@@ -57,7 +57,7 @@ const Orders = () => {
         }
       }
       
-      const response = await api.get(`/orders/api/stores/${currentStoreId}/orders/?${params}`);
+      const response = await api.get(`/orders/stores/${currentStoreId}/orders/?${params}`);
       setOrders(response.data.results || response.data);
     } catch (error) {
       console.error('Error fetching orders:', error);
@@ -116,7 +116,7 @@ const Orders = () => {
 
   const fetchStatistics = async () => {
     try {
-      const response = await api.get(`/orders/api/stores/${currentStoreId}/orders/statistics/`);
+      const response = await api.get(`/orders/stores/${currentStoreId}/orders/statistics/`);
       setStatistics(response.data);
     } catch (error) {
       console.error('Error fetching statistics:', error);
@@ -132,7 +132,7 @@ const Orders = () => {
 
   const handleStatusUpdate = async (orderId, newStatus) => {
     try {
-      await api.post(`/orders/api/stores/${currentStoreId}/orders/${orderId}/status/`, {
+      await api.post(`/orders/stores/${currentStoreId}/orders/${orderId}/status/`, {
         status: newStatus
       });
       fetchOrders();
@@ -149,7 +149,7 @@ const Orders = () => {
       if (statusFilter !== 'all') params.append('status', statusFilter);
       if (dateFilter !== 'all') params.append('date_filter', dateFilter);
       
-      const response = await api.get(`/orders/api/stores/${currentStoreId}/orders/export/?${params}`, {
+      const response = await api.get(`/orders/stores/${currentStoreId}/orders/export/?${params}`, {
         responseType: 'blob'
       });
       

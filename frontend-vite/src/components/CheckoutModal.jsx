@@ -34,7 +34,7 @@ const CheckoutModal = ({
 
   const fetchPaymentMethods = async () => {
     try {
-      const response = await api.get(`/payments/api/public/${storeSlug}/payment-methods/`);
+      const response = await api.get(`/payments/public/${storeSlug}/payment-methods/`);
       setPaymentMethods(response.data.results || response.data);
     } catch (error) {
       console.error('Error fetching payment methods:', error);
@@ -125,7 +125,7 @@ const CheckoutModal = ({
         delivery_method: formData.delivery_method,
       };
 
-      const response = await api.post(`/orders/api/public/${storeSlug}/checkout/`, orderData);
+      const response = await api.post(`/orders/public/${storeSlug}/checkout/`, orderData);
       
       onOrderCreated && onOrderCreated(response.data);
       onClose();

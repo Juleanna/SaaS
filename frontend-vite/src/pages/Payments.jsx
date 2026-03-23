@@ -43,7 +43,7 @@ const Payments = () => {
       if (statusFilter !== 'all') params.append('status', statusFilter);
       if (methodFilter !== 'all') params.append('payment_method', methodFilter);
       
-      const response = await api.get(`/payments/api/stores/${currentStoreId}/payments/?${params}`);
+      const response = await api.get(`/payments/stores/${currentStoreId}/payments/?${params}`);
       setPayments(response.data.results || response.data);
     } catch (error) {
       console.error('Error fetching payments:', error);
@@ -109,7 +109,7 @@ const Payments = () => {
 
   const fetchPaymentMethods = async () => {
     try {
-      const response = await api.get(`/payments/api/stores/${currentStoreId}/payment-methods/`);
+      const response = await api.get(`/payments/stores/${currentStoreId}/payment-methods/`);
       setPaymentMethods(response.data.results || response.data);
     } catch (error) {
       console.error('Error fetching payment methods:', error);
@@ -125,7 +125,7 @@ const Payments = () => {
 
   const fetchStatistics = async () => {
     try {
-      const response = await api.get(`/payments/api/stores/${currentStoreId}/payments/analytics/`);
+      const response = await api.get(`/payments/stores/${currentStoreId}/payments/analytics/`);
       setStatistics(response.data);
     } catch (error) {
       console.error('Error fetching payment statistics:', error);
@@ -143,7 +143,7 @@ const Payments = () => {
 
   const updatePaymentStatus = async (paymentId, newStatus) => {
     try {
-      await api.post(`/payments/api/stores/${currentStoreId}/payments/${paymentId}/status/`, {
+      await api.post(`/payments/stores/${currentStoreId}/payments/${paymentId}/status/`, {
         status: newStatus
       });
       fetchPayments();
@@ -156,7 +156,7 @@ const Payments = () => {
 
   const markAsPaid = async (paymentId) => {
     try {
-      await api.post(`/payments/api/stores/${currentStoreId}/payments/${paymentId}/mark-paid/`);
+      await api.post(`/payments/stores/${currentStoreId}/payments/${paymentId}/mark-paid/`);
       fetchPayments();
       fetchStatistics();
     } catch (error) {
@@ -167,7 +167,7 @@ const Payments = () => {
 
   const togglePaymentMethod = async (methodId, isActive) => {
     try {
-      await api.patch(`/payments/api/stores/${currentStoreId}/payment-methods/${methodId}/`, {
+      await api.patch(`/payments/stores/${currentStoreId}/payment-methods/${methodId}/`, {
         is_active: !isActive
       });
       fetchPaymentMethods();

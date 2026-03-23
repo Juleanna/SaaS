@@ -207,7 +207,7 @@ const Products = () => {
 
   const generateBarcode = async (productId) => {
     try {
-      await api.post(`/products/api/${productId}/generate-barcode/`);
+      await api.post(`/products/${productId}/generate-barcode/`);
       fetchProducts(pagination.current_page);
       alert('Штрихкод успішно згенеровано');
     } catch (error) {
@@ -218,7 +218,7 @@ const Products = () => {
 
   const generateQRCode = async (productId) => {
     try {
-      await api.post(`/products/api/${productId}/generate-qr/`);
+      await api.post(`/products/${productId}/generate-qr/`);
       fetchProducts(pagination.current_page);
       alert('QR код успішно згенеровано');
     } catch (error) {

@@ -53,7 +53,7 @@ const PriceLists = () => {
     queryFn: async () => {
       if (!selectedStore) return [];
       try {
-        const response = await api.get(`/pricelists/api/stores/${selectedStore}/pricelists/`);
+        const response = await api.get(`/pricelists/stores/${selectedStore}/pricelists/`);
         return response.data.results || response.data;
       } catch (error) {
         console.error('Error fetching price lists:', error);
@@ -96,7 +96,7 @@ const PriceLists = () => {
   // Створення прайс-листа
   const createMutation = useMutation({
     mutationFn: async (data) => {
-      const response = await api.post(`/pricelists/api/stores/${selectedStore}/pricelists/`, data);
+      const response = await api.post(`/pricelists/stores/${selectedStore}/pricelists/`, data);
       return response.data;
     },
     onSuccess: () => {
@@ -113,7 +113,7 @@ const PriceLists = () => {
   // Оновлення прайс-листа
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }) => {
-      const response = await api.patch(`/pricelists/api/stores/${selectedStore}/pricelists/${id}/`, data);
+      const response = await api.patch(`/pricelists/stores/${selectedStore}/pricelists/${id}/`, data);
       return response.data;
     },
     onSuccess: () => {
@@ -131,7 +131,7 @@ const PriceLists = () => {
   // Видалення прайс-листа
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
-      await api.delete(`/pricelists/api/stores/${selectedStore}/pricelists/${id}/`);
+      await api.delete(`/pricelists/stores/${selectedStore}/pricelists/${id}/`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['pricelists', selectedStore]);
@@ -181,7 +181,7 @@ const PriceLists = () => {
 
   const copyPriceList = async (priceList) => {
     try {
-      await api.post(`/pricelists/api/stores/${selectedStore}/pricelists/${priceList.id}/copy/`);
+      await api.post(`/pricelists/stores/${selectedStore}/pricelists/${priceList.id}/copy/`);
       queryClient.invalidateQueries(['pricelists', selectedStore]);
       toast.success('Прайс-лист скопійовано');
     } catch (error) {
