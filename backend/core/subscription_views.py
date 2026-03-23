@@ -5,6 +5,7 @@ API views для системи підписок та тарифних план�
 from rest_framework import generics, status, permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from django.utils import timezone
 from datetime import timedelta
 
@@ -32,8 +33,6 @@ class SubscriptionPlanListView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
 
     def get_serializer_class(self):
-        if self.action == "retrieve":
-            return SubscriptionPlanDetailSerializer
         return SubscriptionPlanSerializer
 
 
@@ -187,24 +186,24 @@ class SubscriptionPaymentListView(generics.ListAPIView):
         ).order_by("-created_at")
 
 
-class SubscriptionUsageView(generics.RetrieveAPIView):
+class SubscriptionUsageView(APIView):
     """Отримати інформацію про використання плану"""
 
     permission_classes = [permissions.IsAuthenticated]
 
-    def retrieve(self, request, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
         try:
             subscription = UserSubscription.objects.get(user=request.user)
             plan = subscription.plan
 
             # Отримати статистику
-            stores_count = request.user.stores.count()
+            stores_count = request.user.store_set.count()
 
             # Загальна кількість товарів
             from stores.models import Store
 
             products_count = 0
-            for store in request.user.stores.all():
+            for store in request.user.store_set.all():
                 products_count += store.products.count()
 
             # Замовлення за цей місяць

@@ -123,10 +123,6 @@ const Login = () => {
                       autoComplete="current-password"
                       {...register('password', {
                         required: 'Пароль обов\'язковий',
-                        minLength: {
-                          value: 8,
-                          message: 'Пароль повинен містити мінімум 8 символів',
-                        },
                       })}
                       className="input pr-10"
                       placeholder="••••••••"

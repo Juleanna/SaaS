@@ -32,7 +32,7 @@ const SubscriptionsPage = () => {
     queryKey: ['subscription-plans'],
     queryFn: async () => {
       const response = await api.get('/subscriptions/plans/');
-      return response.data;
+      return response.data.results || response.data;
     },
   });
 

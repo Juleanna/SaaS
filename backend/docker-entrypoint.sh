@@ -25,7 +25,7 @@ python manage.py migrate --noinput
 
 # Зібрати статичні файли
 echo "📁 Collecting static files..."
-python manage.py collectstatic --noinput --clear
+python manage.py collectstatic --noinput
 
 # Створити суперюзера якщо потрібно (тільки для development)
 if [ "$CREATE_SUPERUSER" = "true" ]; then
