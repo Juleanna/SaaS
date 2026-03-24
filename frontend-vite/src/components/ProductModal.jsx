@@ -255,7 +255,7 @@ const ProductModal = ({
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex items-start justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div className="flex items-start justify-center min-h-screen pt-2 px-4 pb-10 text-center sm:block sm:p-0">
         {/* Backdrop */}
         <div 
           className="fixed inset-0 bg-gradient-to-br from-gray-900/80 via-gray-800/70 to-slate-900/80 transition-all duration-300 backdrop-blur-sm" 
@@ -266,21 +266,22 @@ const ProductModal = ({
         <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
         {/* Modal */}
-        <div className="relative z-10 inline-block align-bottom bg-white rounded-2xl text-left shadow-2xl transform transition-all duration-300 sm:my-8 sm:align-middle w-full max-w-4xl border border-gray-200/50 overflow-hidden">
+        <div className="relative z-10 inline-block align-bottom bg-white rounded-2xl text-left shadow-2xl transform transition-all duration-300 sm:my-4 sm:align-middle w-full max-w-2xl border border-gray-200/50 overflow-hidden max-h-[90vh] flex flex-col">
           <form onSubmit={handleSubmit}>
-            <div className="bg-gradient-to-br from-white via-gray-50/50 to-blue-50/30 px-6 pt-6 pb-4 sm:p-8 sm:pb-6">
-              <div className="flex items-center justify-between mb-8">
+            {/* Fixed Header */}
+            <div className="bg-gradient-to-br from-white via-gray-50/50 to-blue-50/30 px-6 pt-5 sm:px-8 sm:pt-6 flex-shrink-0">
+              <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <svg className="w-4.5 h-4.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+                    <h3 className="text-lg font-bold text-gray-900">
                       {product ? 'Редагувати товар' : 'Додати товар'}
                     </h3>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-xs text-gray-500">
                       {product ? 'Оновіть інформацію про товар' : 'Створіть новий товар для вашого магазину'}
                     </p>
                   </div>
@@ -290,12 +291,12 @@ const ProductModal = ({
                   onClick={onClose}
                   className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all duration-200"
                 >
-                  <XMarkIcon className="h-6 w-6" />
+                  <XMarkIcon className="h-5 w-5" />
                 </button>
               </div>
 
               {/* Tabs */}
-              <div className="border-b border-gray-200/60 mb-8">
+              <div className="border-b border-gray-200/60">
                 <nav className="-mb-px flex space-x-8">
                   {tabs.map((tab) => (
                     <button
@@ -313,7 +314,10 @@ const ProductModal = ({
                   ))}
                 </nav>
               </div>
+            </div>
 
+            {/* Scrollable Body */}
+            <div className="overflow-y-auto flex-1 px-6 py-4 sm:px-8 space-y-4">
               {/* Basic Information Tab */}
               {activeTab === 'basic' && (
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -805,8 +809,9 @@ const ProductModal = ({
               )}
 
             </div>
+            </div>
 
-            <div className="bg-gradient-to-r from-gray-50/80 to-blue-50/30 px-6 py-4 sm:px-8 sm:flex sm:flex-row-reverse border-t border-gray-200/50">
+            <div className="bg-gradient-to-r from-gray-50/80 to-blue-50/30 px-6 py-3 sm:px-8 sm:flex sm:flex-row-reverse border-t border-gray-200/50 flex-shrink-0">
               <button
                 type="submit"
                 disabled={loading}
