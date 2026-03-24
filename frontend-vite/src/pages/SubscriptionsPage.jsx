@@ -74,13 +74,11 @@ const SubscriptionsPage = () => {
         toast.success(`План "${selectedPlan.name}" успішно активовано!`);
       }
 
-      queryClient.removeQueries({ queryKey: ['current-subscription'] });
-      queryClient.removeQueries({ queryKey: ['subscription-usage'] });
-      queryClient.removeQueries({ queryKey: ['subscription-plans'] });
       setShowUpgradeModal(false);
       setSelectedPlan(null);
-      // Перезавантажити сторінку для гарантованого оновлення
-      window.location.reload();
+      // Примусове оновлення даних
+      await queryClient.resetQueries({ queryKey: ['current-subscription'] });
+      await queryClient.resetQueries({ queryKey: ['subscription-usage'] });
     } catch (error) {
       const data = error.response?.data;
       if (data?.message) {
@@ -133,7 +131,7 @@ const SubscriptionsPage = () => {
     );
   }
 
-  const currentPlanId = currentSubscription?.plan;
+  const currentPlanId = currentSubscription?.plan_details?.id ?? currentSubscription?.plan;
 
   const features = [
     { key: 'has_analytics', label: 'Аналітика', icon: ChartBarIcon },
@@ -231,7 +229,7 @@ const SubscriptionsPage = () => {
       {/* Сітка планів */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {plans.map((plan) => {
-          const isCurrent = currentPlanId === plan.id && currentSubscription?.is_active;
+          const isCurrent = Number(currentPlanId) === Number(plan.id) && currentSubscription?.is_active;
           const bg = getPlanBg(plan);
           const accent = getPlanAccent(plan);
 
