@@ -105,19 +105,48 @@ class UpgradeSubscriptionView(generics.CreateAPIView):
 
             # Створити платіж за підписку (якщо план платний)
             if plan.price > 0:
+                user = request.user
+                if user.balance < plan.price:
+                    # Недостатньо коштів — не активуємо план
+                    if not created:
+                        subscription.plan = old_plan if not created else plan
+                        subscription.save()
+                    return Response(
+                        {
+                            "error": "insufficient_balance",
+                            "message": f"Недостатньо коштів на рахунку. Поточний баланс: {float(user.balance):.2f} ₴, потрібно: {float(plan.price):.2f} ₴. Будь ласка, поповніть рахунок.",
+                            "balance": float(user.balance),
+                            "required": float(plan.price),
+                            "shortfall": float(plan.price - user.balance),
+                        },
+                        status=status.HTTP_402_PAYMENT_REQUIRED,
+                    )
+
+                # Списати кошти з балансу
+                user.balance -= plan.price
+                user.monthly_spending += plan.price
+                user.total_spent += plan.price
+                user.save(update_fields=["balance", "monthly_spending", "total_spent"])
+
                 payment = SubscriptionPayment.objects.create(
                     subscription=subscription,
                     amount=plan.price,
                     currency="UAH",
-                    status="pending",
+                    status="completed",
+                    paid_at=timezone.now(),
+                )
+
+                logger.info(
+                    f"Списано {plan.price} ₴ з балансу {user.email}. Залишок: {user.balance} ₴"
                 )
 
                 return Response(
                     {
                         "subscription": UserSubscriptionSerializer(subscription).data,
-                        "payment_required": True,
+                        "payment_required": False,
                         "payment_id": payment.id,
                         "amount": float(plan.price),
+                        "new_balance": float(user.balance),
                     },
                     status=status.HTTP_201_CREATED,
                 )

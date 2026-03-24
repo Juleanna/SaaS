@@ -68,18 +68,19 @@ const SubscriptionsPage = () => {
         plan_id: selectedPlan.id,
       });
 
-      if (response.data.payment_required) {
-        toast.success(`План "${selectedPlan.name}" активовано. Очікує оплата: ${response.data.amount} ₴`);
-      } else {
-        toast.success(`План "${selectedPlan.name}" успішно активовано!`);
-      }
+      toast.success(`План "${selectedPlan.name}" успішно активовано! Списано ${response.data.amount} ₴. Залишок: ${response.data.new_balance?.toFixed(2) ?? '—'} ₴`);
 
       queryClient.invalidateQueries({ queryKey: ['current-subscription'] });
       queryClient.invalidateQueries({ queryKey: ['subscription-usage'] });
       setShowUpgradeModal(false);
       setSelectedPlan(null);
     } catch (error) {
-      toast.error(error.response?.data?.error || 'Помилка при зміні плану');
+      const data = error.response?.data;
+      if (data?.error === 'insufficient_balance') {
+        toast.error(data.message);
+      } else {
+        toast.error(data?.message || data?.error || 'Помилка при зміні плану');
+      }
     } finally {
       setIsProcessing(false);
     }

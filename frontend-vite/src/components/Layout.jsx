@@ -83,7 +83,12 @@ const Layout = () => {
         { name: 'Замовлення', href: '/orders', icon: ShoppingCartIcon },
         { name: 'Платежі', href: '/payments', icon: CreditCardIcon },
         { name: 'Прайс-листи', href: '/pricelists', icon: DocumentTextIcon },
-        { name: 'Підписка', href: '/subscriptions', icon: SparklesIcon },
+      ],
+    },
+    {
+      label: 'Підписка',
+      items: [
+        { name: 'Тарифні плани', href: '/subscriptions', icon: SparklesIcon },
       ],
     },
     {
