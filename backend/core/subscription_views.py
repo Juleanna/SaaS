@@ -103,6 +103,12 @@ class UpgradeSubscriptionView(generics.CreateAPIView):
                     f"Користувач {request.user.email} оновив план з {old_plan.name} на {plan.name}"
                 )
 
+            # Синхронізуємо subscription_plan на моделі User
+            user = request.user
+            user.subscription_plan = plan.slug
+            user.is_subscribed = plan.slug != 'free'
+            user.save(update_fields=['subscription_plan', 'is_subscribed'])
+
             # Створити платіж за підписку (якщо план платний)
             if plan.price > 0:
                 user = request.user
@@ -184,6 +190,11 @@ class CancelSubscriptionView(generics.CreateAPIView):
                 )
 
             subscription.cancel()
+
+            # Синхронізуємо User модель
+            request.user.subscription_plan = 'free'
+            request.user.is_subscribed = False
+            request.user.save(update_fields=['subscription_plan', 'is_subscribed'])
 
             logger.info(f"Користувач {request.user.email} скасував підписку")
 
