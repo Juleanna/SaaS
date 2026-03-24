@@ -104,11 +104,7 @@ const CategoryModal = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    console.log('Form submitted with data:', formData);
-    console.log('Store ID:', storeId);
-    
     if (!validateForm()) {
-      console.log('Form validation failed');
       return;
     }
 
@@ -125,16 +121,12 @@ const CategoryModal = ({
         ? `/products/stores/${storeId}/categories/${category.id}/`
         : `/products/stores/${storeId}/categories/`;
       
-      console.log('Making request to:', url, 'with data:', formData);
-      
       if (category) {
         response = await api.put(url, formData);
       } else {
         response = await api.post(url, formData);
       }
       
-      console.log('Category saved successfully:', response.data);
-
       onSave && onSave(response.data);
       onClose();
     } catch (error) {

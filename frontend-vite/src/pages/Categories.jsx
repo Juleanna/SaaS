@@ -40,10 +40,8 @@ const Categories = () => {
   // Функція завантаження магазинів
   const fetchUserStores = async () => {
     try {
-      console.log('Fetching stores from API...');
       const response = await api.get('/stores/');
       const stores = response.data.results || response.data || [];
-      console.log('API response for stores:', response.data);
       setUserStores(stores);
       
       // Встановлюємо перший магазин як вибраний, якщо не вибрано з URL
@@ -73,13 +71,11 @@ const Categories = () => {
 
     try {
       setLoading(true);
-      console.log(`Fetching categories for store: ${currentStoreId}`);
       
       const params = new URLSearchParams();
       if (searchTerm) params.append('search', searchTerm);
       
       const url = `/products/stores/${currentStoreId}/categories/?${params}`;
-      console.log('Fetching categories from:', url);
       const response = await api.get(url);
       setCategories(response.data.results || response.data || []);
       setError(null);
