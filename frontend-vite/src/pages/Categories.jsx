@@ -62,7 +62,7 @@ const Categories = () => {
   };
 
   // Функція завантаження категорій
-  const fetchCategories = async () => {
+  const fetchCategories = async (showLoader = false) => {
     if (!currentStoreId) {
       setError('Не вказано ID магазину');
       setLoading(false);
@@ -70,11 +70,11 @@ const Categories = () => {
     }
 
     try {
-      setLoading(true);
-      
+      if (showLoader) setLoading(true);
+
       const params = new URLSearchParams();
       if (searchTerm) params.append('search', searchTerm);
-      
+
       const url = `/products/stores/${currentStoreId}/categories/?${params}`;
       const response = await api.get(url);
       setCategories(response.data.results || response.data || []);
@@ -123,7 +123,7 @@ const Categories = () => {
 
   useEffect(() => {
     if (!storesLoading && currentStoreId) {
-      fetchCategories();
+      fetchCategories(true);
     }
   }, [currentStoreId, searchTerm, storesLoading]);
 
@@ -409,11 +409,8 @@ const Categories = () => {
         }}
         category={editingCategory}
         storeId={currentStoreId}
-        onSave={async () => {
-          setShowCreateModal(false);
-          setEditingCategory(null);
-          // Невелика затримка щоб БД встигла зберегти
-          setTimeout(() => fetchCategories(), 300);
+        onSave={() => {
+          fetchCategories();
         }}
       />
     </div>
