@@ -44,14 +44,25 @@ const CategoryModal = ({
     setErrors({});
   }, [category, isOpen]);
 
+  // Транслітерація кирилиці в латиницю
+  const transliterate = (text) => {
+    const map = {
+      'а':'a','б':'b','в':'v','г':'h','ґ':'g','д':'d','е':'e','є':'ye',
+      'ж':'zh','з':'z','и':'y','і':'i','ї':'yi','й':'y','к':'k','л':'l',
+      'м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u',
+      'ф':'f','х':'kh','ц':'ts','ч':'ch','ш':'sh','щ':'shch','ь':'',
+      'ю':'yu','я':'ya','ъ':'','ы':'y','э':'e','ё':'yo',
+    };
+    return text.split('').map(ch => map[ch] ?? ch).join('');
+  };
+
   // Функція для генерації slug з назви
   const generateSlug = (text) => {
-    return text
-      .toLowerCase()
-      .replace(/[^a-z0-9а-я]/g, '-') // Замінюємо всі не-літери на дефіси
-      .replace(/-+/g, '-') // Замінюємо множинні дефіси на один
-      .replace(/^-|-$/g, '') // Видаляємо дефіси на початку і в кінці
-      .substring(0, 50); // Обмежуємо довжину
+    return transliterate(text.toLowerCase())
+      .replace(/[^a-z0-9]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+      .substring(0, 50);
   };
 
   const handleInputChange = (e) => {
