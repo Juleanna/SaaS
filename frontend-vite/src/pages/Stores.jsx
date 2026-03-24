@@ -533,64 +533,70 @@ const Stores = () => {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {stores.map((store, index) => (
-              <div 
-                key={store.id} 
-                className="card group hover:scale-105 transition-all duration-300 animate-fade-in-up"
+              <div
+                key={store.id}
+                className="group bg-white rounded-2xl border border-gray-200/80 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 animate-fade-in-up"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
-                <div className="card-body relative overflow-hidden">
-                  {/* Логотип або плейсхолдер */}
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-3">
-                      {store.logo ? (
-                        <img
-                          src={store.logo}
-                          alt={store.name}
-                          className="w-12 h-12 rounded-xl object-cover border-2 border-white shadow-lg"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-xl flex items-center justify-center shadow-lg">
-                          <span className="text-white font-bold text-lg">
-                            {store.name.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                      )}
-                      <div>
-                        <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
-                          {store.name}
-                        </h3>
-                        <span className={`badge text-xs ${(store.is_active || store.status === 'active') ? 'badge-success' : 'badge-warning'}`}>
-                          {(store.is_active || store.status === 'active') ? '🟢 Активний' : '🟡 Неактивний'}
-                        </span>
-                      </div>
-                    </div>
+                {/* Banner */}
+                <Link to={`/stores/${store.id}`} className="block relative h-28 overflow-hidden">
+                  {store.banner_image ? (
+                    <img src={store.banner_image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 group-hover:scale-105 transition-transform duration-500"></div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                  {/* Status badge */}
+                  <div className="absolute top-3 right-3">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium backdrop-blur-sm ${(store.is_active || store.status === 'active') ? 'bg-emerald-500/20 text-emerald-100 border border-emerald-400/30' : 'bg-amber-500/20 text-amber-100 border border-amber-400/30'}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full mr-1 ${(store.is_active || store.status === 'active') ? 'bg-emerald-400' : 'bg-amber-400'}`}></span>
+                      {(store.is_active || store.status === 'active') ? 'Активний' : 'Неактивний'}
+                    </span>
                   </div>
-                  
-                  <p className="text-gray-600 line-clamp-2 mb-4 min-h-[2.5rem]">
-                    {store.description || 'Опис магазину не вказано'}
-                  </p>
-                  
-                  {/* Дії */}
-                  <div className="flex space-x-2">
+                  {/* Logo on banner */}
+                  <div className="absolute bottom-3 left-4">
+                    {store.logo ? (
+                      <img src={store.logo} alt={store.name} className="w-11 h-11 rounded-xl object-cover border-2 border-white/30 shadow-lg" />
+                    ) : (
+                      <div className="w-11 h-11 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center border-2 border-white/30">
+                        <span className="text-white font-bold text-lg">{store.name.charAt(0).toUpperCase()}</span>
+                      </div>
+                    )}
+                  </div>
+                </Link>
+
+                {/* Info */}
+                <div className="p-4">
+                  <Link to={`/stores/${store.id}`} className="block mb-2">
+                    <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors truncate">
+                      {store.name}
+                    </h3>
+                    <p className="text-sm text-gray-500 line-clamp-1">
+                      {store.description || 'Опис магазину не вказано'}
+                    </p>
+                  </Link>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
                     <Link
                       to={`/stores/${store.id}`}
-                      className="btn btn-outline flex-1 flex items-center justify-center text-sm whitespace-nowrap"
+                      className="flex-1 inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-gray-700 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
                     >
-                      <EyeIcon className="h-4 w-4 mr-2" />
+                      <EyeIcon className="h-4 w-4 mr-1.5" />
                       Переглянути
                     </Link>
-                    <button 
+                    <button
                       onClick={() => handleEditStore(store)}
-                      className="btn btn-outline px-3"
+                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
                       title="Редагувати"
                     >
                       <PencilIcon className="h-4 w-4" />
                     </button>
-                    <button 
+                    <button
                       onClick={() => handleDeleteStore(store)}
-                      className="btn btn-outline px-3 text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-200"
+                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
                       title="Видалити"
                     >
                       <TrashIcon className="h-4 w-4" />
