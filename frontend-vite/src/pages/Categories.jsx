@@ -1,13 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  PlusIcon, 
-  PencilIcon, 
-  TrashIcon, 
+import {
+  PlusIcon,
+  PencilIcon,
+  TrashIcon,
   MagnifyingGlassIcon,
   FolderIcon,
   ChartBarIcon,
-  BuildingStorefrontIcon
+  BuildingStorefrontIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  TagIcon,
+  EyeIcon,
+  PauseCircleIcon,
+  PlayCircleIcon,
 } from '@heroicons/react/24/outline';
 import api from '../services/api';
 import { useAuthStore } from '../stores/authStore';
@@ -226,46 +232,32 @@ const Categories = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Категорії</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Керуйте категоріями товарів вашого магазину
-          </p>
-          {userStores.length > 0 && (
-            console.log('Rendering store selector, stores:', userStores) ||
-            <div className="mt-3">
-              <label className="form-label">
-                {userStores.length > 1 ? 'Виберіть магазин' : 'Магазин'}
-              </label>
-              {userStores.length > 1 ? (
-                <select
-                  value={selectedStoreId || ''}
-                  onChange={(e) => setSelectedStoreId(e.target.value)}
-                  className="input w-64"
-                >
-                  <option value="">Оберіть магазин...</option>
-                  {userStores.map((store) => (
-                    <option key={store.id} value={store.id}>
-                      {store.name}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <div className="flex items-center text-sm text-gray-900 bg-gray-50 px-3 py-2 rounded-md border">
-                  <BuildingStorefrontIcon className="h-4 w-4 mr-2" />
-                  {userStores[0].name}
-                </div>
-              )}
-            </div>
-          )}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+            <TagIcon className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Категорії</h1>
+            <p className="text-sm text-gray-500">Керуйте категоріями товарів вашого магазину</p>
+          </div>
         </div>
-        <div className="flex space-x-3">
-          <button 
+        <div className="flex items-center gap-3">
+          {userStores.length > 1 && (
+            <select
+              value={selectedStoreId || ''}
+              onChange={(e) => setSelectedStoreId(e.target.value)}
+              className="px-3 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              {userStores.map((store) => (
+                <option key={store.id} value={store.id}>{store.name}</option>
+              ))}
+            </select>
+          )}
+          <button
             onClick={() => setShowCreateModal(true)}
             disabled={!currentStoreId}
-            className={`${currentStoreId ? 'btn-primary' : 'btn-disabled'} flex items-center justify-center whitespace-nowrap mx-auto`}
-            title={!currentStoreId ? 'Оберіть магазин для створення категорії' : 'Додати категорію'}
+            className="inline-flex items-center px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl hover:shadow-lg hover:shadow-blue-500/25 transition-all disabled:opacity-50"
           >
             <PlusIcon className="h-4 w-4 mr-2" />
             Додати категорію
@@ -274,200 +266,142 @@ const Categories = () => {
       </div>
 
       {/* Search */}
-      <div className="card">
-        <div className="card-body">
-          <div className="flex items-center space-x-4">
-            <div className="flex-1">
-              <label className="form-label">
-                Пошук
-              </label>
-              <div className="relative">
-                <MagnifyingGlassIcon className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Назва категорії..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="input pl-10"
-                />
-              </div>
-            </div>
+      <div className="bg-white rounded-2xl border border-gray-200/80 p-5">
+        <div className="flex items-center gap-3">
+          <div className="flex-1 relative">
+            <MagnifyingGlassIcon className="h-5 w-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Пошук категорій..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-11 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
           </div>
         </div>
       </div>
 
       {/* Statistics */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="card">
-          <div className="card-body">
-            <div className="flex items-center">
-              <FolderIcon className="h-8 w-8 text-blue-600 mr-4" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: 'Всього категорій', value: filteredCategories.length, icon: FolderIcon, gradient: 'from-blue-500 to-blue-600', bg: 'bg-blue-50' },
+          { label: 'Активні', value: filteredCategories.filter(c => c.is_active).length, icon: CheckCircleIcon, gradient: 'from-emerald-500 to-emerald-600', bg: 'bg-emerald-50' },
+          { label: 'Неактивні', value: filteredCategories.filter(c => !c.is_active).length, icon: XCircleIcon, gradient: 'from-orange-500 to-red-500', bg: 'bg-orange-50' },
+          { label: 'Всього товарів', value: filteredCategories.reduce((sum, c) => sum + (c.products_count || 0), 0), icon: ChartBarIcon, gradient: 'from-purple-500 to-indigo-600', bg: 'bg-purple-50' },
+        ].map((stat, i) => (
+          <div key={i} className={`${stat.bg} rounded-2xl p-5 transition-all hover:shadow-md`}>
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${stat.gradient} flex items-center justify-center`}>
+                <stat.icon className="h-5 w-5 text-white" />
+              </div>
               <div>
-                <dt className="text-sm font-medium text-gray-500">Всього категорій</dt>
-                <dd className="text-lg font-medium text-gray-900">{filteredCategories.length}</dd>
+                <div className="text-xs font-medium text-gray-500">{stat.label}</div>
+                <div className="text-xl font-bold text-gray-900">{stat.value}</div>
               </div>
             </div>
           </div>
-        </div>
-
-        <div className="card">
-          <div className="card-body">
-            <div className="flex items-center">
-              <div className="text-2xl mr-4">✅</div>
-              <div>
-                <dt className="text-sm font-medium text-gray-500">Активні</dt>
-                <dd className="text-lg font-medium text-gray-900">
-                  {filteredCategories.filter(c => c.is_active).length}
-                </dd>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="card-body">
-            <div className="flex items-center">
-              <div className="text-2xl mr-4">❌</div>
-              <div>
-                <dt className="text-sm font-medium text-gray-500">Неактивні</dt>
-                <dd className="text-lg font-medium text-gray-900">
-                  {filteredCategories.filter(c => !c.is_active).length}
-                </dd>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="card-body">
-            <div className="flex items-center">
-              <ChartBarIcon className="h-8 w-8 text-green-600 mr-4" />
-              <div>
-                <dt className="text-sm font-medium text-gray-500">Всього товарів</dt>
-                <dd className="text-lg font-medium text-gray-900">
-                  {filteredCategories.reduce((sum, c) => sum + (c.products_count || 0), 0)}
-                </dd>
-              </div>
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* Categories Table */}
-      <div className="card">
-        <div className="overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Категорія
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Кількість товарів
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Статус
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Створена
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Дії
-                </th>
+      <div className="bg-white rounded-2xl border border-gray-200/80 overflow-hidden">
+        <table className="min-w-full">
+          <thead>
+            <tr className="border-b border-gray-100">
+              <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Категорія</th>
+              <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Товарів</th>
+              <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Статус</th>
+              <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Створена</th>
+              <th className="px-6 py-3.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Дії</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-50">
+            {filteredCategories.map((category) => (
+              <tr key={category.id} className="hover:bg-gray-50/50 transition-colors">
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center flex-shrink-0">
+                      <FolderIcon className="h-5 w-5 text-indigo-600" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold text-gray-900">{category.name}</div>
+                      {category.description && (
+                        <div className="text-xs text-gray-500 line-clamp-1">{category.description}</div>
+                      )}
+                    </div>
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-gray-100 text-sm font-medium text-gray-700">
+                    {category.products_count || 0}
+                  </span>
+                </td>
+                <td className="px-6 py-4">
+                  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                    category.is_active
+                      ? 'bg-emerald-100 text-emerald-700'
+                      : 'bg-gray-100 text-gray-500'
+                  }`}>
+                    <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${category.is_active ? 'bg-emerald-500' : 'bg-gray-400'}`}></span>
+                    {category.is_active ? 'Активна' : 'Неактивна'}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-500">
+                  {category.created_at ? new Date(category.created_at).toLocaleDateString('uk-UA') : '—'}
+                </td>
+                <td className="px-6 py-4">
+                  <div className="flex items-center justify-end gap-1">
+                    <button
+                      onClick={() => navigate(`/products?category=${category.id}`)}
+                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      title="Переглянути товари"
+                    >
+                      <EyeIcon className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => setEditingCategory(category)}
+                      className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                      title="Редагувати"
+                    >
+                      <PencilIcon className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => handleToggleStatus(category)}
+                      className={`p-2 rounded-lg transition-colors ${category.is_active ? 'text-gray-400 hover:text-orange-600 hover:bg-orange-50' : 'text-gray-400 hover:text-emerald-600 hover:bg-emerald-50'}`}
+                      title={category.is_active ? 'Деактивувати' : 'Активувати'}
+                    >
+                      {category.is_active ? <PauseCircleIcon className="h-4 w-4" /> : <PlayCircleIcon className="h-4 w-4" />}
+                    </button>
+                    <button
+                      onClick={() => handleDelete(category.id)}
+                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Видалити"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                </td>
               </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredCategories.map((category) => (
-                <tr key={category.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <FolderIcon className="h-10 w-10 text-gray-400 mr-4" />
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">
-                          {category.name}
-                        </div>
-                        {category.description && (
-                          <div className="text-sm text-gray-500">
-                            {category.description}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <ChartBarIcon className="h-4 w-4 text-gray-400 mr-1" />
-                      <span className="text-sm text-gray-900">
-                        {category.products_count || 0} товарів
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`badge ${
-                      category.is_active ? 'badge-success' : 'badge-secondary'
-                    }`}>
-                      {category.is_active ? 'Активна' : 'Неактивна'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {category.created_at ? new Date(category.created_at).toLocaleDateString('uk-UA') : 'Невідомо'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <div className="flex space-x-2">
-                      <button 
-                        onClick={() => navigate(`/products?category=${category.id}`)}
-                        className="text-blue-600 hover:text-blue-900"
-                        title="Переглянути товари"
-                      >
-                        <ChartBarIcon className="h-4 w-4" />
-                      </button>
-                      <button 
-                        onClick={() => setEditingCategory(category)}
-                        className="text-green-600 hover:text-green-900"
-                        title="Редагувати"
-                      >
-                        <PencilIcon className="h-4 w-4" />
-                      </button>
-                      <button 
-                        onClick={() => handleToggleStatus(category)}
-                        className={`${category.is_active ? 'text-orange-600 hover:text-orange-900' : 'text-green-600 hover:text-green-900'}`}
-                        title={category.is_active ? 'Деактивувати' : 'Активувати'}
-                      >
-                        {category.is_active ? '⏸️' : '▶️'}
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(category.id)}
-                        className="text-red-600 hover:text-red-900"
-                        title="Видалити"
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          
-          {filteredCategories.length === 0 && !loading && (
-            <div className="text-center py-12">
-              <FolderIcon className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">Немає категорій</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                Почніть з створення першої категорії для ваших товарів.
-              </p>
-              <div className="mt-6">
-                <button
-                  onClick={() => setShowCreateModal(true)}
-                  className="btn-primary flex items-center justify-center whitespace-nowrap mx-auto"
-                >
-                  <PlusIcon className="h-4 w-4 mr-2" />
-                  Додати категорію
-                </button>
-              </div>
+            ))}
+          </tbody>
+        </table>
+
+        {filteredCategories.length === 0 && !loading && (
+          <div className="text-center py-16">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center mb-4">
+              <FolderIcon className="h-8 w-8 text-gray-400" />
             </div>
-          )}
-        </div>
+            <h3 className="text-base font-semibold text-gray-900 mb-1">Немає категорій</h3>
+            <p className="text-sm text-gray-500 mb-6">Почніть з створення першої категорії для ваших товарів.</p>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="inline-flex items-center px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl hover:shadow-lg hover:shadow-blue-500/25 transition-all"
+            >
+              <PlusIcon className="h-4 w-4 mr-2" />
+              Додати категорію
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Category Modal */}

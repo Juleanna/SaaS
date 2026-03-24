@@ -76,8 +76,8 @@ const Layout = () => {
           href: '/products',
           icon: CubeIcon,
           submenu: [
-            { name: 'Всі товари', href: '/products', icon: CubeIcon },
             { name: 'Категорії', href: '/categories', icon: TagIcon },
+            { name: 'Всі товари', href: '/products', icon: CubeIcon },
           ],
         },
         { name: 'Замовлення', href: '/orders', icon: ShoppingCartIcon },
