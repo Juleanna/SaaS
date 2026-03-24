@@ -809,7 +809,6 @@ const ProductModal = ({
               )}
 
             </div>
-            </div>
 
             <div className="bg-gradient-to-r from-gray-50/80 to-blue-50/30 px-6 py-3 sm:px-8 sm:flex sm:flex-row-reverse border-t border-gray-200/50 flex-shrink-0">
               <button
