@@ -74,11 +74,13 @@ const SubscriptionsPage = () => {
         toast.success(`План "${selectedPlan.name}" успішно активовано!`);
       }
 
-      await queryClient.refetchQueries({ queryKey: ['current-subscription'] });
-      await queryClient.refetchQueries({ queryKey: ['subscription-usage'] });
-      await queryClient.refetchQueries({ queryKey: ['subscription-plans'] });
+      queryClient.removeQueries({ queryKey: ['current-subscription'] });
+      queryClient.removeQueries({ queryKey: ['subscription-usage'] });
+      queryClient.removeQueries({ queryKey: ['subscription-plans'] });
       setShowUpgradeModal(false);
       setSelectedPlan(null);
+      // Перезавантажити сторінку для гарантованого оновлення
+      window.location.reload();
     } catch (error) {
       const data = error.response?.data;
       if (data?.message) {
