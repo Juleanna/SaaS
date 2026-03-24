@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import api from '../../services/api';
+import api, { getResults } from '../../services/api';
 import ShoppingCart from '../../components/ShoppingCart';
 import CheckoutModal from '../../components/CheckoutModal';
 import {
@@ -21,6 +21,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartIconSolid, StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import toast from 'react-hot-toast';
+import logger from '../../services/logger';
 
 // ============================================================
 // ProductQuickView Modal
@@ -193,7 +194,7 @@ const PublicStore = () => {
         const response = await api.get(`/stores/public/${storeSlug}/`);
         return response.data;
       } catch (error) {
-        console.error('Error fetching store:', error);
+        logger.error('Error fetching store:', error);
         return {
           id: 1,
           name: 'TechStore',
@@ -229,9 +230,9 @@ const PublicStore = () => {
         if (sortBy) params.append('ordering', sortBy);
 
         const response = await api.get(`/stores/public/${storeSlug}/products/?${params}`);
-        return response.data.results || response.data;
+        return getResults(response.data);
       } catch (error) {
-        console.error('Error fetching products:', error);
+        logger.error('Error fetching products:', error);
         return [
           {
             id: 1,
@@ -290,7 +291,7 @@ const PublicStore = () => {
     queryFn: async () => {
       try {
         const response = await api.get(`/stores/public/${storeSlug}/categories/`);
-        return response.data.results || response.data;
+        return getResults(response.data);
       } catch (error) {
         return [
           { id: 1, name: 'Смартфони' },

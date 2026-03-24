@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { XMarkIcon, CameraIcon, StopIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
+import logger from '../services/logger';
 
 const BarcodeScanner = ({ 
   isOpen, 
@@ -67,7 +68,7 @@ const BarcodeScanner = ({
       }, 500); // Сканування кожні 500мс
       
     } catch (err) {
-      console.error('Camera error:', err);
+      logger.error('Camera error:', err);
       let errorMessage = 'Помилка доступу до камери';
       
       if (err.name === 'NotAllowedError') {

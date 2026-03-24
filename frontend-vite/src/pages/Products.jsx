@@ -14,9 +14,10 @@ import {
   ArrowUpIcon,
   ArrowDownIcon
 } from '@heroicons/react/24/outline';
-import api from '../services/api';
+import api, { getResults } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
 import ProductModal from '../components/ProductModal';
+import logger from '../services/logger';
 
 const Products = () => {
   const { storeId } = useParams();
@@ -48,15 +49,15 @@ const Products = () => {
   });
   const [pageSize, setPageSize] = useState(20);
 
-  const currentStoreId = storeId || userStores?.[0]?.id || user?.stores?.[0]?.id;
+  const currentStoreId = storeId || userStores?.[0]?.id;
 
   const fetchUserStores = async () => {
     try {
       setStoresLoading(true);
       const response = await api.get('/stores/');
-      setUserStores(response.data.results || response.data || []);
+      setUserStores(getResults(response.data));
     } catch (error) {
-      console.error('Error fetching user stores:', error);
+      logger.error('Error fetching user stores:', error);
       setUserStores([]);
     } finally {
       setStoresLoading(false);
@@ -95,7 +96,7 @@ const Products = () => {
         setProducts(response.data || []);
       }
     } catch (error) {
-      console.error('Error fetching products:', error);
+      logger.error('Error fetching products:', error);
       const errorMessage = error.response?.data?.detail || 'Помилка завантаження товарів';
       setError(errorMessage);
       setProducts([]);
@@ -109,9 +110,9 @@ const Products = () => {
     
     try {
       const response = await api.get(`/products/stores/${currentStoreId}/categories/`);
-      setCategories(response.data.results || response.data || []);
+      setCategories(getResults(response.data));
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      logger.error('Error fetching categories:', error);
       setCategories([]);
     }
   };
@@ -123,7 +124,7 @@ const Products = () => {
       await api.delete(`/products/stores/${currentStoreId}/products/${productId}/`);
       fetchProducts(pagination.current_page);
     } catch (error) {
-      console.error('Error deleting product:', error);
+      logger.error('Error deleting product:', error);
       alert('Помилка видалення товару');
     }
   };
@@ -135,7 +136,7 @@ const Products = () => {
       });
       fetchProducts(pagination.current_page);
     } catch (error) {
-      console.error('Error toggling product status:', error);
+      logger.error('Error toggling product status:', error);
       alert('Помилка зміни статусу товару');
     }
   };
@@ -174,7 +175,7 @@ const Products = () => {
       setSelectedProducts(new Set());
       fetchProducts(pagination.current_page);
     } catch (error) {
-      console.error('Error performing bulk action:', error);
+      logger.error('Error performing bulk action:', error);
       alert('Помилка виконання масової дії');
     }
   };
@@ -211,7 +212,7 @@ const Products = () => {
       fetchProducts(pagination.current_page);
       alert('Штрихкод успішно згенеровано');
     } catch (error) {
-      console.error('Error generating barcode:', error);
+      logger.error('Error generating barcode:', error);
       alert('Помилка генерації штрихкоду');
     }
   };
@@ -222,7 +223,7 @@ const Products = () => {
       fetchProducts(pagination.current_page);
       alert('QR код успішно згенеровано');
     } catch (error) {
-      console.error('Error generating QR code:', error);
+      logger.error('Error generating QR code:', error);
       alert('Помилка генерації QR коду');
     }
   };

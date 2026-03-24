@@ -8,6 +8,7 @@ import {
   CreditCardIcon
 } from '@heroicons/react/24/outline';
 import api from '../services/api';
+import logger from '../services/logger';
 
 const ShoppingCart = ({ 
   isOpen, 
@@ -27,7 +28,7 @@ const ShoppingCart = ({
       const response = await api.get(`/orders/public/${storeSlug}/cart/`);
       setCart(response.data);
     } catch (error) {
-      console.error('Error fetching cart:', error);
+      logger.error('Error fetching cart:', error);
       setError('Помилка завантаження кошика');
       
       // Fallback mock data
@@ -84,7 +85,7 @@ const ShoppingCart = ({
       });
       fetchCart();
     } catch (error) {
-      console.error('Error updating quantity:', error);
+      logger.error('Error updating quantity:', error);
       alert('Помилка оновлення кількості');
     }
   };
@@ -94,7 +95,7 @@ const ShoppingCart = ({
       await api.delete(`/orders/public/${storeSlug}/cart/items/${itemId}/`);
       fetchCart();
     } catch (error) {
-      console.error('Error removing item:', error);
+      logger.error('Error removing item:', error);
       alert('Помилка видалення товару');
     }
   };
@@ -109,7 +110,7 @@ const ShoppingCart = ({
         await Promise.all(deletePromises);
         fetchCart();
       } catch (error) {
-        console.error('Error clearing cart:', error);
+        logger.error('Error clearing cart:', error);
         alert('Помилка очищення кошика');
       }
     }

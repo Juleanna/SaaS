@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { XMarkIcon, PhotoIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import api from '../services/api';
+import logger from '../services/logger';
 
 const ProductModal = ({ 
   isOpen, 
@@ -120,7 +121,7 @@ const ProductModal = ({
       const uploadedImages = await Promise.all(uploadPromises);
       setImages(prev => [...prev, ...uploadedImages]);
     } catch (error) {
-      console.error('Error uploading images:', error);
+      logger.error('Error uploading images:', error);
       alert('Помилка завантаження зображень');
     } finally {
       setLoading(false);
@@ -134,7 +135,7 @@ const ProductModal = ({
       }
       setImages(prev => prev.filter(img => img.id !== imageId));
     } catch (error) {
-      console.error('Error removing image:', error);
+      logger.error('Error removing image:', error);
       alert('Помилка видалення зображення');
     }
   };
@@ -225,7 +226,7 @@ const ProductModal = ({
       onSave && onSave(response.data);
       onClose();
     } catch (error) {
-      console.error('Error saving product:', error);
+      logger.error('Error saving product:', error);
       if (error.response?.data) {
         const serverErrors = {};
         Object.keys(error.response.data).forEach(key => {

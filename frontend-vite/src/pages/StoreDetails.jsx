@@ -32,26 +32,9 @@ const StoreDetails = () => {
   const { data: store, isLoading, error } = useQuery({
     queryKey: ['store', storeId],
     queryFn: async () => {
-      try {
-        const response = await api.get(`/stores/${storeId}/`);
-        return response.data;
-      } catch (error) {
-        console.error('Store fetch error:', error);
-        return {
-          id: parseInt(storeId),
-          name: 'Мій інтернет-магазин',
-          slug: 'my-online-store',
-          description: 'Продаж електроніки та аксесуарів',
-          status: 'active',
-          is_active: true,
-          products_count: 12,
-          orders_count: 8,
-          revenue: 15600,
-          created_at: '2024-01-15',
-        };
-      }
+      const response = await api.get(`/stores/${storeId}/`);
+      return response.data;
     },
-    retry: false,
   });
 
   const copySlug = () => {

@@ -6,6 +6,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { PencilIcon, CheckIcon, XMarkIcon, CreditCardIcon, PlusIcon, CameraIcon, UserIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import api from '../services/api';
+import logger from '../services/logger';
 
 const Profile = () => {
   const { user, updateProfile, updateUser } = useAuthStore();
@@ -25,7 +26,7 @@ const Profile = () => {
         const response = await api.get('/auth/profile/');
         return response.data;
       } catch (error) {
-        console.error('Profile fetch error:', error);
+        logger.error('Profile fetch error:', error);
         return user; // Fallback на дані з store
       }
     },
@@ -141,7 +142,7 @@ const Profile = () => {
       // Також оновлюємо дані в authStore
       updateUser({ balance: response.data.new_balance });
     } catch (error) {
-      console.error('Top up error:', error);
+      logger.error('Top up error:', error);
       const errorMessage = error.response?.data?.error || 'Помилка поповнення рахунку';
       toast.error(errorMessage);
     } finally {
@@ -190,7 +191,7 @@ const Profile = () => {
       // Також оновлюємо дані в authStore
       updateUser({ avatar: response.data.avatar_url });
     } catch (error) {
-      console.error('Avatar upload error:', error);
+      logger.error('Avatar upload error:', error);
       const errorMessage = error.response?.data?.error || 'Помилка завантаження аватару';
       toast.error(errorMessage);
     } finally {

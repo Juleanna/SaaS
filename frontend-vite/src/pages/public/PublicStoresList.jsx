@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import api from '../../services/api';
+import api, { getResults } from '../../services/api';
 import {
   MagnifyingGlassIcon,
   BuildingStorefrontIcon,
@@ -18,6 +18,7 @@ import {
   SparklesIcon
 } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
+import logger from '../../services/logger';
 
 // Gradient palettes for store cards
 const cardGradients = [
@@ -48,9 +49,9 @@ const PublicStoresList = () => {
         if (selectedCity) params.append('city', selectedCity);
 
         const response = await api.get(`/stores/public/?${params}`);
-        return response.data.results || response.data;
+        return getResults(response.data);
       } catch (error) {
-        console.error('Error fetching stores:', error);
+        logger.error('Error fetching stores:', error);
         // Mock data
         return [
           {
@@ -144,7 +145,7 @@ const PublicStoresList = () => {
     queryFn: async () => {
       try {
         const response = await api.get('/stores/categories/');
-        return response.data.results || response.data;
+        return getResults(response.data);
       } catch (error) {
         return ['Електроніка', 'Одяг', 'Дім', 'Сад', 'Гаджети', 'Аксесуари', 'Спорт'];
       }
@@ -157,7 +158,7 @@ const PublicStoresList = () => {
     queryFn: async () => {
       try {
         const response = await api.get('/stores/cities/');
-        return response.data.results || response.data;
+        return getResults(response.data);
       } catch (error) {
         return ['Київ', 'Львів', 'Одеса', 'Харків', 'Дніпро'];
       }

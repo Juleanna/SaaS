@@ -4,7 +4,8 @@ import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { PlusIcon, EyeIcon, PencilIcon, TrashIcon, XMarkIcon, ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
-import api from '../services/api';
+import api, { getResults } from '../services/api';
+import logger from '../services/logger';
 
 const SOCIAL_TYPES = [
   { value: 'instagram', label: 'Instagram', icon: '📷' },
@@ -78,9 +79,9 @@ const Stores = () => {
     queryFn: async () => {
       try {
         const response = await api.get('/stores/');
-        return response.data.results || response.data || [];
+        return getResults(response.data);
       } catch (error) {
-        console.error('Stores fetch error:', error);
+        logger.error('Stores fetch error:', error);
         // Fallback на моковані дані якщо API недоступне
         return [
           {
@@ -252,7 +253,7 @@ const Stores = () => {
       clearStoreBlocks();
       refetch(); // Оновлюємо список магазинів
     } catch (error) {
-      console.error('Store save error:', error);
+      logger.error('Store save error:', error);
       const errorMessage = error.response?.data?.message || 
                           error.response?.data?.detail || 
                           (editingStore ? 'Помилка оновлення магазину' : 'Помилка створення магазину');
@@ -391,7 +392,7 @@ const Stores = () => {
           });
         }
       } catch (error) {
-        console.error('Error saving social link:', error);
+        logger.error('Error saving social link:', error);
         // Не блокуємо весь процес збереження через помилку в одній соціальній мережі
       }
     }
@@ -471,7 +472,7 @@ const Stores = () => {
           });
         }
       } catch (error) {
-        console.error('Error saving store block:', error);
+        logger.error('Error saving store block:', error);
         // Не блокуємо весь процес збереження через помилку в одному блоці
       }
     }

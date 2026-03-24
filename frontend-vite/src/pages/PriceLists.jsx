@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '../stores/authStore';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '../services/api';
+import api, { getResults } from '../services/api';
 import toast from 'react-hot-toast';
 import {
   PlusIcon,
@@ -19,6 +19,7 @@ import {
 } from '@heroicons/react/24/outline';
 import PriceListModal from '../components/PriceListModal';
 import PriceListItemsModal from '../components/PriceListItemsModal';
+import logger from '../services/logger';
 
 const PriceLists = () => {
   const { user } = useAuthStore();
@@ -36,7 +37,7 @@ const PriceLists = () => {
     queryKey: ['user-stores'],
     queryFn: async () => {
       const response = await api.get('/stores/');
-      return response.data.results || response.data;
+      return getResults(response.data);
     },
   });
 
@@ -54,9 +55,9 @@ const PriceLists = () => {
       if (!selectedStore) return [];
       try {
         const response = await api.get(`/pricelists/stores/${selectedStore}/pricelists/`);
-        return response.data.results || response.data;
+        return getResults(response.data);
       } catch (error) {
-        console.error('Error fetching price lists:', error);
+        logger.error('Error fetching price lists:', error);
         // Fallback до mock даних
         return [
           {
@@ -106,7 +107,7 @@ const PriceLists = () => {
     },
     onError: (error) => {
       toast.error('Помилка створення прайс-листа');
-      console.error('Create error:', error);
+      logger.error('Create error:', error);
     },
   });
 
@@ -124,7 +125,7 @@ const PriceLists = () => {
     },
     onError: (error) => {
       toast.error('Помилка оновлення прайс-листа');
-      console.error('Update error:', error);
+      logger.error('Update error:', error);
     },
   });
 
@@ -139,7 +140,7 @@ const PriceLists = () => {
     },
     onError: (error) => {
       toast.error('Помилка видалення прайс-листа');
-      console.error('Delete error:', error);
+      logger.error('Delete error:', error);
     },
   });
 

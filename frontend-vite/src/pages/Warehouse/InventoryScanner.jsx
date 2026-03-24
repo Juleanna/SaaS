@@ -15,6 +15,7 @@ import {
   XCircleIcon,
   ClockIcon
 } from '@heroicons/react/24/outline';
+import logger from '../../services/logger';
 
 const InventoryScanner = () => {
   const { inventoryId } = useParams();
@@ -33,7 +34,7 @@ const InventoryScanner = () => {
         const response = await api.get(`/warehouse/inventory/${inventoryId}/`);
         return response.data;
       } catch (error) {
-        console.error('Error fetching inventory:', error);
+        logger.error('Error fetching inventory:', error);
         // Mock data
         return {
           id: inventoryId,
@@ -56,7 +57,7 @@ const InventoryScanner = () => {
         const response = await api.get(`/warehouse/inventory/${inventoryId}/scan/summary/`);
         return response.data;
       } catch (error) {
-        console.error('Error fetching scan summary:', error);
+        logger.error('Error fetching scan summary:', error);
         // Mock data
         return {
           summary: {

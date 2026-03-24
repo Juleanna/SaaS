@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import api from '../services/api';
+import logger from '../services/logger';
 
 const CategoryModal = ({ 
   isOpen, 
@@ -109,7 +110,7 @@ const CategoryModal = ({
     }
 
     if (!storeId) {
-      console.error('No store ID provided');
+      logger.error('No store ID provided');
       alert('Помилка: не вказано магазин');
       return;
     }
@@ -130,11 +131,11 @@ const CategoryModal = ({
       onSave && onSave(response.data);
       onClose();
     } catch (error) {
-      console.error('Error saving category:', error);
-      console.error('Error response:', error.response?.data);
-      console.error('Error status:', error.response?.status);
-      console.error('Request URL:', error.config?.url);
-      console.error('Request data:', error.config?.data);
+      logger.error('Error saving category:', error);
+      logger.error('Error response:', error.response?.data);
+      logger.error('Error status:', error.response?.status);
+      logger.error('Request URL:', error.config?.url);
+      logger.error('Request data:', error.config?.data);
       
       if (error.response?.data) {
         const serverErrors = {};

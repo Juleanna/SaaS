@@ -11,8 +11,9 @@ import {
   ArrowDownTrayIcon,
   PencilIcon,
 } from '@heroicons/react/24/outline';
-import api from '../services/api';
+import api, { getResults } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
+import logger from '../services/logger';
 
 const Orders = () => {
   const { storeId } = useParams();
@@ -29,8 +30,9 @@ const Orders = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   
-  // Get store ID (from URL or user's first store)
-  const currentStoreId = storeId || user?.stores?.[0]?.id || 1;
+  const [userStores, setUserStores] = useState([]);
+
+  const currentStoreId = storeId || userStores?.[0]?.id || user?.stores?.[0]?.id;
 
   const fetchOrders = async () => {
     try {
@@ -58,57 +60,10 @@ const Orders = () => {
       }
       
       const response = await api.get(`/orders/stores/${currentStoreId}/orders/?${params}`);
-      setOrders(response.data.results || response.data);
+      setOrders(getResults(response.data));
     } catch (error) {
-      console.error('Error fetching orders:', error);
       setError('Помилка завантаження замовлень');
-      // Fallback to mock data if API fails
-      setOrders([
-        {
-          id: 1,
-          order_number: 'ORD-12345678',
-          customer_name: 'Іван Петренко',
-          customer_email: 'ivan@example.com',
-          total_amount: 1500,
-          status: 'pending',
-          created_at: '2024-01-15T10:30:00Z',
-          items_count: 3,
-          items: [],
-        },
-        {
-          id: 2,
-          order_number: 'ORD-12345679',
-          customer_name: 'Марія Коваленко',
-          customer_email: 'maria@example.com',
-          total_amount: 2300,
-          status: 'confirmed',
-          created_at: '2024-01-14T11:20:00Z',
-          items_count: 2,
-          items: [],
-        },
-        {
-          id: 3,
-          order_number: 'ORD-12345680',
-          customer_name: 'Олексій Сидоренко',
-          customer_email: 'oleksiy@example.com',
-          total_amount: 890,
-          status: 'shipped',
-          created_at: '2024-01-13T14:45:00Z',
-          items_count: 1,
-          items: [],
-        },
-        {
-          id: 4,
-          order_number: 'ORD-12345681',
-          customer_name: 'Анна Іваненко',
-          customer_email: 'anna@example.com',
-          total_amount: 3200,
-          status: 'delivered',
-          created_at: '2024-01-12T16:15:00Z',
-          items_count: 5,
-          items: [],
-        },
-      ]);
+      setOrders([]);
     } finally {
       setLoading(false);
     }
@@ -119,14 +74,7 @@ const Orders = () => {
       const response = await api.get(`/orders/stores/${currentStoreId}/orders/statistics/`);
       setStatistics(response.data);
     } catch (error) {
-      console.error('Error fetching statistics:', error);
-      // Fallback statistics
-      setStatistics({
-        pending_count: orders.filter(o => o.status === 'pending').length,
-        processing_count: orders.filter(o => ['confirmed', 'processing', 'shipped'].includes(o.status)).length,
-        completed_count: orders.filter(o => o.status === 'delivered').length,
-        total_amount: orders.reduce((sum, o) => sum + (o.total_amount || 0), 0),
-      });
+      setStatistics(null);
     }
   };
 
@@ -138,7 +86,7 @@ const Orders = () => {
       fetchOrders();
       fetchStatistics();
     } catch (error) {
-      console.error('Error updating order status:', error);
+      logger.error('Error updating order status:', error);
       alert('Помилка оновлення статусу замовлення');
     }
   };
@@ -161,13 +109,25 @@ const Orders = () => {
       link.click();
       link.remove();
     } catch (error) {
-      console.error('Error exporting orders:', error);
+      logger.error('Error exporting orders:', error);
       alert('Помилка експорту замовлень');
     }
   };
 
   useEffect(() => {
-    fetchOrders();
+    const fetchUserStores = async () => {
+      try {
+        const response = await api.get('/stores/');
+        setUserStores(getResults(response.data));
+      } catch (error) {
+        setUserStores([]);
+      }
+    };
+    if (!storeId) fetchUserStores();
+  }, [storeId]);
+
+  useEffect(() => {
+    if (currentStoreId) fetchOrders();
   }, [currentStoreId, searchTerm, statusFilter, dateFilter]);
 
   useEffect(() => {

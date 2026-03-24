@@ -41,12 +41,12 @@ api.interceptors.response.use(
           return api(originalRequest);
         }
       } catch (refreshError) {
-        useAuthStore.getState().logout();
-        // Використовуємо navigate замість window.location для SPA
-        if (window.location.pathname !== '/login') {
-          window.history.pushState({}, '', '/login');
-          window.dispatchEvent(new PopStateEvent('popstate'));
-        }
+        // Refresh не вдався — виходимо з системи
+      }
+
+      useAuthStore.getState().logout();
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
       }
     }
     
@@ -54,4 +54,14 @@ api.interceptors.response.use(
   }
 );
 
-export default api; 
+/**
+ * Витягує масив даних з API-відповіді (пагінована або пласка).
+ * Використання: const items = getResults(response.data);
+ */
+export const getResults = (data) => {
+  if (Array.isArray(data)) return data;
+  if (data?.results && Array.isArray(data.results)) return data.results;
+  return [];
+};
+
+export default api;

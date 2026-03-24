@@ -8,7 +8,8 @@ import {
   MapPinIcon,
   EnvelopeIcon
 } from '@heroicons/react/24/outline';
-import api from '../services/api';
+import api, { getResults } from '../services/api';
+import logger from '../services/logger';
 
 const CheckoutModal = ({ 
   isOpen, 
@@ -35,9 +36,9 @@ const CheckoutModal = ({
   const fetchPaymentMethods = async () => {
     try {
       const response = await api.get(`/payments/public/${storeSlug}/payment-methods/`);
-      setPaymentMethods(response.data.results || response.data);
+      setPaymentMethods(getResults(response.data));
     } catch (error) {
-      console.error('Error fetching payment methods:', error);
+      logger.error('Error fetching payment methods:', error);
       // Fallback payment methods
       setPaymentMethods([
         { id: 1, name: 'Готівка при отриманні', type: 'cash', is_active: true },
@@ -134,7 +135,7 @@ const CheckoutModal = ({
       alert(`Замовлення #${response.data.order_number} успішно створено! Ми зв'яжемося з вами найближчим часом.`);
       
     } catch (error) {
-      console.error('Error creating order:', error);
+      logger.error('Error creating order:', error);
       if (error.response?.data) {
         const serverErrors = {};
         Object.keys(error.response.data).forEach(key => {

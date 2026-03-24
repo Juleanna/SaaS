@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import api from '../services/api';
+import logger from '../services/logger';
 
 export const useAuthStore = create(
   persist(
@@ -25,7 +26,7 @@ export const useAuthStore = create(
           
           return { success: true };
         } catch (error) {
-          console.error('Login error:', error.response?.data);
+          logger.error('Login error:', error.response?.data);
           
           let errorMessage = 'Помилка входу';
           

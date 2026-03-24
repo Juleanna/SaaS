@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '../services/api';
+import api, { getResults } from '../services/api';
 import toast from 'react-hot-toast';
 import {
   XMarkIcon,
@@ -13,6 +13,7 @@ import {
   AdjustmentsHorizontalIcon,
   ArrowPathIcon
 } from '@heroicons/react/24/outline';
+import logger from '../services/logger';
 
 const PriceListItemsModal = ({ 
   isOpen, 
@@ -33,9 +34,9 @@ const PriceListItemsModal = ({
       if (!priceList?.id || !storeId) return [];
       try {
         const response = await api.get(`/pricelists/stores/${storeId}/pricelists/${priceList.id}/items/`);
-        return response.data.results || response.data;
+        return getResults(response.data);
       } catch (error) {
-        console.error('Error fetching price list items:', error);
+        logger.error('Error fetching price list items:', error);
         // Mock data для демонстрації
         return [
           {
@@ -87,7 +88,7 @@ const PriceListItemsModal = ({
       if (!storeId) return [];
       try {
         const response = await api.get(`/products/stores/${storeId}/products/`);
-        return response.data.results || response.data;
+        return getResults(response.data);
       } catch (error) {
         return [];
       }
@@ -102,7 +103,7 @@ const PriceListItemsModal = ({
       if (!storeId) return [];
       try {
         const response = await api.get(`/products/stores/${storeId}/categories/`);
-        return response.data.results || response.data;
+        return getResults(response.data);
       } catch (error) {
         return [];
       }
@@ -123,7 +124,7 @@ const PriceListItemsModal = ({
     },
     onError: (error) => {
       toast.error('Помилка додавання товару');
-      console.error('Add item error:', error);
+      logger.error('Add item error:', error);
     },
   });
 
@@ -140,7 +141,7 @@ const PriceListItemsModal = ({
     },
     onError: (error) => {
       toast.error('Помилка оновлення позиції');
-      console.error('Update item error:', error);
+      logger.error('Update item error:', error);
     },
   });
 
@@ -155,7 +156,7 @@ const PriceListItemsModal = ({
     },
     onError: (error) => {
       toast.error('Помилка видалення позиції');
-      console.error('Delete item error:', error);
+      logger.error('Delete item error:', error);
     },
   });
 

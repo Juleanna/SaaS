@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import api from '../services/api';
+import logger from '../services/logger';
 
 export const useWarehouseStore = create(
   persist(
@@ -49,7 +50,7 @@ export const useWarehouseStore = create(
           set({ warehouses: response.data });
           return { success: true };
         } catch (error) {
-          console.error('Error fetching warehouses:', error);
+          logger.error('Error fetching warehouses:', error);
           return { success: false, error: error.response?.data?.message || 'Помилка завантаження складів' };
         }
       },
@@ -63,7 +64,7 @@ export const useWarehouseStore = create(
           }));
           return { success: true, data: response.data };
         } catch (error) {
-          console.error('Error creating warehouse:', error);
+          logger.error('Error creating warehouse:', error);
           return { success: false, error: error.response?.data?.message || 'Помилка створення складу' };
         }
       },
@@ -77,7 +78,7 @@ export const useWarehouseStore = create(
           }));
           return { success: true, data: response.data };
         } catch (error) {
-          console.error('Error updating warehouse:', error);
+          logger.error('Error updating warehouse:', error);
           return { success: false, error: error.response?.data?.message || 'Помилка оновлення складу' };
         }
       },
@@ -91,7 +92,7 @@ export const useWarehouseStore = create(
           }));
           return { success: true };
         } catch (error) {
-          console.error('Error deleting warehouse:', error);
+          logger.error('Error deleting warehouse:', error);
           return { success: false, error: error.response?.data?.message || 'Помилка видалення складу' };
         }
       },
@@ -111,7 +112,7 @@ export const useWarehouseStore = create(
           set({ stocks: response.data, stocksLoading: false });
           return { success: true };
         } catch (error) {
-          console.error('Error fetching stocks:', error);
+          logger.error('Error fetching stocks:', error);
           set({ stocksLoading: false });
           return { success: false, error: error.response?.data?.message || 'Помилка завантаження залишків' };
         }
@@ -126,7 +127,7 @@ export const useWarehouseStore = create(
           }));
           return { success: true, data: response.data };
         } catch (error) {
-          console.error('Error updating stock:', error);
+          logger.error('Error updating stock:', error);
           return { success: false, error: error.response?.data?.message || 'Помилка оновлення залишку' };
         }
       },
@@ -139,7 +140,7 @@ export const useWarehouseStore = create(
           set({ suppliers: response.data, suppliersLoading: false });
           return { success: true };
         } catch (error) {
-          console.error('Error fetching suppliers:', error);
+          logger.error('Error fetching suppliers:', error);
           set({ suppliersLoading: false });
           return { success: false, error: error.response?.data?.message || 'Помилка завантаження постачальників' };
         }
@@ -154,7 +155,7 @@ export const useWarehouseStore = create(
           }));
           return { success: true, data: response.data };
         } catch (error) {
-          console.error('Error creating supplier:', error);
+          logger.error('Error creating supplier:', error);
           return { success: false, error: error.response?.data?.message || 'Помилка створення постачальника' };
         }
       },
@@ -168,7 +169,7 @@ export const useWarehouseStore = create(
           }));
           return { success: true, data: response.data };
         } catch (error) {
-          console.error('Error updating supplier:', error);
+          logger.error('Error updating supplier:', error);
           return { success: false, error: error.response?.data?.message || 'Помилка оновлення постачальника' };
         }
       },
@@ -182,7 +183,7 @@ export const useWarehouseStore = create(
           }));
           return { success: true };
         } catch (error) {
-          console.error('Error deleting supplier:', error);
+          logger.error('Error deleting supplier:', error);
           return { success: false, error: error.response?.data?.message || 'Помилка видалення постачальника' };
         }
       },
@@ -197,7 +198,7 @@ export const useWarehouseStore = create(
           set({ supplies: response.data, suppliesLoading: false });
           return { success: true };
         } catch (error) {
-          console.error('Error fetching supplies:', error);
+          logger.error('Error fetching supplies:', error);
           set({ suppliesLoading: false });
           return { success: false, error: error.response?.data?.message || 'Помилка завантаження постачань' };
         }
@@ -212,7 +213,7 @@ export const useWarehouseStore = create(
           }));
           return { success: true, data: response.data };
         } catch (error) {
-          console.error('Error creating supply:', error);
+          logger.error('Error creating supply:', error);
           return { success: false, error: error.response?.data?.message || 'Помилка створення постачання' };
         }
       },
@@ -226,7 +227,7 @@ export const useWarehouseStore = create(
           }));
           return { success: true, data: response.data };
         } catch (error) {
-          console.error('Error updating supply status:', error);
+          logger.error('Error updating supply status:', error);
           return { success: false, error: error.response?.data?.message || 'Помилка оновлення статусу постачання' };
         }
       },
@@ -244,7 +245,7 @@ export const useWarehouseStore = create(
           set({ stockBatches: response.data, stockBatchesLoading: false });
           return { success: true };
         } catch (error) {
-          console.error('Error fetching stock batches:', error);
+          logger.error('Error fetching stock batches:', error);
           set({ stockBatchesLoading: false });
           return { success: false, error: error.response?.data?.message || 'Помилка завантаження партій' };
         }
@@ -263,7 +264,7 @@ export const useWarehouseStore = create(
           set({ stockMovements: response.data, stockMovementsLoading: false });
           return { success: true };
         } catch (error) {
-          console.error('Error fetching stock movements:', error);
+          logger.error('Error fetching stock movements:', error);
           set({ stockMovementsLoading: false });
           return { success: false, error: error.response?.data?.message || 'Помилка завантаження руху товарів' };
         }
@@ -279,7 +280,7 @@ export const useWarehouseStore = create(
           set({ inventories: response.data, inventoriesLoading: false });
           return { success: true };
         } catch (error) {
-          console.error('Error fetching inventories:', error);
+          logger.error('Error fetching inventories:', error);
           set({ inventoriesLoading: false });
           return { success: false, error: error.response?.data?.message || 'Помилка завантаження інвентаризацій' };
         }
@@ -294,7 +295,7 @@ export const useWarehouseStore = create(
           }));
           return { success: true, data: response.data };
         } catch (error) {
-          console.error('Error creating inventory:', error);
+          logger.error('Error creating inventory:', error);
           return { success: false, error: error.response?.data?.message || 'Помилка створення інвентаризації' };
         }
       },
@@ -308,7 +309,7 @@ export const useWarehouseStore = create(
           }));
           return { success: true, data: response.data };
         } catch (error) {
-          console.error('Error updating inventory status:', error);
+          logger.error('Error updating inventory status:', error);
           return { success: false, error: error.response?.data?.message || 'Помилка оновлення статусу інвентаризації' };
         }
       },
@@ -320,7 +321,7 @@ export const useWarehouseStore = create(
           set({ units: response.data });
           return { success: true };
         } catch (error) {
-          console.error('Error fetching units:', error);
+          logger.error('Error fetching units:', error);
           return { success: false, error: error.response?.data?.message || 'Помилка завантаження одиниць вимірювання' };
         }
       },
@@ -332,7 +333,7 @@ export const useWarehouseStore = create(
           set({ costingMethods: response.data });
           return { success: true };
         } catch (error) {
-          console.error('Error fetching costing methods:', error);
+          logger.error('Error fetching costing methods:', error);
           return { success: false, error: error.response?.data?.message || 'Помилка завантаження методів розрахунку' };
         }
       },
@@ -346,7 +347,7 @@ export const useWarehouseStore = create(
           set({ packagings: response.data });
           return { success: true };
         } catch (error) {
-          console.error('Error fetching packagings:', error);
+          logger.error('Error fetching packagings:', error);
           return { success: false, error: error.response?.data?.message || 'Помилка завантаження фасувань' };
         }
       },
@@ -367,7 +368,7 @@ export const useWarehouseStore = create(
           const response = await api.get(`/warehouse/warehouses/${warehouseId}/stats/`);
           return { success: true, data: response.data };
         } catch (error) {
-          console.error('Error fetching warehouse stats:', error);
+          logger.error('Error fetching warehouse stats:', error);
           return { success: false, error: error.response?.data?.message || 'Помилка завантаження статистики' };
         }
       },
@@ -381,7 +382,7 @@ export const useWarehouseStore = create(
           });
           return { success: true, data: response.data };
         } catch (error) {
-          console.error('Error exporting warehouse data:', error);
+          logger.error('Error exporting warehouse data:', error);
           return { success: false, error: error.response?.data?.message || 'Помилка експорту даних' };
         }
       }

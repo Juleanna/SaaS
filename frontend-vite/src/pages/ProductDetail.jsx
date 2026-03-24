@@ -12,9 +12,10 @@ import {
   CubeIcon,
   TagIcon
 } from '@heroicons/react/24/outline';
-import api from '../services/api';
+import api, { getResults } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
 import ProductModal from '../components/ProductModal';
+import logger from '../services/logger';
 
 const ProductDetail = () => {
   const { productId } = useParams();
@@ -39,7 +40,7 @@ const ProductDetail = () => {
       const response = await api.get(`/products/stores/${currentStoreId}/products/${productId}/`);
       setProduct(response.data);
     } catch (error) {
-      console.error('Error fetching product:', error);
+      logger.error('Error fetching product:', error);
       setError('Помилка завантаження товару');
       
       // Fallback mock data
@@ -79,9 +80,9 @@ const ProductDetail = () => {
   const fetchCategories = async () => {
     try {
       const response = await api.get(`/products/stores/${currentStoreId}/categories/`);
-      setCategories(response.data.results || response.data);
+      setCategories(getResults(response.data));
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      logger.error('Error fetching categories:', error);
       setCategories([
         { id: 1, name: 'Смартфони' },
         { id: 2, name: 'Ноутбуки' },
@@ -96,7 +97,7 @@ const ProductDetail = () => {
         await api.delete(`/products/stores/${currentStoreId}/products/${productId}/`);
         navigate('/products');
       } catch (error) {
-        console.error('Error deleting product:', error);
+        logger.error('Error deleting product:', error);
         alert('Помилка видалення товару');
       }
     }
@@ -107,7 +108,7 @@ const ProductDetail = () => {
       await api.post(`/products/stores/${currentStoreId}/products/${productId}/toggle-status/`);
       fetchProduct();
     } catch (error) {
-      console.error('Error toggling product status:', error);
+      logger.error('Error toggling product status:', error);
       alert('Помилка зміни статусу товару');
     }
   };
@@ -118,7 +119,7 @@ const ProductDetail = () => {
       setProduct(prev => ({ ...prev, barcode: response.data.barcode }));
       alert('Штрих-код згенеровано успішно');
     } catch (error) {
-      console.error('Error generating barcode:', error);
+      logger.error('Error generating barcode:', error);
       alert('Помилка генерації штрих-коду');
     }
   };
@@ -129,7 +130,7 @@ const ProductDetail = () => {
       setProduct(prev => ({ ...prev, qr_code: response.data.qr_code }));
       alert('QR-код згенеровано успішно');
     } catch (error) {
-      console.error('Error generating QR code:', error);
+      logger.error('Error generating QR code:', error);
       alert('Помилка генерації QR-коду');
     }
   };

@@ -13,8 +13,9 @@ import {
   EyeIcon,
   ClockIcon,
 } from '@heroicons/react/24/outline';
-import api from '../../services/api';
+import api, { getResults } from '../../services/api';
 import { useAuthStore } from '../../stores/authStore';
+import logger from '../../services/logger';
 
 const Dashboard = () => {
   const { user } = useAuthStore();
@@ -31,13 +32,13 @@ const Dashboard = () => {
         ]);
 
         const stores_count = storesResponse.status === 'fulfilled' 
-          ? (storesResponse.value.data.results || storesResponse.value.data || []).length 
+          ? getResults(storesResponse.value.data).length
           : 2;
 
         // Отримуємо кількість товарів з усіх магазинів користувача
         let products_count = 0;
         if (storesResponse.status === 'fulfilled') {
-          const stores = storesResponse.value.data.results || storesResponse.value.data || [];
+          const stores = getResults(storesResponse.value.data);
           const productPromises = stores.map(store => 
             api.get(`/products/stores/${store.id}/products/?page_size=1`).catch(() => ({ data: { count: 0 } }))
           );
@@ -50,44 +51,41 @@ const Dashboard = () => {
           }, 0);
         }
 
-        const orders_count = ordersResponse.status === 'fulfilled' 
-          ? (ordersResponse.value.data.count || 128)
-          : 128;
+        const orders_count = ordersResponse.status === 'fulfilled'
+          ? (ordersResponse.value.data.count || 0)
+          : 0;
 
-        // Fallback до mock даних з реальними отриманими значеннями
         return {
           stores_count,
           products_count,
           orders_count,
-          total_revenue: 234500.00,
-          monthly_revenue: 45600.00,
-          weekly_orders: 23,
-          conversion_rate: 3.2,
-          average_order_value: 1832.00,
+          total_revenue: 0,
+          monthly_revenue: 0,
+          weekly_orders: 0,
+          conversion_rate: 0,
+          average_order_value: 0,
           trends: {
-            orders: { value: 12, direction: 'up' },
-            revenue: { value: 8.5, direction: 'up' },
-            products: { value: 3, direction: 'up' },
-            customers: { value: 15, direction: 'up' }
+            orders: { value: 0, direction: 'up' },
+            revenue: { value: 0, direction: 'up' },
+            products: { value: 0, direction: 'up' },
+            customers: { value: 0, direction: 'up' }
           }
         };
       } catch (error) {
-        console.error('Error fetching dashboard stats:', error);
-        // Fallback до mock даних
         return {
-          stores_count: 2,
-          products_count: 45,
-          orders_count: 128,
-          total_revenue: 234500.00,
-          monthly_revenue: 45600.00,
-          weekly_orders: 23,
-          conversion_rate: 3.2,
-          average_order_value: 1832.00,
+          stores_count: 0,
+          products_count: 0,
+          orders_count: 0,
+          total_revenue: 0,
+          monthly_revenue: 0,
+          weekly_orders: 0,
+          conversion_rate: 0,
+          average_order_value: 0,
           trends: {
-            orders: { value: 12, direction: 'up' },
-            revenue: { value: 8.5, direction: 'up' },
-            products: { value: 3, direction: 'up' },
-            customers: { value: 15, direction: 'up' }
+            orders: { value: 0, direction: 'up' },
+            revenue: { value: 0, direction: 'up' },
+            products: { value: 0, direction: 'up' },
+            customers: { value: 0, direction: 'up' }
           }
         };
       }
@@ -100,57 +98,9 @@ const Dashboard = () => {
     queryFn: async () => {
       try {
         const response = await api.get('/orders/recent/?limit=5');
-        return response.data.results || response.data;
+        return getResults(response.data);
       } catch (error) {
-        console.error('Error fetching recent orders:', error);
-        // Mock реальних даних
-        return [
-          {
-            id: 1,
-            order_number: 'ORD-2024-001',
-            customer: { first_name: 'Олександр', last_name: 'Петренко' },
-            total_amount: 2350.00,
-            status: 'confirmed',
-            created_at: '2024-01-20T14:30:00Z',
-            store: { name: 'TechStore' }
-          },
-          {
-            id: 2,
-            order_number: 'ORD-2024-002',
-            customer: { first_name: 'Марія', last_name: 'Коваленко' },
-            total_amount: 1890.00,
-            status: 'processing',
-            created_at: '2024-01-20T12:15:00Z',
-            store: { name: 'Fashion Hub' }
-          },
-          {
-            id: 3,
-            order_number: 'ORD-2024-003',
-            customer: { first_name: 'Іван', last_name: 'Сидоренко' },
-            total_amount: 3200.00,
-            status: 'shipped',
-            created_at: '2024-01-19T18:45:00Z',
-            store: { name: 'TechStore' }
-          },
-          {
-            id: 4,
-            order_number: 'ORD-2024-004',
-            customer: { first_name: 'Анна', last_name: 'Мельник' },
-            total_amount: 950.00,
-            status: 'pending',
-            created_at: '2024-01-19T16:20:00Z',
-            store: { name: 'Home & Garden' }
-          },
-          {
-            id: 5,
-            order_number: 'ORD-2024-005',
-            customer: { first_name: 'Дмитро', last_name: 'Кравченко' },
-            total_amount: 4100.00,
-            status: 'delivered',
-            created_at: '2024-01-18T20:10:00Z',
-            store: { name: 'TechStore' }
-          }
-        ];
+        return [];
       }
     },
   });
@@ -162,59 +112,29 @@ const Dashboard = () => {
       try {
         // Спробуємо отримати топ товари з API
         const response = await api.get('/products/top/?limit=5');
-        return response.data.results || response.data;
+        return getResults(response.data);
       } catch (error) {
-        console.error('Error fetching top products:', error);
-        // Якщо не вдалося, спробуємо отримати просто останні товари з магазинів
+        // Якщо не вдалося, спробуємо отримати останні товари з магазинів
         try {
           const storesResponse = await api.get('/stores/');
-          const stores = storesResponse.data.results || storesResponse.data || [];
-          
+          const stores = getResults(storesResponse.data);
+
           if (stores.length > 0) {
             const productsResponse = await api.get(`/products/stores/${stores[0].id}/products/?page_size=5&ordering=-created_at`);
-            const products = productsResponse.data.results || [];
-            
+            const products = getResults(productsResponse.data);
+
             return products.map(product => ({
               ...product,
-              order_count: Math.floor(Math.random() * 50) + 1, // Mock продажів
-              revenue: product.price * (Math.floor(Math.random() * 50) + 1),
+              order_count: 0,
+              revenue: 0,
               store: { name: stores[0].name }
             }));
           }
         } catch (err) {
-          console.error('Error fetching products from stores:', err);
+          // Не вдалося отримати товари
         }
-        
-        // Fallback до mock даних
-        return [
-          {
-            id: 1,
-            name: 'iPhone 15 Pro',
-            sales_count: 23,
-            revenue: 1035000.00,
-            image: null,
-            store: { name: 'TechStore' },
-            price: 45000
-          },
-          {
-            id: 2,
-            name: 'MacBook Air M2',
-            sales_count: 15,
-            revenue: 824985.00,
-            image: null,
-            store: { name: 'TechStore' },
-            price: 54999
-          },
-          {
-            id: 3,
-            name: 'Зимова куртка Nike',
-            sales_count: 31,
-            revenue: 95690.00,
-            image: null,
-            store: { name: 'Fashion Hub' },
-            price: 3087
-          }
-        ];
+
+        return [];
       }
     },
   });

@@ -54,7 +54,15 @@ class Store(models.Model):
     
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.name)
+            base_slug = slugify(self.name)
+            if not base_slug:
+                base_slug = f'store-{self.owner_id}'
+            slug = base_slug
+            counter = 1
+            while Store.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                slug = f'{base_slug}-{counter}'
+                counter += 1
+            self.slug = slug
         super().save(*args, **kwargs)
     
     def get_absolute_url(self):

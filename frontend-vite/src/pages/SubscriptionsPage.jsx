@@ -18,7 +18,7 @@ import {
   ClockIcon,
 } from '@heroicons/react/24/outline';
 import { StarIcon } from '@heroicons/react/24/solid';
-import api from '../services/api';
+import api, { getResults } from '../services/api';
 import toast from 'react-hot-toast';
 
 const SubscriptionsPage = () => {
@@ -32,7 +32,7 @@ const SubscriptionsPage = () => {
     queryKey: ['subscription-plans'],
     queryFn: async () => {
       const response = await api.get('/subscriptions/plans/');
-      return response.data.results || response.data;
+      return getResults(response.data);
     },
   });
 

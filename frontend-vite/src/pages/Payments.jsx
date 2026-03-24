@@ -14,8 +14,9 @@ import {
   ClockIcon,
   ChartBarIcon
 } from '@heroicons/react/24/outline';
-import api from '../services/api';
+import api, { getResults } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
+import logger from '../services/logger';
 
 const Payments = () => {
   const { storeId } = useParams();
@@ -44,9 +45,9 @@ const Payments = () => {
       if (methodFilter !== 'all') params.append('payment_method', methodFilter);
       
       const response = await api.get(`/payments/stores/${currentStoreId}/payments/?${params}`);
-      setPayments(response.data.results || response.data);
+      setPayments(getResults(response.data));
     } catch (error) {
-      console.error('Error fetching payments:', error);
+      logger.error('Error fetching payments:', error);
       setError('Помилка завантаження платежів');
       // Fallback to mock data if API fails
       setPayments([
@@ -110,9 +111,9 @@ const Payments = () => {
   const fetchPaymentMethods = async () => {
     try {
       const response = await api.get(`/payments/stores/${currentStoreId}/payment-methods/`);
-      setPaymentMethods(response.data.results || response.data);
+      setPaymentMethods(getResults(response.data));
     } catch (error) {
-      console.error('Error fetching payment methods:', error);
+      logger.error('Error fetching payment methods:', error);
       // Fallback payment methods
       setPaymentMethods([
         { id: 1, name: 'Готівка при отриманні', type: 'cash', is_active: true, settings: {} },
@@ -128,7 +129,7 @@ const Payments = () => {
       const response = await api.get(`/payments/stores/${currentStoreId}/payments/analytics/`);
       setStatistics(response.data);
     } catch (error) {
-      console.error('Error fetching payment statistics:', error);
+      logger.error('Error fetching payment statistics:', error);
       // Fallback statistics
       setStatistics({
         total_amount: payments.reduce((sum, p) => sum + (p.amount || 0), 0),
@@ -149,7 +150,7 @@ const Payments = () => {
       fetchPayments();
       fetchStatistics();
     } catch (error) {
-      console.error('Error updating payment status:', error);
+      logger.error('Error updating payment status:', error);
       alert('Помилка оновлення статусу платежу');
     }
   };
@@ -160,7 +161,7 @@ const Payments = () => {
       fetchPayments();
       fetchStatistics();
     } catch (error) {
-      console.error('Error marking payment as paid:', error);
+      logger.error('Error marking payment as paid:', error);
       alert('Помилка позначення платежу як оплаченого');
     }
   };
@@ -172,7 +173,7 @@ const Payments = () => {
       });
       fetchPaymentMethods();
     } catch (error) {
-      console.error('Error toggling payment method:', error);
+      logger.error('Error toggling payment method:', error);
       alert('Помилка зміни статусу методу оплати');
     }
   };

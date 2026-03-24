@@ -15,9 +15,10 @@ import {
   PauseCircleIcon,
   PlayCircleIcon,
 } from '@heroicons/react/24/outline';
-import api from '../services/api';
+import api, { getResults } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
 import CategoryModal from '../components/CategoryModal';
+import logger from '../services/logger';
 
 const Categories = () => {
   const { storeId } = useParams();
@@ -41,7 +42,7 @@ const Categories = () => {
   const fetchUserStores = async () => {
     try {
       const response = await api.get('/stores/');
-      const stores = response.data.results || response.data || [];
+      const stores = getResults(response.data);
       setUserStores(stores);
       
       // Встановлюємо перший магазин як вибраний, якщо не вибрано з URL
@@ -53,7 +54,7 @@ const Categories = () => {
         setError('У вас немає створених магазинів');
       }
     } catch (error) {
-      console.error('Error fetching stores:', error);
+      logger.error('Error fetching stores:', error);
       setError(`Помилка завантаження магазинів: ${error.response?.status || error.message}`);
       setUserStores([]);
     } finally {
@@ -77,10 +78,10 @@ const Categories = () => {
 
       const url = `/products/stores/${currentStoreId}/categories/?${params}`;
       const response = await api.get(url);
-      setCategories(response.data.results || response.data || []);
+      setCategories(getResults(response.data));
       setError(null);
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      logger.error('Error fetching categories:', error);
       setError(`Помилка завантаження категорій: ${error.response?.data?.detail || error.message}`);
       setCategories([]);
     } finally {
@@ -98,7 +99,7 @@ const Categories = () => {
       await api.delete(`/products/stores/${currentStoreId}/categories/${categoryId}/`);
       fetchCategories();
     } catch (error) {
-      console.error('Error deleting category:', error);
+      logger.error('Error deleting category:', error);
       alert('Помилка видалення категорії');
     }
   };
@@ -111,7 +112,7 @@ const Categories = () => {
       });
       fetchCategories();
     } catch (error) {
-      console.error('Error toggling category status:', error);
+      logger.error('Error toggling category status:', error);
       alert('Помилка зміни статусу категорії');
     }
   };
