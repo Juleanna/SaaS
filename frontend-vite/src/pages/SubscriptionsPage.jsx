@@ -76,9 +76,9 @@ const SubscriptionsPage = () => {
 
       setShowUpgradeModal(false);
       setSelectedPlan(null);
-      // Примусове оновлення даних
-      await queryClient.resetQueries({ queryKey: ['current-subscription'] });
-      await queryClient.resetQueries({ queryKey: ['subscription-usage'] });
+      setIsProcessing(false);
+      // Примусове перезавантаження для оновлення даних
+      setTimeout(() => window.location.reload(), 500);
     } catch (error) {
       const data = error.response?.data;
       if (data?.message) {
