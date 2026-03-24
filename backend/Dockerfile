@@ -37,7 +37,7 @@ RUN pip install --upgrade pip && \
 COPY . .
 
 # Створити директорії для статики та медіа
-RUN mkdir -p /app/staticfiles /app/media
+RUN mkdir -p /app/staticfiles /app/media/store_logos /app/media/store_banners /app/media/avatars
 
 # Копіювати entrypoint скрипт
 COPY docker-entrypoint.sh /docker-entrypoint.sh

@@ -23,6 +23,9 @@ echo "✅ Redis is ready!"
 echo "📦 Applying database migrations..."
 python manage.py migrate --noinput
 
+# Забезпечити права на media директорію
+mkdir -p /app/media/store_logos /app/media/store_banners /app/media/avatars
+
 # Зібрати статичні файли
 echo "📁 Collecting static files..."
 python manage.py collectstatic --noinput
