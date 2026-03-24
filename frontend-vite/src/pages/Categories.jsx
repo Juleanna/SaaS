@@ -409,10 +409,11 @@ const Categories = () => {
         }}
         category={editingCategory}
         storeId={currentStoreId}
-        onSave={() => {
-          fetchCategories();
+        onSave={async () => {
           setShowCreateModal(false);
           setEditingCategory(null);
+          // Невелика затримка щоб БД встигла зберегти
+          setTimeout(() => fetchCategories(), 300);
         }}
       />
     </div>
