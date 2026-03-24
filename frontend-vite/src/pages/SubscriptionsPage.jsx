@@ -68,10 +68,15 @@ const SubscriptionsPage = () => {
         plan_id: selectedPlan.id,
       });
 
-      toast.success(`План "${selectedPlan.name}" успішно активовано! Списано ${response.data.amount} ₴. Залишок: ${response.data.new_balance?.toFixed(2) ?? '—'} ₴`);
+      if (response.data.amount > 0) {
+        toast.success(`План "${selectedPlan.name}" успішно активовано! Списано ${response.data.amount} ₴. Залишок: ${response.data.new_balance?.toFixed(2) ?? '—'} ₴`);
+      } else {
+        toast.success(`План "${selectedPlan.name}" успішно активовано!`);
+      }
 
-      queryClient.invalidateQueries({ queryKey: ['current-subscription'] });
-      queryClient.invalidateQueries({ queryKey: ['subscription-usage'] });
+      await queryClient.refetchQueries({ queryKey: ['current-subscription'] });
+      await queryClient.refetchQueries({ queryKey: ['subscription-usage'] });
+      await queryClient.refetchQueries({ queryKey: ['subscription-plans'] });
       setShowUpgradeModal(false);
       setSelectedPlan(null);
     } catch (error) {
