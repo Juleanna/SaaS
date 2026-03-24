@@ -19,21 +19,19 @@ while ! nc -z ${REDIS_HOST:-redis} ${REDIS_PORT:-6379}; do
 done
 echo "✅ Redis is ready!"
 
-# Застосувати міграції БД
-echo "📦 Applying database migrations..."
-python manage.py migrate --noinput
+# Міграції, static, superuser — тільки для web-сервера (не celery)
+if echo "$@" | grep -qv "celery"; then
+    echo "📦 Applying database migrations..."
+    python manage.py migrate --noinput
 
-# Забезпечити права на media директорію
-mkdir -p /app/media/store_logos /app/media/store_banners /app/media/avatars
+    mkdir -p /app/media/store_logos /app/media/store_banners /app/media/avatars
 
-# Зібрати статичні файли
-echo "📁 Collecting static files..."
-python manage.py collectstatic --noinput
+    echo "📁 Collecting static files..."
+    python manage.py collectstatic --noinput
 
-# Створити суперюзера якщо потрібно (тільки для development)
-if [ "$CREATE_SUPERUSER" = "true" ]; then
-    echo "👤 Creating superuser..."
-    python manage.py shell -c "
+    if [ "$CREATE_SUPERUSER" = "true" ]; then
+        echo "👤 Creating superuser..."
+        python manage.py shell -c "
 from django.contrib.auth import get_user_model;
 User = get_user_model();
 if not User.objects.filter(username='${DJANGO_SUPERUSER_USERNAME:-admin}').exists():
@@ -46,6 +44,10 @@ if not User.objects.filter(username='${DJANGO_SUPERUSER_USERNAME:-admin}').exist
 else:
     print('ℹ️  Superuser already exists')
 "
+    fi
+else
+    echo "⏳ Waiting for migrations (from backend)..."
+    sleep 10
 fi
 
 echo "🚀 Starting application..."

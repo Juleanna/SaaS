@@ -63,15 +63,16 @@ const CategoryModal = ({ isOpen, onClose, category = null, storeId, onSuccess })
 
     try {
       const payload = { name: name.trim(), description, slug, is_active: isActive };
+      let res;
 
       if (category) {
-        await api.put(`/products/stores/${storeId}/categories/${category.id}/`, payload);
+        res = await api.put(`/products/stores/${storeId}/categories/${category.id}/`, payload);
       } else {
-        await api.post(`/products/stores/${storeId}/categories/`, payload);
+        res = await api.post(`/products/stores/${storeId}/categories/`, payload);
       }
 
       onClose();
-      if (onSuccess) onSuccess();
+      if (onSuccess) onSuccess(res.data, !!category);
     } catch (err) {
       const data = err.response?.data;
       if (data) {

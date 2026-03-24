@@ -123,9 +123,7 @@ services:
       - REDIS_PORT=6379
       - CELERY_BROKER_URL=redis://redis:6379/0
     depends_on:
-      db:
-        condition: service_healthy
-      redis:
+      backend:
         condition: service_healthy
     networks:
       - saas-network
@@ -157,9 +155,7 @@ services:
       - REDIS_PORT=6379
       - CELERY_BROKER_URL=redis://redis:6379/0
     depends_on:
-      db:
-        condition: service_healthy
-      redis:
+      backend:
         condition: service_healthy
     networks:
       - saas-network

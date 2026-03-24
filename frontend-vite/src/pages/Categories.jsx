@@ -23,6 +23,7 @@ const Categories = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [stores, setStores] = useState([]);
+  const [storesLoaded, setStoresLoaded] = useState(false);
   const [selectedStoreId, setSelectedStoreId] = useState(storeId || null);
   const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null });
 
@@ -38,7 +39,8 @@ const Categories = () => {
           setSelectedStoreId(list[0].id);
         }
       })
-      .catch(() => setStores([]));
+      .catch(() => setStores([]))
+      .finally(() => setStoresLoaded(true));
   }, []);
 
   // Завантаження категорій — при зміні магазину або пошуку
@@ -107,9 +109,14 @@ const Categories = () => {
   const openEdit = (cat) => { setEditingCategory(cat); setModalOpen(true); };
   const closeModal = () => { setModalOpen(false); setEditingCategory(null); };
 
-  const handleModalSuccess = () => {
-    toast.success(editingCategory ? 'Категорію оновлено' : 'Категорію створено');
-    loadCategories();
+  const handleModalSuccess = (savedData, isEditing) => {
+    if (isEditing && savedData?.id) {
+      setCategories(prev => prev.map(c => c.id === savedData.id ? { ...c, ...savedData } : c));
+      toast.success('Категорію оновлено');
+    } else if (savedData) {
+      setCategories(prev => [...prev, savedData]);
+      toast.success('Категорію створено');
+    }
   };
 
   // Фільтрація (додатковий клієнтський пошук)
@@ -117,15 +124,31 @@ const Categories = () => {
   const activeCount = filtered.filter(c => c.is_active).length;
   const totalProducts = filtered.reduce((s, c) => s + (c.products_count || 0), 0);
 
-  // Стан: завантаження магазинів
-  if (stores.length === 0 && !loading) {
+  // Поки магазини не завантажились — спінер
+  if (!storesLoaded) {
+    return (
+      <div className="flex items-center justify-center h-40">
+        <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // Немає магазинів — пропонуємо створити
+  if (stores.length === 0) {
     return (
       <div className="text-center py-16">
-        <BuildingStorefrontIcon className="mx-auto h-12 w-12 text-gray-400" />
-        <h3 className="mt-4 text-lg font-medium text-gray-900">Немає магазинів</h3>
-        <p className="mt-2 text-sm text-gray-500">Спочатку створіть магазин</p>
-        <button onClick={() => navigate('/stores')} className="mt-4 btn btn-primary">
-          Створити магазин
+        <div className="text-yellow-500 mb-4">
+          <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Немає доступних магазинів</h3>
+        <p className="text-gray-600 mb-4">Спочатку створіть магазин, щоб керувати категоріями.</p>
+        <button
+          onClick={() => navigate('/stores')}
+          className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 border border-transparent rounded-xl text-sm font-semibold text-white hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-4 focus:ring-blue-500/20 transition-all duration-200 shadow-lg transform hover:scale-105 active:scale-95 relative overflow-hidden group"
+        >
+          <span className="relative z-10">Створити магазин</span>
         </button>
       </div>
     );
