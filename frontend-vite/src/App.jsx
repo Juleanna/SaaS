@@ -26,6 +26,7 @@ import InstagramPage from './pages/InstagramPage';
 import SubscriptionsPage from './pages/SubscriptionsPage';
 import PublicStore from './pages/public/PublicStore';
 import PublicStoresList from './pages/public/PublicStoresList';
+import Landing from './pages/public/Landing';
 
 function App() {
   const { isAuthenticated } = useAuthStore();
@@ -67,7 +68,10 @@ function App() {
             <Route path="warehouse/scanner-demo" element={<ScannerDemo />} />
           </Route>
         ) : (
-          <Route path="*" element={<Login />} />
+          <>
+            <Route path="/" element={<Landing />} />
+            <Route path="*" element={<Login />} />
+          </>
         )}
       </Routes>
     </div>

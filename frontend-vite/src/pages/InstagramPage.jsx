@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import ConfirmModal from '../components/ConfirmModal';
 
 /**
  * Сторінка Instagram інтеграції
@@ -14,6 +15,7 @@ const InstagramPage = ({ storeId }) => {
   const [showAutoPostModal, setShowAutoPostModal] = useState(false);
   const [dmKeywords, setDMKeywords] = useState([]);
   const [showKeywordModal, setShowKeywordModal] = useState(false);
+  const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null });
 
   useEffect(() => {
     fetchData();
@@ -87,26 +89,29 @@ const InstagramPage = ({ storeId }) => {
     }
   };
 
-  const handleDisconnect = async () => {
-    if (!window.confirm('Ви впевнені?')) {
-      return;
-    }
+  const handleDisconnect = () => {
+    setConfirmModal({
+      open: true,
+      title: 'Відключення акаунту',
+      message: 'Ви впевнені, що хочете відключити Instagram акаунт?',
+      onConfirm: async () => {
+        try {
+          const token = localStorage.getItem('access_token');
+          await axios.post(
+            `/api/instagram/accounts/${account.id}/disconnect/`,
+            {},
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
 
-    try {
-      const token = localStorage.getItem('access_token');
-      await axios.post(
-        `/api/instagram/accounts/${account.id}/disconnect/`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      setAccount(null);
-      setStatistics([]);
-      setRecentPosts([]);
-      setAutoPosts([]);
-    } catch (err) {
-      alert('Помилка при відключенні');
-    }
+          setAccount(null);
+          setStatistics([]);
+          setRecentPosts([]);
+          setAutoPosts([]);
+        } catch (err) {
+          alert('Помилка при відключенні');
+        }
+      },
+    });
   };
 
   const handleSyncMedia = async () => {
@@ -373,6 +378,15 @@ const InstagramPage = ({ storeId }) => {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={confirmModal.open}
+        onClose={() => setConfirmModal({ ...confirmModal, open: false })}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmText="Підтвердити"
+      />
     </div>
   );
 };

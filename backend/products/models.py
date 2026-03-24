@@ -8,12 +8,25 @@ import random
 import string
 import uuid
 import re
+from django.utils.text import slugify as django_slugify
 from stores.models import Store
+
+
+def _transliterate(text):
+    """Транслітерація кирилиці в латиницю"""
+    ua_map = {
+        'а':'a','б':'b','в':'v','г':'h','ґ':'g','д':'d','е':'e','є':'ye',
+        'ж':'zh','з':'z','и':'y','і':'i','ї':'yi','й':'y','к':'k','л':'l',
+        'м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u',
+        'ф':'f','х':'kh','ц':'ts','ч':'ch','ш':'sh','щ':'shch','ь':'',
+        'ю':'yu','я':'ya','ъ':'','ы':'y','э':'e','ё':'yo',
+    }
+    return ''.join(ua_map.get(ch, ch) for ch in text.lower())
 
 
 class Category(models.Model):
     """Категорія товарів"""
-    
+
     store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='categories', verbose_name=_('Магазин'))
     name = models.CharField(max_length=100, verbose_name=_('Назва'))
     description = models.TextField(blank=True, verbose_name=_('Опис'))
@@ -21,19 +34,31 @@ class Category(models.Model):
     image = models.ImageField(upload_to='category_images/', blank=True, verbose_name=_('Зображення'))
     order = models.PositiveIntegerField(default=0, verbose_name=_('Порядок'))
     is_active = models.BooleanField(default=True, verbose_name=_('Активна'))
-    
+
     # Дати
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Дата створення'))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_('Дата оновлення'))
-    
+
     class Meta:
         verbose_name = _('Категорія')
         verbose_name_plural = _('Категорії')
         ordering = ['order', 'name']
         unique_together = ['store', 'slug']
-    
+
     def __str__(self):
         return f"{self.store.name} - {self.name}"
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base_slug = django_slugify(_transliterate(self.name)) or f'category-{self.store_id}'
+            self.slug = base_slug
+        # Гарантуємо унікальність slug в межах магазину
+        base_slug = self.slug
+        counter = 1
+        while Category.objects.filter(store=self.store, slug=self.slug).exclude(pk=self.pk).exists():
+            self.slug = f'{base_slug}-{counter}'
+            counter += 1
+        super().save(*args, **kwargs)
 
 
 

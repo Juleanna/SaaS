@@ -13,6 +13,7 @@ import {
   AdjustmentsHorizontalIcon,
   ArrowPathIcon
 } from '@heroicons/react/24/outline';
+import ConfirmModal from './ConfirmModal';
 import logger from '../services/logger';
 
 const PriceListItemsModal = ({ 
@@ -26,6 +27,7 @@ const PriceListItemsModal = ({
   const [selectedCategory, setSelectedCategory] = useState('');
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null });
 
   // Отримуємо позиції прайс-листа
   const { data: items = [], isLoading: itemsLoading } = useQuery({
@@ -181,9 +183,14 @@ const PriceListItemsModal = ({
   };
 
   const handleDeleteItem = (item) => {
-    if (window.confirm(`Видалити "${item.product.name}" з прайс-листа?`)) {
-      deleteItemMutation.mutate(item.id);
-    }
+    setConfirmModal({
+      open: true,
+      title: 'Видалення позиції',
+      message: `Видалити "${item.product.name}" з прайс-листа?`,
+      onConfirm: () => {
+        deleteItemMutation.mutate(item.id);
+      },
+    });
   };
 
   const formatPrice = (price) => {
@@ -448,6 +455,14 @@ const PriceListItemsModal = ({
       </div>
 
       {/* Add Item Modal та Edit Item Modal будуть додані пізніше */}
+
+      <ConfirmModal
+        isOpen={confirmModal.open}
+        onClose={() => setConfirmModal({ ...confirmModal, open: false })}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+      />
     </div>
   );
 };

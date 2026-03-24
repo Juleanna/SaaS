@@ -1,51 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import api from '../services/api';
-import logger from '../services/logger';
 
-const CategoryModal = ({ 
-  isOpen, 
-  onClose, 
-  category = null, 
-  storeId, 
-  onSave 
-}) => {
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    slug: '',
-    meta_title: '',
-    meta_description: '',
-    is_active: true,
-  });
-  
+const CategoryModal = ({ isOpen, onClose, category = null, storeId, onSuccess }) => {
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [slug, setSlug] = useState('');
+  const [isActive, setIsActive] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    if (category) {
-      setFormData({
-        name: category.name || '',
-        description: category.description || '',
-        slug: category.slug || '',
-        meta_title: category.meta_title || '',
-        meta_description: category.meta_description || '',
-        is_active: category.is_active ?? true,
-      });
-    } else {
-      setFormData({
-        name: '',
-        description: '',
-        slug: '',
-        meta_title: '',
-        meta_description: '',
-        is_active: true,
-      });
+    if (isOpen) {
+      if (category) {
+        setName(category.name || '');
+        setDescription(category.description || '');
+        setSlug(category.slug || '');
+        setIsActive(category.is_active ?? true);
+      } else {
+        setName('');
+        setDescription('');
+        setSlug('');
+        setIsActive(true);
+      }
+      setError('');
     }
-    setErrors({});
-  }, [category, isOpen]);
+  }, [isOpen, category]);
 
-  // Транслітерація кирилиці в латиницю
   const transliterate = (text) => {
     const map = {
       'а':'a','б':'b','в':'v','г':'h','ґ':'g','д':'d','е':'e','є':'ye',
@@ -57,96 +38,48 @@ const CategoryModal = ({
     return text.split('').map(ch => map[ch] ?? ch).join('');
   };
 
-  // Функція для генерації slug з назви
-  const generateSlug = (text) => {
-    return transliterate(text.toLowerCase())
-      .replace(/[^a-z0-9]/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '')
-      .substring(0, 50);
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    let newValue = type === 'checkbox' ? checked : value;
-    
-    const newFormData = {
-      ...formData,
-      [name]: newValue
-    };
-    
-    // Автоматично генеруємо slug при зміні назви
-    if (name === 'name' && newValue && !category) {
-      newFormData.slug = generateSlug(newValue);
+  const handleNameChange = (value) => {
+    setName(value);
+    if (!category) {
+      setSlug(
+        transliterate(value.toLowerCase())
+          .replace(/[^a-z0-9]/g, '-')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, '')
+          .substring(0, 50)
+      );
     }
-    
-    setFormData(newFormData);
-    
-    // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: null
-      }));
-    }
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-    
-    if (!formData.name.trim()) {
-      newErrors.name = 'Назва категорії обов\'язкова';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
-
-    if (!storeId) {
-      logger.error('No store ID provided');
-      alert('Помилка: не вказано магазин');
+    if (!name.trim()) {
+      setError('Назва категорії обов\'язкова');
       return;
     }
 
     setLoading(true);
+    setError('');
+
     try {
-      let response;
-      const url = category 
-        ? `/products/stores/${storeId}/categories/${category.id}/`
-        : `/products/stores/${storeId}/categories/`;
-      
+      const payload = { name: name.trim(), description, slug, is_active: isActive };
+
       if (category) {
-        response = await api.put(url, formData);
+        await api.put(`/products/stores/${storeId}/categories/${category.id}/`, payload);
       } else {
-        response = await api.post(url, formData);
+        await api.post(`/products/stores/${storeId}/categories/`, payload);
       }
-      
-      onSave && onSave(response.data);
+
       onClose();
-    } catch (error) {
-      logger.error('Error saving category:', error);
-      logger.error('Error response:', error.response?.data);
-      logger.error('Error status:', error.response?.status);
-      logger.error('Request URL:', error.config?.url);
-      logger.error('Request data:', error.config?.data);
-      
-      if (error.response?.data) {
-        const serverErrors = {};
-        Object.keys(error.response.data).forEach(key => {
-          serverErrors[key] = Array.isArray(error.response.data[key]) 
-            ? error.response.data[key][0] 
-            : error.response.data[key];
-        });
-        setErrors(serverErrors);
+      if (onSuccess) onSuccess();
+    } catch (err) {
+      const data = err.response?.data;
+      if (data) {
+        const msg = typeof data === 'string' ? data
+          : data.detail || data.name?.[0] || data.slug?.[0] || JSON.stringify(data);
+        setError(msg);
       } else {
-        alert(`Помилка збереження категорії: ${error.message}`);
+        setError('Помилка збереження');
       }
     } finally {
       setLoading(false);
@@ -157,144 +90,84 @@ const CategoryModal = ({
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={onClose}></div>
+      <div className="flex items-center justify-center min-h-screen px-4">
+        <div className="fixed inset-0 bg-black/50" onClick={onClose} />
 
-        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full relative z-10">
+        <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg">
           <form onSubmit={handleSubmit}>
-            <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+            <div className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg leading-6 font-medium text-gray-900">
+                <h3 className="text-lg font-semibold text-gray-900">
                   {category ? 'Редагувати категорію' : 'Додати категорію'}
                 </h3>
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="text-gray-400 hover:text-gray-600"
-                >
+                <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600">
                   <XMarkIcon className="h-6 w-6" />
                 </button>
               </div>
 
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+                  {error}
+                </div>
+              )}
+
               <div className="space-y-4">
                 <div>
-                  <label className="form-label">
-                    Назва категорії *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Назва *</label>
                   <input
                     type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    className={`input ${
-                      errors.name ? 'border-red-300' : 'border-gray-300'
-                    }`}
+                    value={name}
+                    onChange={(e) => handleNameChange(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Введіть назву категорії"
+                    autoFocus
                   />
-                  {errors.name && (
-                    <p className="form-error">{errors.name}</p>
-                  )}
                 </div>
 
                 <div>
-                  <label className="form-label">
-                    Опис
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Опис</label>
                   <textarea
-                    name="description"
-                    value={formData.description}
-                    onChange={handleInputChange}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
                     rows={3}
-                    className="input"
-                    placeholder="Введіть опис категорії"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Опис категорії (необов'язково)"
                   />
                 </div>
 
                 <div>
-                  <label className="form-label">
-                    URL (slug)
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">URL (slug)</label>
                   <input
                     type="text"
-                    name="slug"
-                    value={formData.slug}
-                    onChange={handleInputChange}
-                    className={`input ${
-                      errors.slug ? 'border-red-300' : 'border-gray-300'
-                    }`}
-                    placeholder="url-категории"
+                    value={slug}
+                    onChange={(e) => setSlug(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="url-kategoriyi"
                   />
-                  {errors.slug && (
-                    <p className="form-error">{errors.slug}</p>
-                  )}
-                  <p className="mt-1 text-xs text-gray-500">
-                    Автоматично генерується з назви. Тільки латинські літери, цифри та дефіси.
-                  </p>
                 </div>
 
-                <div>
-                  <label className="form-label">
-                    SEO заголовок
-                  </label>
-                  <input
-                    type="text"
-                    name="meta_title"
-                    value={formData.meta_title}
-                    onChange={handleInputChange}
-                    className="input"
-                    placeholder="SEO заголовок для пошукових систем"
-                  />
-                  <p className="mt-1 text-xs text-gray-500">
-                    Рекомендована довжина: 50-60 символів
-                  </p>
-                </div>
-
-                <div>
-                  <label className="form-label">
-                    SEO опис
-                  </label>
-                  <textarea
-                    name="meta_description"
-                    value={formData.meta_description}
-                    onChange={handleInputChange}
-                    rows={2}
-                    className="input"
-                    placeholder="Короткий опис категорії для пошукових систем"
-                  />
-                  <p className="mt-1 text-xs text-gray-500">
-                    Рекомендована довжина: 150-160 символів
-                  </p>
-                </div>
-
-                <div className="flex items-center">
+                <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
-                    name="is_active"
-                    checked={formData.is_active}
-                    onChange={handleInputChange}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    checked={isActive}
+                    onChange={(e) => setIsActive(e.target.checked)}
+                    className="h-4 w-4 text-blue-600 rounded border-gray-300"
                   />
-                  <label className="ml-2 block text-sm text-gray-700">
-                    Активна категорія
-                  </label>
-                </div>
+                  <span className="text-sm text-gray-700">Активна категорія</span>
+                </label>
               </div>
             </div>
 
-            <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+            <div className="flex justify-end gap-3 px-6 py-4 bg-gray-50 rounded-b-2xl">
+              <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50">
+                Скасувати
+              </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="btn btn-primary sm:ml-3 sm:w-auto disabled:opacity-50"
+                className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl hover:shadow-lg disabled:opacity-50"
               >
                 {loading ? 'Збереження...' : (category ? 'Оновити' : 'Створити')}
-              </button>
-              <button
-                type="button"
-                onClick={onClose}
-                className="btn btn-outline sm:mt-0 sm:ml-3 sm:w-auto"
-              >
-                Скасувати
               </button>
             </div>
           </form>

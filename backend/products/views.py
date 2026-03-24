@@ -4,13 +4,13 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
-from django.db.models import Q
+from django.db.models import Q, Count
 from stores.models import Store
 from stores.tenancy import StoreScopedMixin
 from stores.permissions import IsStoreOwnerOrStaff
 from .models import Category, Product, ProductImage, ProductVariant
 from .serializers import (
-    CategorySerializer, CategoryCreateSerializer, ProductSerializer, ProductCreateSerializer, ProductUpdateSerializer,
+    CategorySerializer, ProductSerializer, ProductCreateSerializer, ProductUpdateSerializer,
     ProductImageSerializer, ProductImageCreateSerializer,
     ProductVariantSerializer, ProductVariantCreateSerializer,
     ProductPublicSerializer
@@ -18,27 +18,27 @@ from .serializers import (
 
 
 class CategoryListCreateView(StoreScopedMixin, generics.ListCreateAPIView):
-    """View ???>?? ???????????>?-?????? ????'????????-??????"""
-    
+    """Список та створення категорій"""
+
+    serializer_class = CategorySerializer
     permission_classes = [permissions.IsAuthenticated, IsStoreOwnerOrStaff]
-    
+
     def get_queryset(self):
-        return Category.objects.filter(store=self.store)
-    
-    def get_serializer_class(self):
-        if self.request.method == 'POST':
-            return CategoryCreateSerializer
-        return CategorySerializer
+        return Category.objects.filter(store=self.store).annotate(
+            products_count=Count('products')
+        )
 
 
 class CategoryDetailView(StoreScopedMixin, generics.RetrieveUpdateDestroyAPIView):
-    """View ???>?? ???????????>?-?????? ???????????? ????'????????-?"??"""
-    
+    """Деталі, оновлення та видалення категорії"""
+
     serializer_class = CategorySerializer
     permission_classes = [permissions.IsAuthenticated, IsStoreOwnerOrStaff]
-    
+
     def get_queryset(self):
-        return self.filter_queryset_by_store(Category.objects.all())
+        return self.filter_queryset_by_store(
+            Category.objects.annotate(products_count=Count('products'))
+        )
 
 
 class ProductListCreateView(StoreScopedMixin, generics.ListCreateAPIView):

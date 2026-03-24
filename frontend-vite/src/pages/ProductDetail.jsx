@@ -15,6 +15,7 @@ import {
 import api, { getResults } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
 import ProductModal from '../components/ProductModal';
+import ConfirmModal from '../components/ConfirmModal';
 import logger from '../services/logger';
 
 const ProductDetail = () => {
@@ -30,6 +31,7 @@ const ProductDetail = () => {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [showBarcodeModal, setShowBarcodeModal] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
+  const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null });
 
   // Get store ID (from URL or user's first store)
   const currentStoreId = user?.stores?.[0]?.id || 1;
@@ -91,16 +93,21 @@ const ProductDetail = () => {
     }
   };
 
-  const handleDelete = async () => {
-    if (window.confirm('Ви впевнені, що хочете видалити цей товар?')) {
-      try {
-        await api.delete(`/products/stores/${currentStoreId}/products/${productId}/`);
-        navigate('/products');
-      } catch (error) {
-        logger.error('Error deleting product:', error);
-        alert('Помилка видалення товару');
-      }
-    }
+  const handleDelete = () => {
+    setConfirmModal({
+      open: true,
+      title: 'Видалення товару',
+      message: 'Ви впевнені, що хочете видалити цей товар?',
+      onConfirm: async () => {
+        try {
+          await api.delete(`/products/stores/${currentStoreId}/products/${productId}/`);
+          navigate('/products');
+        } catch (error) {
+          logger.error('Error deleting product:', error);
+          alert('Помилка видалення товару');
+        }
+      },
+    });
   };
 
   const handleToggleStatus = async () => {
@@ -526,6 +533,14 @@ const ProductDetail = () => {
           fetchProduct();
           setShowEditModal(false);
         }}
+      />
+
+      <ConfirmModal
+        isOpen={confirmModal.open}
+        onClose={() => setConfirmModal({ ...confirmModal, open: false })}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
       />
     </div>
   );

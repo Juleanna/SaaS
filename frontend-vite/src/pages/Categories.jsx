@@ -1,230 +1,135 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  PlusIcon,
-  PencilIcon,
-  TrashIcon,
-  MagnifyingGlassIcon,
-  FolderIcon,
-  ChartBarIcon,
-  BuildingStorefrontIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  TagIcon,
-  EyeIcon,
-  PauseCircleIcon,
-  PlayCircleIcon,
+  PlusIcon, PencilIcon, TrashIcon, MagnifyingGlassIcon,
+  FolderIcon, ChartBarIcon, BuildingStorefrontIcon,
+  CheckCircleIcon, XCircleIcon, TagIcon, EyeIcon,
+  PauseCircleIcon, PlayCircleIcon,
 } from '@heroicons/react/24/outline';
 import api, { getResults } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
 import CategoryModal from '../components/CategoryModal';
-import logger from '../services/logger';
+import ConfirmModal from '../components/ConfirmModal';
+import toast from 'react-hot-toast';
 
 const Categories = () => {
   const { storeId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  
+
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
-  const [userStores, setUserStores] = useState([]);
-  const [storesLoading, setStoresLoading] = useState(true);
-  const [selectedStoreId, setSelectedStoreId] = useState(storeId);
-  
-  // Отримуємо ID магазину
-  const currentStoreId = selectedStoreId || userStores?.[0]?.id;
+  const [stores, setStores] = useState([]);
+  const [selectedStoreId, setSelectedStoreId] = useState(storeId || null);
+  const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null });
 
-  // Функція завантаження магазинів
-  const fetchUserStores = async () => {
+  const currentStoreId = selectedStoreId || stores[0]?.id;
+
+  // Завантаження магазинів — один раз
+  useEffect(() => {
+    api.get('/stores/')
+      .then(res => {
+        const list = getResults(res.data);
+        setStores(list);
+        if (!selectedStoreId && list.length > 0) {
+          setSelectedStoreId(list[0].id);
+        }
+      })
+      .catch(() => setStores([]));
+  }, []);
+
+  // Завантаження категорій — при зміні магазину або пошуку
+  const loadCategories = useCallback(async () => {
+    if (!currentStoreId) return;
+    setLoading(true);
     try {
-      const response = await api.get('/stores/');
-      const stores = getResults(response.data);
-      setUserStores(stores);
-      
-      // Встановлюємо перший магазин як вибраний, якщо не вибрано з URL
-      if (!selectedStoreId && stores.length > 0) {
-        setSelectedStoreId(stores[0].id);
-      }
-      
-      if (stores.length === 0) {
-        setError('У вас немає створених магазинів');
-      }
-    } catch (error) {
-      logger.error('Error fetching stores:', error);
-      setError(`Помилка завантаження магазинів: ${error.response?.status || error.message}`);
-      setUserStores([]);
-    } finally {
-      setStoresLoading(false);
-    }
-  };
-
-  // Функція завантаження категорій
-  const fetchCategories = async (showLoader = false) => {
-    if (!currentStoreId) {
-      setError('Не вказано ID магазину');
-      setLoading(false);
-      return;
-    }
-
-    try {
-      if (showLoader) setLoading(true);
-
-      const params = new URLSearchParams();
-      if (searchTerm) params.append('search', searchTerm);
-
-      const url = `/products/stores/${currentStoreId}/categories/?${params}`;
-      const response = await api.get(url);
-      setCategories(getResults(response.data));
-      setError(null);
-    } catch (error) {
-      logger.error('Error fetching categories:', error);
-      setError(`Помилка завантаження категорій: ${error.response?.data?.detail || error.message}`);
+      const params = searchTerm ? `?search=${encodeURIComponent(searchTerm)}` : '';
+      const res = await api.get(`/products/stores/${currentStoreId}/categories/${params}`);
+      setCategories(getResults(res.data));
+    } catch {
       setCategories([]);
     } finally {
       setLoading(false);
     }
-  };
-
-  // Видалення категорії
-  const handleDelete = async (categoryId) => {
-    if (!window.confirm('Ви впевнені, що хочете видалити цю категорію?')) {
-      return;
-    }
-
-    try {
-      await api.delete(`/products/stores/${currentStoreId}/categories/${categoryId}/`);
-      fetchCategories();
-    } catch (error) {
-      logger.error('Error deleting category:', error);
-      alert('Помилка видалення категорії');
-    }
-  };
-
-  // Зміна статусу категорії
-  const handleToggleStatus = async (category) => {
-    try {
-      await api.patch(`/products/stores/${currentStoreId}/categories/${category.id}/`, {
-        is_active: !category.is_active
-      });
-      fetchCategories();
-    } catch (error) {
-      logger.error('Error toggling category status:', error);
-      alert('Помилка зміни статусу категорії');
-    }
-  };
-
-  // Ефекти
-  useEffect(() => {
-    fetchUserStores();
-  }, []);
+  }, [currentStoreId, searchTerm]);
 
   useEffect(() => {
-    if (!storesLoading && currentStoreId) {
-      fetchCategories(true);
-    }
-  }, [currentStoreId, searchTerm, storesLoading]);
+    loadCategories();
+  }, [loadCategories]);
 
-  // Оновлюємо URL при зміні магазину (тільки якщо це не з URL параметра)
+  // URL sync
   useEffect(() => {
-    if (currentStoreId && !storeId && selectedStoreId) {
+    if (currentStoreId && !storeId) {
       navigate(`/categories/${currentStoreId}`, { replace: true });
     }
-  }, [selectedStoreId, storeId, navigate]);
+  }, [currentStoreId, storeId, navigate]);
 
-  // Показуємо завантаження магазинів
-  if (storesLoading) {
+  // Дії
+  const handleDelete = (id) => {
+    setConfirmModal({
+      open: true,
+      title: 'Видалення',
+      message: 'Видалити цю категорію?',
+      onConfirm: async () => {
+        const backup = categories;
+        setCategories(prev => prev.filter(c => c.id !== id));
+        toast.success('Категорію видалено');
+        try {
+          await api.delete(`/products/stores/${currentStoreId}/categories/${id}/`);
+        } catch {
+          setCategories(backup);
+          toast.error('Помилка видалення');
+        }
+      },
+    });
+  };
+
+  const handleToggleStatus = async (cat) => {
+    const newStatus = !cat.is_active;
+    // Оптимістичне оновлення — одразу показуємо зміну
+    setCategories(prev => prev.map(c => c.id === cat.id ? { ...c, is_active: newStatus } : c));
+    toast.success(newStatus ? 'Категорію активовано' : 'Категорію деактивовано');
+    try {
+      await api.patch(`/products/stores/${currentStoreId}/categories/${cat.id}/`, {
+        is_active: newStatus,
+      });
+    } catch {
+      // Відкат при помилці
+      setCategories(prev => prev.map(c => c.id === cat.id ? { ...c, is_active: cat.is_active } : c));
+      toast.error('Помилка зміни статусу');
+    }
+  };
+
+  const openCreate = () => { setEditingCategory(null); setModalOpen(true); };
+  const openEdit = (cat) => { setEditingCategory(cat); setModalOpen(true); };
+  const closeModal = () => { setModalOpen(false); setEditingCategory(null); };
+
+  const handleModalSuccess = () => {
+    toast.success(editingCategory ? 'Категорію оновлено' : 'Категорію створено');
+    loadCategories();
+  };
+
+  // Фільтрація (додатковий клієнтський пошук)
+  const filtered = categories;
+  const activeCount = filtered.filter(c => c.is_active).length;
+  const totalProducts = filtered.reduce((s, c) => s + (c.products_count || 0), 0);
+
+  // Стан: завантаження магазинів
+  if (stores.length === 0 && !loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-        <p className="ml-4 text-gray-600">Завантаження магазинів...</p>
+      <div className="text-center py-16">
+        <BuildingStorefrontIcon className="mx-auto h-12 w-12 text-gray-400" />
+        <h3 className="mt-4 text-lg font-medium text-gray-900">Немає магазинів</h3>
+        <p className="mt-2 text-sm text-gray-500">Спочатку створіть магазин</p>
+        <button onClick={() => navigate('/stores')} className="mt-4 btn btn-primary">
+          Створити магазин
+        </button>
       </div>
     );
   }
-
-  // Показуємо помилку або відсутність магазинів
-  if (error && userStores.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <div className="text-red-500 mb-4">
-          <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.124 4c-.77-.833-2.186-.833-2.956 0L2.632 16.5c-.77.833.192 2.5 1.732 2.5z" />
-          </svg>
-        </div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Помилка завантаження</h3>
-        <p className="text-gray-600 mb-4">{error}</p>
-        <div className="space-x-4">
-
-          <button
-            onClick={() => navigate('/stores')}
-            className="btn-primary"
-          >
-            Створити магазин
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Показуємо повідомлення коли не обрано магазин
-  if (!storesLoading && userStores.length > 0 && !currentStoreId) {
-    return (
-      <div className="space-y-6">
-        {/* Header з вибором магазину */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Категорії</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Керуйте категоріями товарів вашого магазину
-            </p>
-            <div className="mt-3">
-              <label className="form-label">
-                Виберіть магазин
-              </label>
-              <select
-                value={selectedStoreId || ''}
-                onChange={(e) => setSelectedStoreId(e.target.value)}
-                className="input w-64"
-              >
-                <option value="">Оберіть магазин...</option>
-                {userStores.map((store) => (
-                  <option key={store.id} value={store.id}>
-                    {store.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div className="text-center py-12">
-          <BuildingStorefrontIcon className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">Оберіть магазин</h3>
-          <p className="mt-1 text-sm text-gray-500">
-            Виберіть магазин зі списку вище, щоб переглянути його категорії.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Показуємо завантаження категорій
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-        <p className="ml-4 text-gray-600">Завантаження категорій...</p>
-      </div>
-    );
-  }
-
-  const filteredCategories = categories.filter(category => 
-    category.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    category.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   return (
     <div className="space-y-6">
@@ -236,26 +141,20 @@ const Categories = () => {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Категорії</h1>
-            <p className="text-sm text-gray-500">Керуйте категоріями товарів вашого магазину</p>
+            <p className="text-sm text-gray-500">Керуйте категоріями товарів</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          {userStores.length > 1 && (
+          {stores.length > 1 && (
             <select
               value={selectedStoreId || ''}
               onChange={(e) => setSelectedStoreId(e.target.value)}
-              className="px-3 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-3 py-2.5 text-sm border border-gray-200 rounded-xl bg-white"
             >
-              {userStores.map((store) => (
-                <option key={store.id} value={store.id}>{store.name}</option>
-              ))}
+              {stores.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
           )}
-          <button
-            onClick={() => setShowCreateModal(true)}
-            disabled={!currentStoreId}
-            className="inline-flex items-center px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl hover:shadow-lg hover:shadow-blue-500/25 transition-all disabled:opacity-50"
-          >
+          <button onClick={openCreate} className="inline-flex items-center px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl hover:shadow-lg transition-all">
             <PlusIcon className="h-4 w-4 mr-2" />
             Додати категорію
           </button>
@@ -264,155 +163,133 @@ const Categories = () => {
 
       {/* Search */}
       <div className="bg-white rounded-2xl border border-gray-200/80 p-5">
-        <div className="flex items-center gap-3">
-          <div className="flex-1 relative">
-            <MagnifyingGlassIcon className="h-5 w-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Пошук категорій..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-11 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
+        <div className="relative">
+          <MagnifyingGlassIcon className="h-5 w-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Пошук категорій..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-11 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
         </div>
       </div>
 
-      {/* Statistics */}
+      {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Всього категорій', value: filteredCategories.length, icon: FolderIcon, gradient: 'from-blue-500 to-blue-600', bg: 'bg-blue-50' },
-          { label: 'Активні', value: filteredCategories.filter(c => c.is_active).length, icon: CheckCircleIcon, gradient: 'from-emerald-500 to-emerald-600', bg: 'bg-emerald-50' },
-          { label: 'Неактивні', value: filteredCategories.filter(c => !c.is_active).length, icon: XCircleIcon, gradient: 'from-orange-500 to-red-500', bg: 'bg-orange-50' },
-          { label: 'Всього товарів', value: filteredCategories.reduce((sum, c) => sum + (c.products_count || 0), 0), icon: ChartBarIcon, gradient: 'from-purple-500 to-indigo-600', bg: 'bg-purple-50' },
-        ].map((stat, i) => (
-          <div key={i} className={`${stat.bg} rounded-2xl p-5 transition-all hover:shadow-md`}>
+          { label: 'Всього', value: filtered.length, icon: FolderIcon, gradient: 'from-blue-500 to-blue-600', bg: 'bg-blue-50' },
+          { label: 'Активні', value: activeCount, icon: CheckCircleIcon, gradient: 'from-emerald-500 to-emerald-600', bg: 'bg-emerald-50' },
+          { label: 'Неактивні', value: filtered.length - activeCount, icon: XCircleIcon, gradient: 'from-orange-500 to-red-500', bg: 'bg-orange-50' },
+          { label: 'Товарів', value: totalProducts, icon: ChartBarIcon, gradient: 'from-purple-500 to-indigo-600', bg: 'bg-purple-50' },
+        ].map((s, i) => (
+          <div key={i} className={`${s.bg} rounded-2xl p-5`}>
             <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${stat.gradient} flex items-center justify-center`}>
-                <stat.icon className="h-5 w-5 text-white" />
+              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${s.gradient} flex items-center justify-center`}>
+                <s.icon className="h-5 w-5 text-white" />
               </div>
               <div>
-                <div className="text-xs font-medium text-gray-500">{stat.label}</div>
-                <div className="text-xl font-bold text-gray-900">{stat.value}</div>
+                <div className="text-xs font-medium text-gray-500">{s.label}</div>
+                <div className="text-xl font-bold text-gray-900">{s.value}</div>
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Categories Table */}
-      <div className="bg-white rounded-2xl border border-gray-200/80 overflow-hidden">
-        <table className="min-w-full">
-          <thead>
-            <tr className="border-b border-gray-100">
-              <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Категорія</th>
-              <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Товарів</th>
-              <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Статус</th>
-              <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Створена</th>
-              <th className="px-6 py-3.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Дії</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50">
-            {filteredCategories.map((category) => (
-              <tr key={category.id} className="hover:bg-gray-50/50 transition-colors">
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center flex-shrink-0">
-                      <FolderIcon className="h-5 w-5 text-indigo-600" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold text-gray-900">{category.name}</div>
-                      {category.description && (
-                        <div className="text-xs text-gray-500 line-clamp-1">{category.description}</div>
-                      )}
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-gray-100 text-sm font-medium text-gray-700">
-                    {category.products_count || 0}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                    category.is_active
-                      ? 'bg-emerald-100 text-emerald-700'
-                      : 'bg-gray-100 text-gray-500'
-                  }`}>
-                    <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${category.is_active ? 'bg-emerald-500' : 'bg-gray-400'}`}></span>
-                    {category.is_active ? 'Активна' : 'Неактивна'}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-500">
-                  {category.created_at ? new Date(category.created_at).toLocaleDateString('uk-UA') : '—'}
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center justify-end gap-1">
-                    <button
-                      onClick={() => navigate(`/products?category=${category.id}`)}
-                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                      title="Переглянути товари"
-                    >
-                      <EyeIcon className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => setEditingCategory(category)}
-                      className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                      title="Редагувати"
-                    >
-                      <PencilIcon className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => handleToggleStatus(category)}
-                      className={`p-2 rounded-lg transition-colors ${category.is_active ? 'text-gray-400 hover:text-orange-600 hover:bg-orange-50' : 'text-gray-400 hover:text-emerald-600 hover:bg-emerald-50'}`}
-                      title={category.is_active ? 'Деактивувати' : 'Активувати'}
-                    >
-                      {category.is_active ? <PauseCircleIcon className="h-4 w-4" /> : <PlayCircleIcon className="h-4 w-4" />}
-                    </button>
-                    <button
-                      onClick={() => handleDelete(category.id)}
-                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Видалити"
-                    >
-                      <TrashIcon className="h-4 w-4" />
-                    </button>
-                  </div>
-                </td>
+      {/* Table */}
+      {loading ? (
+        <div className="flex items-center justify-center h-40">
+          <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-gray-200/80 text-center py-16">
+          <FolderIcon className="mx-auto h-12 w-12 text-gray-300" />
+          <h3 className="mt-4 text-base font-semibold text-gray-900">Немає категорій</h3>
+          <p className="mt-1 text-sm text-gray-500">Створіть першу категорію для товарів</p>
+          <button onClick={openCreate} className="mt-4 inline-flex items-center px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl">
+            <PlusIcon className="h-4 w-4 mr-2" />
+            Додати категорію
+          </button>
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl border border-gray-200/80 overflow-hidden">
+          <table className="min-w-full">
+            <thead>
+              <tr className="border-b border-gray-100">
+                <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Категорія</th>
+                <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Товарів</th>
+                <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Статус</th>
+                <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Створена</th>
+                <th className="px-6 py-3.5 text-right text-xs font-semibold text-gray-500 uppercase">Дії</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {filtered.map(cat => (
+                <tr key={cat.id} className="hover:bg-gray-50/50 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center">
+                        <FolderIcon className="h-5 w-5 text-indigo-600" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-semibold text-gray-900">{cat.name}</div>
+                        {cat.description && <div className="text-xs text-gray-500 line-clamp-1">{cat.description}</div>}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-gray-100 text-sm font-medium text-gray-700">
+                      {cat.products_count || 0}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${cat.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${cat.is_active ? 'bg-emerald-500' : 'bg-gray-400'}`} />
+                      {cat.is_active ? 'Активна' : 'Неактивна'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-500">
+                    {cat.created_at ? new Date(cat.created_at).toLocaleDateString('uk-UA') : '—'}
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center justify-end gap-1">
+                      <button onClick={() => navigate(`/products?category=${cat.id}`)} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg" title="Товари">
+                        <EyeIcon className="h-4 w-4" />
+                      </button>
+                      <button onClick={() => openEdit(cat)} className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg" title="Редагувати">
+                        <PencilIcon className="h-4 w-4" />
+                      </button>
+                      <button onClick={() => handleToggleStatus(cat)} className={`p-2 rounded-lg ${cat.is_active ? 'text-gray-400 hover:text-orange-600 hover:bg-orange-50' : 'text-gray-400 hover:text-emerald-600 hover:bg-emerald-50'}`} title={cat.is_active ? 'Деактивувати' : 'Активувати'}>
+                        {cat.is_active ? <PauseCircleIcon className="h-4 w-4" /> : <PlayCircleIcon className="h-4 w-4" />}
+                      </button>
+                      <button onClick={() => handleDelete(cat.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg" title="Видалити">
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
-        {filteredCategories.length === 0 && !loading && (
-          <div className="text-center py-16">
-            <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center mb-4">
-              <FolderIcon className="h-8 w-8 text-gray-400" />
-            </div>
-            <h3 className="text-base font-semibold text-gray-900 mb-1">Немає категорій</h3>
-            <p className="text-sm text-gray-500 mb-6">Почніть з створення першої категорії для ваших товарів.</p>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="inline-flex items-center px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl hover:shadow-lg hover:shadow-blue-500/25 transition-all"
-            >
-              <PlusIcon className="h-4 w-4 mr-2" />
-              Додати категорію
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Category Modal */}
+      {/* Modal */}
       <CategoryModal
-        isOpen={showCreateModal || editingCategory !== null}
-        onClose={() => {
-          setShowCreateModal(false);
-          setEditingCategory(null);
-        }}
+        isOpen={modalOpen}
+        onClose={closeModal}
         category={editingCategory}
         storeId={currentStoreId}
-        onSave={() => {
-          fetchCategories();
-        }}
+        onSuccess={handleModalSuccess}
+      />
+
+      <ConfirmModal
+        isOpen={confirmModal.open}
+        onClose={() => setConfirmModal({ ...confirmModal, open: false })}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
       />
     </div>
   );

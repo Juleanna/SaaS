@@ -17,6 +17,7 @@ import {
 import api, { getResults } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
 import ProductModal from '../components/ProductModal';
+import ConfirmModal from '../components/ConfirmModal';
 import logger from '../services/logger';
 
 const Products = () => {
@@ -38,6 +39,7 @@ const Products = () => {
   const [editingProduct, setEditingProduct] = useState(null);
   const [selectedProducts, setSelectedProducts] = useState(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
+  const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null });
   const [userStores, setUserStores] = useState([]);
   const [storesLoading, setStoresLoading] = useState(true);
   const [pagination, setPagination] = useState({
@@ -117,16 +119,21 @@ const Products = () => {
     }
   };
 
-  const handleDelete = async (productId) => {
-    if (!window.confirm('Ви впевнені, що хочете видалити цей товар?')) return;
-    
-    try {
-      await api.delete(`/products/stores/${currentStoreId}/products/${productId}/`);
-      fetchProducts(pagination.current_page);
-    } catch (error) {
-      logger.error('Error deleting product:', error);
-      alert('Помилка видалення товару');
-    }
+  const handleDelete = (productId) => {
+    setConfirmModal({
+      open: true,
+      title: 'Видалення товару',
+      message: 'Ви впевнені, що хочете видалити цей товар?',
+      onConfirm: async () => {
+        try {
+          await api.delete(`/products/stores/${currentStoreId}/products/${productId}/`);
+          fetchProducts(pagination.current_page);
+        } catch (error) {
+          logger.error('Error deleting product:', error);
+          alert('Помилка видалення товару');
+        }
+      },
+    });
   };
 
   const handleToggleStatus = async (product) => {
@@ -163,15 +170,28 @@ const Products = () => {
           );
           break;
         case 'delete':
-          if (!window.confirm(`Ви впевнені, що хочете видалити ${productIds.length} товарів?`)) return;
-          await Promise.all(
-            productIds.map(id => 
-              api.delete(`/products/stores/${currentStoreId}/products/${id}/`)
-            )
-          );
-          break;
+          setConfirmModal({
+            open: true,
+            title: 'Видалення товарів',
+            message: `Ви впевнені, що хочете видалити ${productIds.length} товарів?`,
+            onConfirm: async () => {
+              try {
+                await Promise.all(
+                  productIds.map(id =>
+                    api.delete(`/products/stores/${currentStoreId}/products/${id}/`)
+                  )
+                );
+                setSelectedProducts(new Set());
+                fetchProducts(pagination.current_page);
+              } catch (error) {
+                logger.error('Error performing bulk delete:', error);
+                alert('Помилка виконання масового видалення');
+              }
+            },
+          });
+          return;
       }
-      
+
       setSelectedProducts(new Set());
       fetchProducts(pagination.current_page);
     } catch (error) {
@@ -891,6 +911,14 @@ const Products = () => {
           setShowCreateModal(false);
           setEditingProduct(null);
         }}
+      />
+
+      <ConfirmModal
+        isOpen={confirmModal.open}
+        onClose={() => setConfirmModal({ ...confirmModal, open: false })}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
       />
     </div>
   );

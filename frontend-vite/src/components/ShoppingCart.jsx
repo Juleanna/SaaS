@@ -8,6 +8,7 @@ import {
   CreditCardIcon
 } from '@heroicons/react/24/outline';
 import api from '../services/api';
+import ConfirmModal from './ConfirmModal';
 import logger from '../services/logger';
 
 const ShoppingCart = ({ 
@@ -19,6 +20,7 @@ const ShoppingCart = ({
   const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null });
 
   const fetchCart = async () => {
     if (!storeSlug) return;
@@ -100,20 +102,25 @@ const ShoppingCart = ({
     }
   };
 
-  const clearCart = async () => {
-    if (window.confirm('Ви впевнені, що хочете очистити кошик?')) {
-      try {
-        // Delete all items
-        const deletePromises = cart.items.map(item => 
-          api.delete(`/orders/public/${storeSlug}/cart/items/${item.id}/`)
-        );
-        await Promise.all(deletePromises);
-        fetchCart();
-      } catch (error) {
-        logger.error('Error clearing cart:', error);
-        alert('Помилка очищення кошика');
-      }
-    }
+  const clearCart = () => {
+    setConfirmModal({
+      open: true,
+      title: 'Очищення кошика',
+      message: 'Ви впевнені, що хочете очистити кошик?',
+      onConfirm: async () => {
+        try {
+          // Delete all items
+          const deletePromises = cart.items.map(item =>
+            api.delete(`/orders/public/${storeSlug}/cart/items/${item.id}/`)
+          );
+          await Promise.all(deletePromises);
+          fetchCart();
+        } catch (error) {
+          logger.error('Error clearing cart:', error);
+          alert('Помилка очищення кошика');
+        }
+      },
+    });
   };
 
   const handleCheckout = () => {
@@ -278,6 +285,14 @@ const ShoppingCart = ({
           </div>
         </div>
       </div>
+      <ConfirmModal
+        isOpen={confirmModal.open}
+        onClose={() => setConfirmModal({ ...confirmModal, open: false })}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmText="Очистити"
+      />
     </div>
   );
 };

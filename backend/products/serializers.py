@@ -3,22 +3,15 @@ from .models import Category, Product, ProductImage, ProductVariant
 
 
 class CategorySerializer(serializers.ModelSerializer):
-    """Серіалізатор для категорій"""
-    
-    products_count = serializers.IntegerField(read_only=True)
-    
+    """Єдиний серіалізатор для категорій (список, створення, оновлення)"""
+
+    products_count = serializers.IntegerField(read_only=True, default=0)
+
     class Meta:
         model = Category
-        fields = ['id', 'name', 'description', 'slug', 'image', 'order', 'is_active', 'products_count']
+        fields = ['id', 'name', 'description', 'slug', 'image', 'order', 'is_active', 'products_count', 'created_at']
+        read_only_fields = ['id', 'products_count', 'created_at']
 
-
-class CategoryCreateSerializer(serializers.ModelSerializer):
-    """Серіалізатор для створення категорії"""
-    
-    class Meta:
-        model = Category
-        fields = ['name', 'description', 'slug', 'image', 'order', 'is_active']
-    
     def create(self, validated_data):
         validated_data['store'] = self.context['store']
         return super().create(validated_data)

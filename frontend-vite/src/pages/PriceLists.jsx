@@ -19,6 +19,7 @@ import {
 } from '@heroicons/react/24/outline';
 import PriceListModal from '../components/PriceListModal';
 import PriceListItemsModal from '../components/PriceListItemsModal';
+import ConfirmModal from '../components/ConfirmModal';
 import logger from '../services/logger';
 
 const PriceLists = () => {
@@ -31,6 +32,7 @@ const PriceLists = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedPriceList, setSelectedPriceList] = useState(null);
   const [isItemsModalOpen, setIsItemsModalOpen] = useState(false);
+  const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null });
 
   // Отримуємо магазини користувача
   const { data: stores = [] } = useQuery({
@@ -170,9 +172,14 @@ const PriceLists = () => {
   };
 
   const handleDelete = (priceList) => {
-    if (window.confirm(`Видалити прайс-лист "${priceList.name}"?`)) {
-      deleteMutation.mutate(priceList.id);
-    }
+    setConfirmModal({
+      open: true,
+      title: 'Видалення прайс-листа',
+      message: `Видалити прайс-лист "${priceList.name}"?`,
+      onConfirm: () => {
+        deleteMutation.mutate(priceList.id);
+      },
+    });
   };
 
   const handleViewItems = (priceList) => {
@@ -400,6 +407,14 @@ const PriceLists = () => {
         }}
         priceList={selectedPriceList}
         storeId={selectedStore}
+      />
+
+      <ConfirmModal
+        isOpen={confirmModal.open}
+        onClose={() => setConfirmModal({ ...confirmModal, open: false })}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
       />
     </div>
   );
