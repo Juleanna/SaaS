@@ -556,19 +556,19 @@ const Stores = () => {
                     </span>
                   </div>
                   {/* Logo on banner */}
-                  <div className="absolute bottom-3 left-4">
+                  <div className="absolute -bottom-5 left-4">
                     {store.logo ? (
-                      <img src={store.logo} alt={store.name} className="w-11 h-11 rounded-xl object-cover border-2 border-white/30 shadow-lg" />
+                      <img src={store.logo} alt={store.name} className="w-12 h-12 rounded-xl object-cover border-2 border-white shadow-lg bg-white" />
                     ) : (
-                      <div className="w-11 h-11 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center border-2 border-white/30">
-                        <span className="text-white font-bold text-lg">{store.name.charAt(0).toUpperCase()}</span>
+                      <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center border-2 border-white shadow-lg">
+                        <span className="text-transparent bg-clip-text bg-gradient-to-br from-blue-600 to-purple-600 font-bold text-xl">{store.name.charAt(0).toUpperCase()}</span>
                       </div>
                     )}
                   </div>
                 </Link>
 
                 {/* Info */}
-                <div className="p-4">
+                <div className="px-4 pb-4 pt-7">
                   <Link to={`/stores/${store.id}`} className="block mb-2">
                     <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors truncate">
                       {store.name}
