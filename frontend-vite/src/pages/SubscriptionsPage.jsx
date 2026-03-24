@@ -76,10 +76,12 @@ const SubscriptionsPage = () => {
       setSelectedPlan(null);
     } catch (error) {
       const data = error.response?.data;
-      if (data?.error === 'insufficient_balance') {
+      if (data?.message) {
         toast.error(data.message);
+      } else if (typeof data?.error === 'string' && data.error !== 'insufficient_balance') {
+        toast.error(data.error);
       } else {
-        toast.error(data?.message || data?.error || 'Помилка при зміні плану');
+        toast.error('Помилка при зміні плану');
       }
     } finally {
       setIsProcessing(false);
