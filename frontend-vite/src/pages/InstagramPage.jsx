@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import toast from 'react-hot-toast';
+import api, { getResults } from '../services/api';
 import ConfirmModal from '../components/ConfirmModal';
 
 /**
@@ -24,68 +25,46 @@ const InstagramPage = ({ storeId }) => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('access_token');
 
-      // Отримати акаунт
-      const accountRes = await axios.get('/api/instagram/accounts/', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const accountRes = await api.get('/instagram/accounts/');
+      const accounts = getResults(accountRes.data);
 
-      if (accountRes.data.length > 0) {
-        const acc = accountRes.data[0];
+      if (accounts.length > 0) {
+        const acc = accounts[0];
         setAccount(acc);
 
-        // Отримати більше деталей
-        const detailRes = await axios.get(
-          `/api/instagram/accounts/${acc.id}/statistics/`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-
+        const detailRes = await api.get(`/instagram/accounts/${acc.id}/statistics/`);
         const stats = detailRes.data?.statistics;
         setStatistics(Array.isArray(stats) ? stats : []);
 
-        // Отримати пости
-        const postsRes = await axios.get('/api/instagram/posts/', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setRecentPosts(Array.isArray(postsRes.data) ? postsRes.data : postsRes.data?.results || []);
+        const postsRes = await api.get('/instagram/posts/');
+        setRecentPosts(getResults(postsRes.data));
 
-        // Отримати автопости
-        const autoPostsRes = await axios.get('/api/instagram/auto-posts/', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setAutoPosts(Array.isArray(autoPostsRes.data) ? autoPostsRes.data : autoPostsRes.data?.results || []);
+        const autoPostsRes = await api.get('/instagram/auto-posts/');
+        setAutoPosts(getResults(autoPostsRes.data));
 
-        // Отримати DM ключові слова
-        const keywordsRes = await axios.get('/api/instagram/dm-keywords/', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setDMKeywords(keywordsRes.data);
+        const keywordsRes = await api.get('/instagram/dm-keywords/');
+        setDMKeywords(getResults(keywordsRes.data));
       }
 
       setError(null);
-      setLoading(false);
     } catch (err) {
       if (err.response?.status === 404) {
-        // Акаунт не підключений
         setAccount(null);
       } else {
         setError('Помилка при завантаженні даних');
       }
+    } finally {
       setLoading(false);
     }
   };
 
   const handleConnect = async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      const response = await axios.get('/api/instagram/accounts/oauth_login_url/', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
+      const response = await api.get('/instagram/accounts/oauth_login_url/');
       window.location.href = response.data.login_url;
-    } catch (err) {
-      alert('Помилка при підключенні');
+    } catch {
+      toast.error('Помилка при підключенні');
     }
   };
 
@@ -96,19 +75,14 @@ const InstagramPage = ({ storeId }) => {
       message: 'Ви впевнені, що хочете відключити Instagram акаунт?',
       onConfirm: async () => {
         try {
-          const token = localStorage.getItem('access_token');
-          await axios.post(
-            `/api/instagram/accounts/${account.id}/disconnect/`,
-            {},
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-
+          await api.post(`/instagram/accounts/${account.id}/disconnect/`);
           setAccount(null);
           setStatistics([]);
           setRecentPosts([]);
           setAutoPosts([]);
-        } catch (err) {
-          alert('Помилка при відключенні');
+          toast.success('Акаунт відключено');
+        } catch {
+          toast.error('Помилка при відключенні');
         }
       },
     });
@@ -116,16 +90,10 @@ const InstagramPage = ({ storeId }) => {
 
   const handleSyncMedia = async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      await axios.post(
-        `/api/instagram/accounts/${account.id}/sync_media/`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      alert('Синхронізація розпочата');
-    } catch (err) {
-      alert('Помилка при синхронізації');
+      await api.post(`/instagram/accounts/${account.id}/sync_media/`);
+      toast.success('Синхронізація розпочата');
+    } catch {
+      toast.error('Помилка при синхронізації');
     }
   };
 

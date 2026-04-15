@@ -4,7 +4,11 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.contrib.auth import update_session_auth_hash
+from django.db import transaction
 from decimal import Decimal
+import logging
+
+logger = logging.getLogger(__name__)
 from .serializers import (
     CustomTokenObtainPairSerializer, UserRegistrationSerializer,
     UserProfileSerializer, UserUpdateSerializer, ChangePasswordSerializer,
@@ -156,36 +160,33 @@ def upload_avatar(request):
 @permission_classes([IsAuthenticated])
 def top_up_balance(request):
     """Поповнення балансу користувача"""
+    amount = request.data.get('amount')
+
+    if not amount:
+        return Response({'error': 'Сума поповнення обов\'язкова'}, status=status.HTTP_400_BAD_REQUEST)
+
     try:
-        amount = request.data.get('amount')
-        
-        if not amount:
-            return Response({'error': 'Сума поповнення обов\'язкова'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        try:
-            amount = Decimal(str(amount))
-        except (ValueError, TypeError):
-            return Response({'error': 'Неправильний формат суми'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        if amount <= 0:
-            return Response({'error': 'Сума повинна бути більше нуля'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        if amount > Decimal('10000'):
-            return Response({'error': 'Максимальна сума поповнення: 10,000 ₴'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        user = request.user
-        
-        # Імітуємо успішну оплату (в реальному проекті тут буде інтеграція з платіжною системою)
-        # В майбутньому тут буде: Stripe, LiqPay, або інша платіжна система
-        
-        # Поповнюємо баланс
-        user.balance += amount
-        user.save()
-        
-        return Response({
-            'message': f'Баланс успішно поповнено на {amount} ₴',
-            'new_balance': float(user.balance)
-        }, status=status.HTTP_200_OK)
-        
-    except Exception as e:
-        return Response({'error': 'Помилка поповнення балансу'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR) 
+        amount = Decimal(str(amount))
+    except (ValueError, TypeError):
+        return Response({'error': 'Неправильний формат суми'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if amount <= 0:
+        return Response({'error': 'Сума повинна бути більше нуля'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if amount > Decimal('10000'):
+        return Response({'error': 'Максимальна сума поповнення: 10,000 ₴'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        with transaction.atomic():
+            user = User.objects.select_for_update().get(pk=request.user.pk)
+            user.balance += amount
+            user.save(update_fields=['balance'])
+            new_balance = user.balance
+    except Exception:
+        logger.exception('Failed to top up balance for user %s', request.user.pk)
+        return Response({'error': 'Помилка поповнення балансу'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    return Response({
+        'message': f'Баланс успішно поповнено на {amount} ₴',
+        'new_balance': float(new_balance)
+    }, status=status.HTTP_200_OK)

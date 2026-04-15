@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import {
   EyeIcon,
   CheckCircleIcon,
@@ -34,7 +35,7 @@ const Orders = () => {
 
   const currentStoreId = storeId || userStores?.[0]?.id || user?.stores?.[0]?.id;
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (signal) => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
@@ -58,10 +59,11 @@ const Orders = () => {
             break;
         }
       }
-      
-      const response = await api.get(`/orders/stores/${currentStoreId}/orders/?${params}`);
+
+      const response = await api.get(`/orders/stores/${currentStoreId}/orders/?${params}`, { signal });
       setOrders(getResults(response.data));
     } catch (error) {
+      if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') return;
       setError('Помилка завантаження замовлень');
       setOrders([]);
     } finally {
@@ -87,7 +89,7 @@ const Orders = () => {
       fetchStatistics();
     } catch (error) {
       logger.error('Error updating order status:', error);
-      alert('Помилка оновлення статусу замовлення');
+      toast.error('Помилка оновлення статусу замовлення');
     }
   };
 
@@ -110,7 +112,7 @@ const Orders = () => {
       link.remove();
     } catch (error) {
       logger.error('Error exporting orders:', error);
-      alert('Помилка експорту замовлень');
+      toast.error('Помилка експорту замовлень');
     }
   };
 
@@ -127,7 +129,10 @@ const Orders = () => {
   }, [storeId]);
 
   useEffect(() => {
-    if (currentStoreId) fetchOrders();
+    if (!currentStoreId) return;
+    const controller = new AbortController();
+    fetchOrders(controller.signal);
+    return () => controller.abort();
   }, [currentStoreId, searchTerm, statusFilter, dateFilter]);
 
   useEffect(() => {

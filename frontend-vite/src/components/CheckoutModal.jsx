@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  XMarkIcon, 
+import toast from 'react-hot-toast';
+import {
+  XMarkIcon,
   CreditCardIcon,
   TruckIcon,
   UserIcon,
@@ -132,7 +133,7 @@ const CheckoutModal = ({
       onClose();
       
       // Show success message
-      alert(`Замовлення #${response.data.order_number} успішно створено! Ми зв'яжемося з вами найближчим часом.`);
+      toast.success(`Замовлення #${response.data.order_number} успішно створено!`);
       
     } catch (error) {
       logger.error('Error creating order:', error);
@@ -145,7 +146,7 @@ const CheckoutModal = ({
         });
         setErrors(serverErrors);
       } else {
-        alert('Помилка створення замовлення');
+        toast.error('Помилка створення замовлення');
       }
     } finally {
       setLoading(false);

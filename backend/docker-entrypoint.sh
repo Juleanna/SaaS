@@ -19,8 +19,9 @@ while ! nc -z ${REDIS_HOST:-redis} ${REDIS_PORT:-6379}; do
 done
 echo "✅ Redis is ready!"
 
-# Міграції, static, superuser — тільки для web-сервера (не celery)
-if echo "$@" | grep -qv "celery"; then
+# Міграції/static/superuser — тільки якщо RUN_MIGRATIONS=true
+# (виставляється в env лише для backend-сервісу).
+if [ "${RUN_MIGRATIONS:-false}" = "true" ]; then
     echo "📦 Applying database migrations..."
     python manage.py migrate --noinput
 
@@ -46,8 +47,13 @@ else:
 "
     fi
 else
-    echo "⏳ Waiting for migrations (from backend)..."
-    sleep 10
+    echo "⏭️  Skipping migrations (RUN_MIGRATIONS != true)"
+    # Чекаємо щоб backend встиг застосувати міграції
+    until python manage.py showmigrations --plan 2>/dev/null | grep -q "\[X\]"; do
+        echo "⏳ Waiting for migrations from backend..."
+        sleep 2
+    done
+    echo "✅ Migrations are ready"
 fi
 
 echo "🚀 Starting application..."

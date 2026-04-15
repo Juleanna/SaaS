@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { 
-  PlusIcon, 
+import toast from 'react-hot-toast';
+import {
+  PlusIcon,
   EyeIcon, 
   PencilIcon, 
   TrashIcon, 
@@ -130,7 +131,7 @@ const Products = () => {
           fetchProducts(pagination.current_page);
         } catch (error) {
           logger.error('Error deleting product:', error);
-          alert('Помилка видалення товару');
+          toast.error('Помилка видалення товару');
         }
       },
     });
@@ -144,7 +145,7 @@ const Products = () => {
       fetchProducts(pagination.current_page);
     } catch (error) {
       logger.error('Error toggling product status:', error);
-      alert('Помилка зміни статусу товару');
+      toast.error('Помилка зміни статусу товару');
     }
   };
 
@@ -185,7 +186,7 @@ const Products = () => {
                 fetchProducts(pagination.current_page);
               } catch (error) {
                 logger.error('Error performing bulk delete:', error);
-                alert('Помилка виконання масового видалення');
+                toast.error('Помилка виконання масового видалення');
               }
             },
           });
@@ -196,7 +197,7 @@ const Products = () => {
       fetchProducts(pagination.current_page);
     } catch (error) {
       logger.error('Error performing bulk action:', error);
-      alert('Помилка виконання масової дії');
+      toast.error('Помилка виконання масової дії');
     }
   };
 
@@ -230,10 +231,10 @@ const Products = () => {
     try {
       await api.post(`/products/${productId}/generate-barcode/`);
       fetchProducts(pagination.current_page);
-      alert('Штрихкод успішно згенеровано');
+      toast.success('Штрихкод успішно згенеровано');
     } catch (error) {
       logger.error('Error generating barcode:', error);
-      alert('Помилка генерації штрихкоду');
+      toast.error('Помилка генерації штрихкоду');
     }
   };
 
@@ -241,10 +242,10 @@ const Products = () => {
     try {
       await api.post(`/products/${productId}/generate-qr/`);
       fetchProducts(pagination.current_page);
-      alert('QR код успішно згенеровано');
+      toast.success('QR код успішно згенеровано');
     } catch (error) {
       logger.error('Error generating QR code:', error);
-      alert('Помилка генерації QR коду');
+      toast.error('Помилка генерації QR коду');
     }
   };
 

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  PlusIcon, 
+import toast from 'react-hot-toast';
+import {
+  PlusIcon,
   EyeIcon,
   PencilIcon, 
   TrashIcon, 
@@ -151,7 +152,7 @@ const Payments = () => {
       fetchStatistics();
     } catch (error) {
       logger.error('Error updating payment status:', error);
-      alert('Помилка оновлення статусу платежу');
+      toast.error('Помилка оновлення статусу платежу');
     }
   };
 
@@ -162,7 +163,7 @@ const Payments = () => {
       fetchStatistics();
     } catch (error) {
       logger.error('Error marking payment as paid:', error);
-      alert('Помилка позначення платежу як оплаченого');
+      toast.error('Помилка позначення платежу як оплаченого');
     }
   };
 
@@ -174,7 +175,7 @@ const Payments = () => {
       fetchPaymentMethods();
     } catch (error) {
       logger.error('Error toggling payment method:', error);
-      alert('Помилка зміни статусу методу оплати');
+      toast.error('Помилка зміни статусу методу оплати');
     }
   };
 

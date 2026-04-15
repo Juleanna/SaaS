@@ -7,6 +7,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.utils import timezone
+from django.db import transaction
+from django.contrib.auth import get_user_model
 from datetime import timedelta
 
 from .subscription_models import (
@@ -69,54 +71,29 @@ class UpgradeSubscriptionView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        try:
-            plan_id = request.data.get("plan_id")
-
-            if not plan_id:
-                return Response(
-                    {"error": "plan_id обов'язково"}, status=status.HTTP_400_BAD_REQUEST
-                )
-
-            plan = SubscriptionPlan.objects.get(id=plan_id)
-
-            # Отримати поточну підписку
-            subscription, created = UserSubscription.objects.get_or_create(
-                user=request.user,
-                defaults={
-                    "plan": plan,
-                    "expires_at": timezone.now()
-                    + timedelta(days=30 if plan.billing_cycle == "monthly" else 365),
-                },
+        plan_id = request.data.get("plan_id")
+        if not plan_id:
+            return Response(
+                {"error": "plan_id обов'язково"}, status=status.HTTP_400_BAD_REQUEST
             )
 
-            if not created:
-                # Оновити план
-                old_plan = subscription.plan
-                subscription.plan = plan
-                subscription.expires_at = timezone.now() + timedelta(
-                    days=30 if plan.billing_cycle == "monthly" else 365
-                )
-                subscription.status = "active"
-                subscription.save()
+        try:
+            plan = SubscriptionPlan.objects.get(id=plan_id)
+        except SubscriptionPlan.DoesNotExist:
+            return Response(
+                {"error": "План не знайдено"}, status=status.HTTP_404_NOT_FOUND
+            )
 
-                logger.info(
-                    f"Користувач {request.user.email} оновив план з {old_plan.name} на {plan.name}"
-                )
+        User = get_user_model()
+        period_days = 30 if plan.billing_cycle == "monthly" else 365
 
-            # Синхронізуємо subscription_plan на моделі User
-            user = request.user
-            user.subscription_plan = plan.slug
-            user.is_subscribed = plan.slug != 'free'
-            user.save(update_fields=['subscription_plan', 'is_subscribed'])
+        try:
+            with transaction.atomic():
+                # Блокуємо запис користувача — захист від паралельних списань
+                user = User.objects.select_for_update().get(pk=request.user.pk)
 
-            # Створити платіж за підписку (якщо план платний)
-            if plan.price > 0:
-                user = request.user
-                if user.balance < plan.price:
-                    # Недостатньо коштів — не активуємо план
-                    if not created:
-                        subscription.plan = old_plan if not created else plan
-                        subscription.save()
+                # Перевірка балансу до будь-яких змін
+                if plan.price > 0 and user.balance < plan.price:
                     return Response(
                         {
                             "error": "insufficient_balance",
@@ -128,50 +105,68 @@ class UpgradeSubscriptionView(generics.CreateAPIView):
                         status=status.HTTP_402_PAYMENT_REQUIRED,
                     )
 
-                # Списати кошти з балансу
-                user.balance -= plan.price
-                user.monthly_spending += plan.price
-                user.total_spent += plan.price
-                user.save(update_fields=["balance", "monthly_spending", "total_spent"])
-
-                payment = SubscriptionPayment.objects.create(
-                    subscription=subscription,
-                    amount=plan.price,
-                    currency="UAH",
-                    status="completed",
-                    paid_at=timezone.now(),
-                )
-
-                logger.info(
-                    f"Списано {plan.price} ₴ з балансу {user.email}. Залишок: {user.balance} ₴"
-                )
-
-                return Response(
-                    {
-                        "subscription": UserSubscriptionSerializer(subscription).data,
-                        "payment_required": False,
-                        "payment_id": payment.id,
-                        "amount": float(plan.price),
-                        "new_balance": float(user.balance),
+                subscription, created = UserSubscription.objects.select_for_update().get_or_create(
+                    user=user,
+                    defaults={
+                        "plan": plan,
+                        "expires_at": timezone.now() + timedelta(days=period_days),
                     },
-                    status=status.HTTP_201_CREATED,
                 )
 
-            return Response(
-                UserSubscriptionSerializer(subscription).data,
-                status=status.HTTP_201_CREATED,
-            )
+                if not created:
+                    old_plan = subscription.plan
+                    subscription.plan = plan
+                    subscription.expires_at = timezone.now() + timedelta(days=period_days)
+                    subscription.status = "active"
+                    subscription.save()
+                    logger.info(
+                        "Користувач %s оновив план з %s на %s",
+                        user.email, old_plan.name, plan.name,
+                    )
 
-        except SubscriptionPlan.DoesNotExist:
-            return Response(
-                {"error": "План не знайдено"}, status=status.HTTP_404_NOT_FOUND
-            )
-        except Exception as e:
-            logger.error(f"Помилка при оновленні плану: {e}")
+                # Синхронізуємо поля User
+                user.subscription_plan = plan.slug
+                user.is_subscribed = plan.slug != 'free'
+
+                payment = None
+                if plan.price > 0:
+                    user.balance -= plan.price
+                    user.monthly_spending += plan.price
+                    user.total_spent += plan.price
+                    user.save(update_fields=[
+                        'subscription_plan', 'is_subscribed',
+                        'balance', 'monthly_spending', 'total_spent',
+                    ])
+
+                    payment = SubscriptionPayment.objects.create(
+                        subscription=subscription,
+                        amount=plan.price,
+                        currency="UAH",
+                        status="completed",
+                        paid_at=timezone.now(),
+                    )
+                    logger.info(
+                        "Списано %s ₴ з балансу %s. Залишок: %s ₴",
+                        plan.price, user.email, user.balance,
+                    )
+                else:
+                    user.save(update_fields=['subscription_plan', 'is_subscribed'])
+        except Exception:
+            logger.exception("Помилка при оновленні плану для користувача %s", request.user.pk)
             return Response(
                 {"error": "Помилка при обробці запиту"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+        response_data = {
+            "subscription": UserSubscriptionSerializer(subscription).data,
+            "amount": float(plan.price),
+            "new_balance": float(user.balance),
+        }
+        if payment:
+            response_data["payment_id"] = payment.id
+            response_data["payment_required"] = False
+        return Response(response_data, status=status.HTTP_201_CREATED)
 
 
 class CancelSubscriptionView(generics.CreateAPIView):

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { XMarkIcon, PhotoIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import api from '../services/api';
 import logger from '../services/logger';
@@ -122,7 +123,7 @@ const ProductModal = ({
       setImages(prev => [...prev, ...uploadedImages]);
     } catch (error) {
       logger.error('Error uploading images:', error);
-      alert('Помилка завантаження зображень');
+      toast.error('Помилка завантаження зображень');
     } finally {
       setLoading(false);
     }
@@ -136,7 +137,7 @@ const ProductModal = ({
       setImages(prev => prev.filter(img => img.id !== imageId));
     } catch (error) {
       logger.error('Error removing image:', error);
-      alert('Помилка видалення зображення');
+      toast.error('Помилка видалення зображення');
     }
   };
 
@@ -236,7 +237,7 @@ const ProductModal = ({
         });
         setErrors(serverErrors);
       } else {
-        alert('Помилка збереження товару');
+        toast.error('Помилка збереження товару');
       }
     } finally {
       setLoading(false);

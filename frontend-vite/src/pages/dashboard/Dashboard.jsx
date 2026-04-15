@@ -156,7 +156,7 @@ const Dashboard = () => {
     },
     {
       name: 'Переглянути замовлення',
-      href: '/stores/1/orders',
+      href: '/orders',
       icon: ShoppingCartIcon,
       description: 'Перегляньте всі замовлення',
       color: 'bg-yellow-500',
@@ -279,9 +279,13 @@ const Dashboard = () => {
             <div className="ml-3 flex-1 min-w-0">
               <dt className="text-xs font-semibold text-blue-700/80 truncate">Магазини</dt>
               <dd className="flex items-baseline flex-wrap">
-                <span className="text-xl font-bold text-blue-900">
-                  {statsLoading ? '...' : (dashboardStats?.stores_count || 0)}
-                </span>
+                {statsLoading ? (
+                  <span className="inline-block h-6 w-12 bg-blue-200/70 rounded animate-pulse" />
+                ) : (
+                  <span className="text-xl font-bold text-blue-900">
+                    {dashboardStats?.stores_count || 0}
+                  </span>
+                )}
                 {dashboardStats?.trends?.stores && (
                   <span className={`ml-2 text-xs font-semibold ${getTrendColor(dashboardStats.trends.stores.direction)}`}>
                     {dashboardStats.trends.stores.direction === 'up' ? '\u2191' : '\u2193'}{dashboardStats.trends.stores.value}%
@@ -302,9 +306,13 @@ const Dashboard = () => {
             <div className="ml-3 flex-1 min-w-0">
               <dt className="text-xs font-semibold text-green-700/80 truncate">Товари</dt>
               <dd className="flex items-baseline flex-wrap">
-                <span className="text-xl font-bold text-green-900">
-                  {statsLoading ? '...' : (dashboardStats?.products_count || 0)}
-                </span>
+                {statsLoading ? (
+                  <span className="inline-block h-6 w-12 bg-green-200/70 rounded animate-pulse" />
+                ) : (
+                  <span className="text-xl font-bold text-green-900">
+                    {dashboardStats?.products_count || 0}
+                  </span>
+                )}
                 {dashboardStats?.trends?.products && (
                   <span className={`ml-2 text-xs font-semibold ${getTrendColor(dashboardStats.trends.products.direction)}`}>
                     {dashboardStats.trends.products.direction === 'up' ? '\u2191' : '\u2193'}{dashboardStats.trends.products.value}%
@@ -325,9 +333,13 @@ const Dashboard = () => {
             <div className="ml-3 flex-1 min-w-0">
               <dt className="text-xs font-semibold text-yellow-700/80 truncate">Замовлення</dt>
               <dd className="flex items-baseline flex-wrap">
-                <span className="text-xl font-bold text-yellow-900">
-                  {statsLoading ? '...' : (dashboardStats?.orders_count || 0)}
-                </span>
+                {statsLoading ? (
+                  <span className="inline-block h-6 w-12 bg-yellow-200/70 rounded animate-pulse" />
+                ) : (
+                  <span className="text-xl font-bold text-yellow-900">
+                    {dashboardStats?.orders_count || 0}
+                  </span>
+                )}
                 {dashboardStats?.trends?.orders && (
                   <span className={`ml-2 text-xs font-semibold ${getTrendColor(dashboardStats.trends.orders.direction)}`}>
                     {dashboardStats.trends.orders.direction === 'up' ? '\u2191' : '\u2193'}{dashboardStats.trends.orders.value}%
@@ -348,9 +360,13 @@ const Dashboard = () => {
             <div className="ml-3 flex-1 min-w-0">
               <dt className="text-xs font-semibold text-purple-700/80 truncate">Загальний дохід</dt>
               <dd className="flex items-baseline flex-wrap">
-                <span className="text-lg font-bold text-purple-900 truncate">
-                  {statsLoading ? '...' : formatPrice(dashboardStats?.total_revenue || 0)}
-                </span>
+                {statsLoading ? (
+                  <span className="inline-block h-6 w-20 bg-purple-200/70 rounded animate-pulse" />
+                ) : (
+                  <span className="text-lg font-bold text-purple-900 truncate">
+                    {formatPrice(dashboardStats?.total_revenue || 0)}
+                  </span>
+                )}
                 {dashboardStats?.trends?.revenue && (
                   <span className={`ml-1 text-xs font-semibold ${getTrendColor(dashboardStats.trends.revenue.direction)}`}>
                     {dashboardStats.trends.revenue.direction === 'up' ? '\u2191' : '\u2193'}{dashboardStats.trends.revenue.value}%
@@ -374,7 +390,9 @@ const Dashboard = () => {
             <div className="ml-3 flex-1 min-w-0">
               <dt className="text-xs font-semibold text-indigo-700/80 truncate">Середній чек</dt>
               <dd className="text-lg font-bold text-indigo-900 truncate">
-                {statsLoading ? '...' : formatPrice(dashboardStats?.average_order_value || 0)}
+                {statsLoading ? (
+                  <span className="inline-block h-5 w-20 bg-indigo-200/70 rounded animate-pulse" />
+                ) : formatPrice(dashboardStats?.average_order_value || 0)}
               </dd>
             </div>
           </div>
@@ -390,7 +408,9 @@ const Dashboard = () => {
             <div className="ml-3 flex-1 min-w-0">
               <dt className="text-xs font-semibold text-orange-700/80 truncate">Замовлень за тиждень</dt>
               <dd className="text-lg font-bold text-orange-900">
-                {statsLoading ? '...' : (dashboardStats?.weekly_orders || 0)}
+                {statsLoading ? (
+                  <span className="inline-block h-5 w-12 bg-orange-200/70 rounded animate-pulse" />
+                ) : (dashboardStats?.weekly_orders || 0)}
               </dd>
             </div>
           </div>
@@ -406,7 +426,9 @@ const Dashboard = () => {
             <div className="ml-3 flex-1 min-w-0">
               <dt className="text-xs font-semibold text-pink-700/80 truncate">Конверсія</dt>
               <dd className="text-lg font-bold text-pink-900">
-                {statsLoading ? '...' : `${dashboardStats?.conversion_rate || 0}%`}
+                {statsLoading ? (
+                  <span className="inline-block h-5 w-12 bg-pink-200/70 rounded animate-pulse" />
+                ) : `${dashboardStats?.conversion_rate || 0}%`}
               </dd>
             </div>
           </div>

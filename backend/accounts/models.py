@@ -5,7 +5,9 @@ from django.utils.translation import gettext_lazy as _
 
 class User(AbstractUser):
     """Кастомна модель користувача для продавців"""
-    
+
+    email = models.EmailField(_('Email'), unique=True)
+
     # Додаткові поля для продавців
     phone = models.CharField(max_length=20, blank=True, verbose_name=_('Телефон'))
     company_name = models.CharField(max_length=100, blank=True, verbose_name=_('Назва компанії'))

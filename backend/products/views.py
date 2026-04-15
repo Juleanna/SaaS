@@ -42,17 +42,19 @@ class CategoryDetailView(StoreScopedMixin, generics.RetrieveUpdateDestroyAPIView
 
 
 class ProductListCreateView(StoreScopedMixin, generics.ListCreateAPIView):
-    """View ???>?? ???????????>?-?????? ?'??????????????"""
-    
+    """View для списку та створення товарів"""
+
     permission_classes = [permissions.IsAuthenticated, IsStoreOwnerOrStaff]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['category', 'is_active', 'is_featured']
     search_fields = ['name', 'description', 'sku']
     ordering_fields = ['name', 'price', 'created_at']
     ordering = ['-created_at']
-    
+
     def get_queryset(self):
-        return self.filter_queryset_by_store(Product.objects.all())
+        return self.filter_queryset_by_store(
+            Product.objects.select_related('store', 'category').prefetch_related('images', 'variants')
+        )
     
     def get_serializer_class(self):
         if self.request.method == 'POST':
@@ -61,12 +63,14 @@ class ProductListCreateView(StoreScopedMixin, generics.ListCreateAPIView):
 
 
 class ProductDetailView(StoreScopedMixin, generics.RetrieveUpdateDestroyAPIView):
-    """View ???>?? ???????????>?-?????? ??????????? ?'????????????"""
-    
+    """View для деталей, оновлення та видалення товару"""
+
     permission_classes = [permissions.IsAuthenticated, IsStoreOwnerOrStaff]
-    
+
     def get_queryset(self):
-        return self.filter_queryset_by_store(Product.objects.all())
+        return self.filter_queryset_by_store(
+            Product.objects.select_related('store', 'category').prefetch_related('images', 'variants')
+        )
     
     def get_serializer_class(self):
         if self.request.method in ['PUT', 'PATCH']:
@@ -75,9 +79,11 @@ class ProductDetailView(StoreScopedMixin, generics.RetrieveUpdateDestroyAPIView)
 
 
 class ProductPublicView(generics.RetrieveAPIView):
-    """?????+?>?-?????? view ???>?? ?????????>?????? ?'??????????"""
-    
-    queryset = Product.objects.filter(is_active=True)
+    """Публічний view для перегляду товару"""
+
+    queryset = Product.objects.filter(is_active=True).select_related(
+        'store', 'category'
+    ).prefetch_related('images', 'variants')
     serializer_class = ProductPublicSerializer
     permission_classes = [permissions.AllowAny]
     lookup_field = 'slug'
@@ -164,9 +170,11 @@ class ProductVariantDetailView(StoreScopedMixin, generics.RetrieveUpdateDestroyA
 @api_view(['GET'])
 @permission_classes([permissions.AllowAny])
 def store_products(request, store_slug):
-    """???'????????????? ?'?????????-?? ??????????????? ???>?? ?????+?>?-????????? ???????'??????"""
+    """Отримати товари магазину для публічного каталогу"""
     store = get_object_or_404(Store, slug=store_slug, is_active=True)
-    products = Product.objects.filter(store=store, is_active=True)
+    products = Product.objects.filter(store=store, is_active=True).select_related(
+        'category'
+    ).prefetch_related('images')
     
     # ???-?>???'?????o-??
     category_id = request.GET.get('category')
@@ -211,8 +219,12 @@ def toggle_product_status(request, store_id, product_id):
 @permission_classes([permissions.AllowAny])
 def top_products(request):
     """Простая выборка популярных товаров (is_featured или активные со скидкой, сортировка по дате)."""
-    queryset = Product.objects.filter(is_active=True).filter(
-        Q(is_featured=True) | Q(sale_price__isnull=False)
-    ).order_by('-updated_at')[:20]
+    queryset = (
+        Product.objects.filter(is_active=True)
+        .filter(Q(is_featured=True) | Q(sale_price__isnull=False))
+        .select_related('store', 'category')
+        .prefetch_related('images')
+        .order_by('-updated_at')[:20]
+    )
     serializer = ProductPublicSerializer(queryset, many=True)
     return Response(serializer.data)

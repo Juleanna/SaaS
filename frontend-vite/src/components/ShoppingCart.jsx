@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  XMarkIcon, 
+import toast from 'react-hot-toast';
+import {
+  XMarkIcon,
   MinusIcon, 
   PlusIcon, 
   TrashIcon,
@@ -88,7 +89,7 @@ const ShoppingCart = ({
       fetchCart();
     } catch (error) {
       logger.error('Error updating quantity:', error);
-      alert('Помилка оновлення кількості');
+      toast.error('Помилка оновлення кількості');
     }
   };
 
@@ -98,7 +99,7 @@ const ShoppingCart = ({
       fetchCart();
     } catch (error) {
       logger.error('Error removing item:', error);
-      alert('Помилка видалення товару');
+      toast.error('Помилка видалення товару');
     }
   };
 
@@ -117,7 +118,7 @@ const ShoppingCart = ({
           fetchCart();
         } catch (error) {
           logger.error('Error clearing cart:', error);
-          alert('Помилка очищення кошика');
+          toast.error('Помилка очищення кошика');
         }
       },
     });

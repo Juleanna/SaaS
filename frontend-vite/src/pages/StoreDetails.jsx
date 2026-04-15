@@ -23,6 +23,7 @@ import {
   ArrowTopRightOnSquareIcon,
 } from '@heroicons/react/24/outline';
 import api from '../services/api';
+import { sanitizeHtml } from '../services/sanitize';
 
 const StoreDetails = () => {
   const { storeId } = useParams();
@@ -391,7 +392,7 @@ const StoreDetails = () => {
           {store.blocks.filter(b => b.is_active).sort((a, b) => a.order - b.order).map((block) => (
             <div key={block.id} className="bg-white rounded-2xl border border-gray-200/80 p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-3">{block.title}</h2>
-              <div className="text-gray-600 text-sm prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: block.content }} />
+              <div className="text-gray-600 text-sm prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: sanitizeHtml(block.content) }} />
             </div>
           ))}
         </div>

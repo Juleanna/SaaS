@@ -1,6 +1,5 @@
 # Docker Compose для Production Environment
 # Використання: docker-compose -f docker-compose.prod.yml up -d
-version: '3.8'
 
 services:
   # PostgreSQL Database
@@ -71,6 +70,7 @@ services:
       - DB_PORT=5432
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - RUN_MIGRATIONS=true
     depends_on:
       db:
         condition: service_healthy
@@ -122,11 +122,12 @@ services:
         max-size: "50m"
         max-file: "5"
 
-  # React Frontend (Production build)
+  # React Frontend (Production build with Nginx)
   frontend:
     build:
       context: ./frontend-vite
       dockerfile: Dockerfile
+      target: production
     container_name: saas_frontend_prod
     expose:
       - "3000"
@@ -204,6 +205,12 @@ services:
         condition: service_healthy
     networks:
       - saas-network
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'celery.*beat' > /dev/null"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     restart: always
     logging:
       driver: "json-file"

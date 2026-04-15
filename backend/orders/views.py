@@ -39,7 +39,9 @@ class OrderListCreateView(StoreScopedMixin, generics.ListCreateAPIView):
     ordering = ['-created_at']
 
     def get_queryset(self):
-        return self.filter_queryset_by_store(Order.objects.all())
+        return self.filter_queryset_by_store(
+            Order.objects.select_related('store').prefetch_related('items', 'items__product')
+        )
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
@@ -58,7 +60,11 @@ class OrderDetailView(StoreScopedMixin, generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAuthenticated, IsStoreOwnerOrStaff]
 
     def get_queryset(self):
-        return self.filter_queryset_by_store(Order.objects.all())
+        return self.filter_queryset_by_store(
+            Order.objects.select_related('store').prefetch_related(
+                'items', 'items__product', 'items__variant', 'status_history'
+            )
+        )
 
     def get_serializer_class(self):
         if self.request.method in ['PUT', 'PATCH']:
@@ -275,6 +281,11 @@ def order_statistics(request, store_id):
 def recent_orders(request):
     """Последние заказы (до 10 шт) по магазинам пользователя."""
     store_ids = Store.objects.filter(owner=request.user).values_list('id', flat=True)
-    qs = Order.objects.filter(store_id__in=store_ids).order_by('-created_at')[:10]
+    qs = (
+        Order.objects.filter(store_id__in=store_ids)
+        .select_related('store')
+        .prefetch_related('items')
+        .order_by('-created_at')[:10]
+    )
     serializer = OrderSerializer(qs, many=True)
     return Response(serializer.data)

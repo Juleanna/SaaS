@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { 
-  ArrowLeftIcon, 
+import toast from 'react-hot-toast';
+import {
+  ArrowLeftIcon,
   PencilIcon, 
   TrashIcon, 
   PhotoIcon,
@@ -104,7 +105,7 @@ const ProductDetail = () => {
           navigate('/products');
         } catch (error) {
           logger.error('Error deleting product:', error);
-          alert('Помилка видалення товару');
+          toast.error('Помилка видалення товару');
         }
       },
     });
@@ -116,7 +117,7 @@ const ProductDetail = () => {
       fetchProduct();
     } catch (error) {
       logger.error('Error toggling product status:', error);
-      alert('Помилка зміни статусу товару');
+      toast.error('Помилка зміни статусу товару');
     }
   };
 
@@ -124,10 +125,10 @@ const ProductDetail = () => {
     try {
       const response = await api.post(`/products/${productId}/generate-barcode/`);
       setProduct(prev => ({ ...prev, barcode: response.data.barcode }));
-      alert('Штрих-код згенеровано успішно');
+      toast.success('Штрих-код згенеровано успішно');
     } catch (error) {
       logger.error('Error generating barcode:', error);
-      alert('Помилка генерації штрих-коду');
+      toast.error('Помилка генерації штрих-коду');
     }
   };
 
@@ -135,10 +136,10 @@ const ProductDetail = () => {
     try {
       const response = await api.post(`/products/${productId}/generate-qr/`);
       setProduct(prev => ({ ...prev, qr_code: response.data.qr_code }));
-      alert('QR-код згенеровано успішно');
+      toast.success('QR-код згенеровано успішно');
     } catch (error) {
       logger.error('Error generating QR code:', error);
-      alert('Помилка генерації QR-коду');
+      toast.error('Помилка генерації QR-коду');
     }
   };
 
