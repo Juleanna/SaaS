@@ -30,7 +30,7 @@ const PriceListModal: React.FC<PriceListModalProps> = ({
   });
   
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const pricingStrategyOptions = [
     { value: 'manual', label: 'Ручне встановлення цін' },

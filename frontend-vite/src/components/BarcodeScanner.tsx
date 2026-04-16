@@ -29,13 +29,11 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
   // Завантажуємо бібліотеку для розпізнавання штрих-кодів (імітація)
   const scanBarcodeFromCanvas = (canvas: HTMLCanvasElement): string | null => {
-    // В реальному проекті тут буде використана бібліотека типу QuaggaJS або ZXing
-    // Зараз імітуємо процес сканування
     const context = canvas.getContext('2d');
-    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-    
-    // Імітація результату сканування (в реальності тут буде алгоритм розпізнавання)
-    // Повертаємо null, якщо код не знайдено
+    if (!context) return null;
+    // В реальному проекті тут буде використана бібліотека типу QuaggaJS або ZXing
+    // Зараз тільки тригеримо getImageData щоб переконатися що canvas валідний
+    context.getImageData(0, 0, canvas.width, canvas.height);
     return null;
   };
 
@@ -63,27 +61,29 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
           const video = videoRef.current;
           const canvas = canvasRef.current;
           const context = canvas.getContext('2d');
-          
+          if (!context) return;
+
           canvas.width = video.videoWidth;
           canvas.height = video.videoHeight;
           context.drawImage(video, 0, 0, canvas.width, canvas.height);
-          
+
           const result = scanBarcodeFromCanvas(canvas);
           if (result) {
             handleScanResult(result);
           }
         }
-      }, 500); // Сканування кожні 500мс
-      
+      }, 500);
+
     } catch (err) {
       logger.error('Camera error:', err);
       let errorMessage = 'Помилка доступу до камери';
-      
-      if (err.name === 'NotAllowedError') {
+      const errorName = (err as { name?: string })?.name;
+
+      if (errorName === 'NotAllowedError') {
         errorMessage = 'Доступ до камери заборонено. Перевірте дозволи браузера.';
-      } else if (err.name === 'NotFoundError') {
+      } else if (errorName === 'NotFoundError') {
         errorMessage = 'Камера не знайдена.';
-      } else if (err.name === 'NotSupportedError') {
+      } else if (errorName === 'NotSupportedError') {
         errorMessage = 'Камера не підтримується цим браузером.';
       }
       
@@ -104,15 +104,15 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
     setIsScanning(false);
   };
 
-  const handleScanResult = (code) => {
+  const handleScanResult = (code: string): void => {
     if (code && !scanHistory.includes(code)) {
-      setScanHistory(prev => [code, ...prev.slice(0, 4)]); // Зберігаємо останні 5 кодів
+      setScanHistory(prev => [code, ...prev.slice(0, 4)]);
       onScan(code);
       toast.success(`Код відсканований: ${code}`);
     }
   };
 
-  const handleManualSubmit = (e) => {
+  const handleManualSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
     if (manualCode.trim()) {
       handleScanResult(manualCode.trim());

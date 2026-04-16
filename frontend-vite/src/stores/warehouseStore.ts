@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import api from '../services/api';
 import logger from '../services/logger';
+import type { Warehouse, Stock, Supplier, Supply, Inventory } from '../types/models';
 
 export interface ApiResult<T = unknown> {
   success: boolean;
@@ -9,49 +10,58 @@ export interface ApiResult<T = unknown> {
   error?: string;
 }
 
-interface WarehouseEntity {
+// Generic-сутність для довідників (units, costingMethods, packagings, batches, movements)
+interface RefEntity {
   id: number;
+  name?: string;
   [key: string]: unknown;
 }
 
+// Часткові payload-и для create/update операцій
+type WarehousePayload = Partial<Omit<Warehouse, 'id' | 'created_at' | 'updated_at'>>;
+type StockPayload = Partial<Omit<Stock, 'id'>>;
+type SupplierPayload = Partial<Omit<Supplier, 'id'>>;
+type SupplyPayload = Partial<Omit<Supply, 'id' | 'created_at'>>;
+type InventoryPayload = Partial<Omit<Inventory, 'id' | 'created_at'>>;
+
 interface WarehouseState {
-  warehouses: WarehouseEntity[];
-  currentWarehouse: WarehouseEntity | null;
-  stocks: WarehouseEntity[];
+  warehouses: Warehouse[];
+  currentWarehouse: Warehouse | null;
+  stocks: Stock[];
   stocksLoading: boolean;
-  suppliers: WarehouseEntity[];
+  suppliers: Supplier[];
   suppliersLoading: boolean;
-  supplies: WarehouseEntity[];
+  supplies: Supply[];
   suppliesLoading: boolean;
-  stockBatches: WarehouseEntity[];
+  stockBatches: RefEntity[];
   stockBatchesLoading: boolean;
-  stockMovements: WarehouseEntity[];
+  stockMovements: RefEntity[];
   stockMovementsLoading: boolean;
-  inventories: WarehouseEntity[];
+  inventories: Inventory[];
   inventoriesLoading: boolean;
-  units: WarehouseEntity[];
-  costingMethods: WarehouseEntity[];
-  packagings: WarehouseEntity[];
+  units: RefEntity[];
+  costingMethods: RefEntity[];
+  packagings: RefEntity[];
 
   fetchWarehouses: () => Promise<ApiResult>;
-  createWarehouse: (data: Record<string, unknown>) => Promise<ApiResult<WarehouseEntity>>;
-  updateWarehouse: (id: number, data: Record<string, unknown>) => Promise<ApiResult<WarehouseEntity>>;
+  createWarehouse: (data: WarehousePayload) => Promise<ApiResult<Warehouse>>;
+  updateWarehouse: (id: number, data: WarehousePayload) => Promise<ApiResult<Warehouse>>;
   deleteWarehouse: (id: number) => Promise<ApiResult>;
-  setCurrentWarehouse: (warehouse: WarehouseEntity | null) => void;
+  setCurrentWarehouse: (warehouse: Warehouse | null) => void;
   fetchStocks: (warehouseId: number) => Promise<ApiResult>;
-  updateStock: (id: number, data: Record<string, unknown>) => Promise<ApiResult<WarehouseEntity>>;
+  updateStock: (id: number, data: StockPayload) => Promise<ApiResult<Stock>>;
   fetchSuppliers: () => Promise<ApiResult>;
-  createSupplier: (data: Record<string, unknown>) => Promise<ApiResult<WarehouseEntity>>;
-  updateSupplier: (id: number, data: Record<string, unknown>) => Promise<ApiResult<WarehouseEntity>>;
+  createSupplier: (data: SupplierPayload) => Promise<ApiResult<Supplier>>;
+  updateSupplier: (id: number, data: SupplierPayload) => Promise<ApiResult<Supplier>>;
   deleteSupplier: (id: number) => Promise<ApiResult>;
   fetchSupplies: (warehouseId?: number) => Promise<ApiResult>;
-  createSupply: (data: Record<string, unknown>) => Promise<ApiResult<WarehouseEntity>>;
-  updateSupplyStatus: (id: number, status: string) => Promise<ApiResult<WarehouseEntity>>;
+  createSupply: (data: SupplyPayload) => Promise<ApiResult<Supply>>;
+  updateSupplyStatus: (id: number, status: Supply['status']) => Promise<ApiResult<Supply>>;
   fetchStockBatches: (warehouseId?: number, productId?: number) => Promise<ApiResult>;
   fetchStockMovements: (warehouseId?: number, productId?: number) => Promise<ApiResult>;
   fetchInventories: (warehouseId?: number) => Promise<ApiResult>;
-  createInventory: (data: Record<string, unknown>) => Promise<ApiResult<WarehouseEntity>>;
-  updateInventoryStatus: (id: number, status: string) => Promise<ApiResult<WarehouseEntity>>;
+  createInventory: (data: InventoryPayload) => Promise<ApiResult<Inventory>>;
+  updateInventoryStatus: (id: number, status: Inventory['status']) => Promise<ApiResult<Inventory>>;
   fetchUnits: () => Promise<ApiResult>;
   fetchCostingMethods: () => Promise<ApiResult>;
   fetchPackagings: (productId?: number) => Promise<ApiResult>;

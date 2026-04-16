@@ -22,7 +22,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
 
-    /* Linting */
+    /* Linting — strict mode, але noUnused як warning через ESLint */
     "strict": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,

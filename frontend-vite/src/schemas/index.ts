@@ -73,8 +73,10 @@ export const registerSchema = z
     message: 'Паролі не співпадають',
   });
 
-export type CategoryFormValues = z.infer<typeof categorySchema>;
-export type ProductFormValues = z.infer<typeof productSchema>;
-export type PriceListFormValues = z.infer<typeof priceListSchema>;
-export type LoginFormValues = z.infer<typeof loginSchema>;
-export type RegisterFormValues = z.infer<typeof registerSchema>;
+// Експортуємо input типи (дозволяють undefined для полів з .default()).
+// Output (`z.output`) використовуйте для серверних payload-ів.
+export type CategoryFormValues = z.input<typeof categorySchema>;
+export type ProductFormValues = z.input<typeof productSchema>;
+export type PriceListFormValues = z.input<typeof priceListSchema>;
+export type LoginFormValues = z.input<typeof loginSchema>;
+export type RegisterFormValues = z.input<typeof registerSchema>;

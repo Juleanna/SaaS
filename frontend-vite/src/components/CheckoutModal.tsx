@@ -37,10 +37,11 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
     delivery_method: 'delivery',
   });
 
-  const [paymentMethods, setPaymentMethods] = useState([]);
+  type PaymentMethod = { id: number; name: string; type: string; is_active: boolean };
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
-  const [step, setStep] = useState(1); // 1: Customer Info, 2: Delivery, 3: Payment
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [step, setStep] = useState(1);
 
   const fetchPaymentMethods = async () => {
     try {

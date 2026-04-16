@@ -231,3 +231,85 @@ export interface PaginatedResponse<T> {
   previous: string | null;
   results: T[];
 }
+
+// ============================================================
+// Warehouse
+// ============================================================
+
+export interface Warehouse {
+  id: number;
+  name: string;
+  code?: string;
+  address?: string;
+  description?: string;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Stock {
+  id: number;
+  warehouse: number | Warehouse;
+  product: number | Product;
+  quantity: string | number;
+  cost_price?: string | number;
+  available_quantity?: string | number;
+  is_low_stock?: boolean;
+  is_overstocked?: boolean;
+}
+
+export interface Supplier {
+  id: number;
+  name: string;
+  contact_person?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  is_active: boolean;
+}
+
+export interface Supply {
+  id: number;
+  warehouse: number | Warehouse;
+  supplier?: number | Supplier;
+  status: 'draft' | 'pending' | 'received' | 'cancelled';
+  total_amount?: string | number;
+  notes?: string;
+  created_at?: string;
+}
+
+export interface Inventory {
+  id: number;
+  warehouse: number | Warehouse;
+  status: 'draft' | 'in_progress' | 'completed' | 'cancelled';
+  notes?: string;
+  created_at?: string;
+}
+
+// ============================================================
+// Form payloads
+// ============================================================
+
+export interface RegisterPayload {
+  email: string;
+  username: string;
+  password: string;
+  password_confirm: string;
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+  company_name?: string;
+}
+
+// ============================================================
+// API error response (DRF-стиль)
+// ============================================================
+
+export type ApiFieldErrors = Record<string, string | string[]>;
+
+export interface ApiErrorBody {
+  detail?: string;
+  message?: string;
+  non_field_errors?: string[];
+  [field: string]: string | string[] | undefined;
+}

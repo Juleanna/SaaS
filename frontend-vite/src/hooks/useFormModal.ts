@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
 import {
   useForm,
-  type FieldValues,
   type DefaultValues,
+  type FieldValues,
   type Path,
+  type Resolver,
 } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { ZodType } from 'zod';
@@ -11,7 +12,10 @@ import toast from 'react-hot-toast';
 import api from '../services/api';
 import logger from '../services/logger';
 
-export interface UseFormModalOptions<TValues extends FieldValues, TEntity extends { id: number | string }> {
+export interface UseFormModalOptions<
+  TValues extends FieldValues,
+  TEntity extends { id: number | string } = { id: number },
+> {
   schema: ZodType<TValues>;
   defaults: TValues;
   entity?: TEntity | null;
@@ -27,6 +31,9 @@ export interface UseFormModalOptions<TValues extends FieldValues, TEntity extend
 
 /**
  * Хук для модальних форм. Обгортає react-hook-form + zod + api POST/PUT.
+ *
+ * Тип resolver приводимо явно через `as Resolver<TValues>` — zodResolver інферить
+ * вузькіший тип (з output zod-схеми), що в загальному випадку відповідає TValues.
  */
 export function useFormModal<
   TValues extends FieldValues,
@@ -45,8 +52,7 @@ export function useFormModal<
   transform,
 }: UseFormModalOptions<TValues, TEntity>) {
   const form = useForm<TValues>({
-    // @ts-expect-error — типи zodResolver не повністю узгоджені з generic FieldValues
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as unknown as Resolver<TValues>,
     defaultValues: defaults as DefaultValues<TValues>,
   });
 
@@ -64,7 +70,8 @@ export function useFormModal<
     } else {
       reset(defaults as DefaultValues<TValues>);
     }
-  }, [isOpen, entity]); // eslint-disable-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, entity]);
 
   const submit = handleSubmit(async (values) => {
     const payload = transform ? transform(values) : values;
@@ -81,7 +88,8 @@ export function useFormModal<
       onClose?.();
     } catch (error: unknown) {
       logger.error('Form submit error:', error);
-      const responseData = (error as { response?: { data?: Record<string, unknown> } })?.response?.data;
+      const responseData = (error as { response?: { data?: Record<string, unknown> } })
+        ?.response?.data;
       if (responseData && typeof responseData === 'object') {
         Object.keys(responseData).forEach((key) => {
           const raw = responseData[key];

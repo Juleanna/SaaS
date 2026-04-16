@@ -40,10 +40,10 @@ const ProductModal: React.FC<ProductModalProps> = ({
     order_increment: '1',
   });
   
-  const [images, setImages] = useState([]);
-  const [variants, setVariants] = useState([]);
+  const [images, setImages] = useState<Array<{ id?: number; image: string; alt_text?: string; is_primary?: boolean }>>([]);
+  const [variants, setVariants] = useState<Array<Record<string, unknown>>>([]);
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState('basic');
 
   useEffect(() => {

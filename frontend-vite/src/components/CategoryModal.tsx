@@ -146,7 +146,13 @@ const CategoryModal: React.FC<CategoryModalProps> = ({ isOpen, onClose, category
   );
 };
 
-const Field = ({ label, error, children }) => (
+interface FieldProps {
+  label: string;
+  error?: string;
+  children: React.ReactNode;
+}
+
+const Field: React.FC<FieldProps> = ({ label, error, children }) => (
   <div>
     <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
     {children}

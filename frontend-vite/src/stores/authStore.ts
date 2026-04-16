@@ -2,30 +2,36 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import api from '../services/api';
 import logger from '../services/logger';
-import type { User } from '../types/models';
+import type { User, RegisterPayload, ApiErrorBody } from '../types/models';
 
 export interface LoginResult {
   success: boolean;
   error?: string;
 }
 
+export interface ChangePasswordPayload {
+  old_password: string;
+  new_password: string;
+  new_password_confirm: string;
+}
+
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   login: (credentials: { email: string; password: string }) => Promise<LoginResult>;
-  register: (userData: Record<string, unknown>) => Promise<LoginResult>;
+  register: (userData: RegisterPayload) => Promise<LoginResult>;
   logout: () => Promise<void>;
   clearAuth: () => void;
   checkSession: () => Promise<{ success: boolean }>;
   updateProfile: (profileData: Partial<User>) => Promise<LoginResult>;
-  changePassword: (passwordData: Record<string, string>) => Promise<LoginResult>;
+  changePassword: (passwordData: ChangePasswordPayload) => Promise<LoginResult>;
   updateUser: (userData: Partial<User>) => void;
 }
 
 const errorFromResponse = (errorData: unknown): string => {
   if (!errorData) return 'Помилка входу';
   if (typeof errorData === 'string') return errorData;
-  const data = errorData as Record<string, unknown>;
+  const data = errorData as ApiErrorBody;
   if (Array.isArray(data.non_field_errors)) return String(data.non_field_errors[0]);
   if (data.detail) return String(data.detail);
   if (data.message) return String(data.message);
