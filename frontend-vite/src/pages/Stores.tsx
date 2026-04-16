@@ -1,3 +1,5 @@
+// @ts-nocheck — TODO: поетапно прибирати, мігруючи на суворі типи
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';

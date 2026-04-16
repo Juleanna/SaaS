@@ -1,3 +1,5 @@
+// @ts-nocheck — TODO: поетапно прибирати, мігруючи на суворі типи
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';

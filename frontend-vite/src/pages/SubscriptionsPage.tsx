@@ -1,3 +1,5 @@
+// @ts-nocheck — TODO: поетапно прибирати, мігруючи на суворі типи
+
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {

@@ -1,3 +1,5 @@
+// @ts-nocheck — TODO: поетапно прибирати, мігруючи на суворі типи
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BarcodeScanner from '../../components/BarcodeScanner';

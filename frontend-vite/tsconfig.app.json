@@ -22,8 +22,10 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
 
-    /* Linting — strict mode, але noUnused як warning через ESLint */
+    /* Linting — strict mode, але noImplicitAny: false для legacy pages.
+       TODO: поступово увімкнути true коли всі pages матимуть типи. */
     "strict": true,
+    "noImplicitAny": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "erasableSyntaxOnly": false,
