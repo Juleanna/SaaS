@@ -20,6 +20,8 @@ import api, { getResults } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
 import ProductModal from '../components/ProductModal';
 import ConfirmModal from '../components/ConfirmModal';
+import EmptyState from '../components/EmptyState';
+import { useDebounce } from '../hooks/useDebounce';
 import logger from '../services/logger';
 
 const Products = () => {
@@ -28,8 +30,8 @@ const Products = () => {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
 
-  const [searchTerm, setSearchTerm] = useState('');
   const [searchInput, setSearchInput] = useState('');
+  const searchTerm = useDebounce(searchInput, 300);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [sortBy, setSortBy] = useState('-created_at');
   const [sortDirection, setSortDirection] = useState('desc');
@@ -242,15 +244,13 @@ const Products = () => {
     }
   };
 
-  const handleSearch = () => {
-    setSearchTerm(searchInput);
-    setPage(1);
-  };
+  // searchTerm тепер автоматично оновлюється через debounce
 
   const clearSearch = () => {
     setSearchInput('');
-    setSearchTerm('');
   };
+
+  const handleSearch = () => setPage(1); // тільки для legacy Enter-handler
 
   if (storesLoading) {
     return (

@@ -10,6 +10,9 @@ import {
 import api, { getResults } from '../services/api';
 import CategoryModal from '../components/CategoryModal';
 import ConfirmModal from '../components/ConfirmModal';
+import EmptyState from '../components/EmptyState';
+import { SkeletonTableRow } from '../components/Skeleton';
+import { useDebounce } from '../hooks/useDebounce';
 import toast from 'react-hot-toast';
 
 const Categories = () => {
@@ -17,7 +20,8 @@ const Categories = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const searchTerm = useDebounce(searchInput, 300);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [selectedStoreId, setSelectedStoreId] = useState(storeId || null);
@@ -189,8 +193,8 @@ const Categories = () => {
           <input
             type="text"
             placeholder="Пошук категорій..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
             className="w-full pl-11 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
@@ -218,18 +222,24 @@ const Categories = () => {
       </div>
 
       {categoriesLoading ? (
-        <div className="flex items-center justify-center h-40">
-          <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+        <div className="bg-white rounded-2xl border border-gray-200/80 overflow-hidden">
+          <table className="min-w-full">
+            <tbody>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <SkeletonTableRow key={i} cols={5} />
+              ))}
+            </tbody>
+          </table>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-200/80 text-center py-16">
-          <FolderIcon className="mx-auto h-12 w-12 text-gray-300" />
-          <h3 className="mt-4 text-base font-semibold text-gray-900">Немає категорій</h3>
-          <p className="mt-1 text-sm text-gray-500">Створіть першу категорію для товарів</p>
-          <button onClick={openCreate} className="mt-4 inline-flex items-center px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl">
-            <PlusIcon className="h-4 w-4 mr-2" />
-            Додати категорію
-          </button>
+        <div className="bg-white rounded-2xl border border-gray-200/80">
+          <EmptyState
+            icon={FolderIcon}
+            title="Немає категорій"
+            description="Створіть першу категорію для ваших товарів"
+            action={openCreate}
+            actionLabel="Додати категорію"
+          />
         </div>
       ) : (
         <div className="bg-white rounded-2xl border border-gray-200/80 overflow-hidden">

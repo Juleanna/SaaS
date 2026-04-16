@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sitemaps",
     # Third party apps
     "rest_framework",
     "rest_framework_simplejwt",
@@ -62,6 +63,8 @@ INSTALLED_APPS = [
     "django_filters",
     "drf_spectacular",  # API documentation
     "django_celery_beat",
+    "auditlog",  # Audit log for models
+    "django_prometheus",  # /metrics endpoint
     # Local apps
     "accounts",
     "stores",
@@ -72,16 +75,19 @@ INSTALLED_APPS = [
     "notifications",
     "warehouse",
     "telegram_bot",
+    "promotions",
     "core",
 ]
 
 MIDDLEWARE = [
+    "django_prometheus.middleware.PrometheusBeforeMiddleware",  # Prometheus: before
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "core.cache_utils.CacheHeadersMiddleware",
     "core.request_id.RequestIDMiddleware",
     "core.middleware.RateLimitMiddleware",  # Rate limiting для API
+    "core.middleware.CSRFDoubleSubmitMiddleware",  # CSRF для cookie-auth
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -89,6 +95,8 @@ MIDDLEWARE = [
     "core.tenancy.StoreContextMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "auditlog.middleware.AuditlogMiddleware",  # Audit log context (actor, IP)
+    "django_prometheus.middleware.PrometheusAfterMiddleware",  # Prometheus: after
 ]
 
 ROOT_URLCONF = "core.urls"
@@ -248,6 +256,20 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+# Дозволяємо фронтенду надсилати CSRF-заголовок
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-csrf-token',
+    'x-requested-with',
+]
 
 # Redis settings
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
@@ -912,3 +934,80 @@ def environment_callback(request):
 
 # Rate Limiting settings
 RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "60"))  # Максимум запитів на хвилину на IP
+AUTH_RATE_LIMIT_PER_MINUTE = int(os.getenv("AUTH_RATE_LIMIT_PER_MINUTE", "10"))
+
+# ============================================================
+# S3 / MinIO для media (опційно)
+# ============================================================
+USE_S3 = os.getenv("USE_S3", "false").lower() == "true"
+if USE_S3:
+    INSTALLED_APPS += ["storages"]
+    AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+    AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+    AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
+    AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME", "eu-central-1")
+    AWS_S3_ENDPOINT_URL = os.getenv("AWS_S3_ENDPOINT_URL") or None
+    AWS_S3_CUSTOM_DOMAIN = os.getenv("AWS_S3_CUSTOM_DOMAIN") or None
+    AWS_DEFAULT_ACL = None
+    AWS_S3_FILE_OVERWRITE = False
+    AWS_QUERYSTRING_AUTH = False
+    AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
+    DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+
+# ============================================================
+# Logging (structured JSON у продакшені)
+# ============================================================
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "json": {
+            "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
+            "format": "%(asctime)s %(levelname)s %(name)s %(module)s %(message)s",
+        },
+        "verbose": {
+            "format": "[{asctime}] {levelname} {name} {module}: {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose" if DEBUG else "json",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": LOG_LEVEL,
+    },
+    "loggers": {
+        "django": {"handlers": ["console"], "level": "INFO", "propagate": False},
+        "django.db.backends": {"handlers": ["console"], "level": "WARNING", "propagate": False},
+        "celery": {"handlers": ["console"], "level": "INFO", "propagate": False},
+    },
+}
+
+# ============================================================
+# Sentry (опційно)
+# ============================================================
+SENTRY_DSN = os.getenv("SENTRY_DSN", "").strip()
+if SENTRY_DSN:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+    from sentry_sdk.integrations.celery import CeleryIntegration
+    from sentry_sdk.integrations.redis import RedisIntegration
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[
+            DjangoIntegration(),
+            CeleryIntegration(),
+            RedisIntegration(),
+        ],
+        environment=os.getenv("SENTRY_ENVIRONMENT", "development"),
+        release=os.getenv("SENTRY_RELEASE"),
+        traces_sample_rate=float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.1")),
+        send_default_pii=False,
+    )
+

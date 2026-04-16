@@ -16,6 +16,8 @@ import {
 import api, { getResults } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
 import logger from '../services/logger';
+import { useDebounce } from '../hooks/useDebounce';
+import EmptyState from '../components/EmptyState';
 
 const buildOrdersParams = (searchTerm, statusFilter, dateFilter) => {
   const params = new URLSearchParams();
@@ -48,7 +50,8 @@ const Orders = () => {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
 
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const searchTerm = useDebounce(searchInput, 300);
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -206,8 +209,8 @@ const Orders = () => {
                 <input
                   type="text"
                   placeholder="Номер замовлення, клієнт..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
                   className="input pl-10"
                 />
               </div>
@@ -254,7 +257,7 @@ const Orders = () => {
               </label>
               <button
                 onClick={() => {
-                  setSearchTerm('');
+                  setSearchInput('');
                   setStatusFilter('all');
                   setDateFilter('all');
                 }}

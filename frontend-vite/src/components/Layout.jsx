@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
+import { useThemeStore } from '../stores/themeStore';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
 import {
@@ -31,7 +32,22 @@ import {
   SparklesIcon,
   ChevronDoubleLeftIcon,
   ChevronDoubleRightIcon,
+  SunIcon,
+  MoonIcon,
 } from '@heroicons/react/24/outline';
+
+const ThemeToggle = () => {
+  const { theme, toggle } = useThemeStore();
+  return (
+    <button
+      onClick={toggle}
+      className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+      title={theme === 'dark' ? 'Світла тема' : 'Темна тема'}
+    >
+      {theme === 'dark' ? <SunIcon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
+    </button>
+  );
+};
 
 const Layout = () => {
   const { user, logout } = useAuthStore();
@@ -426,6 +442,8 @@ const Layout = () => {
 
           {/* Right side actions */}
           <div className="flex items-center gap-x-3">
+            <ThemeToggle />
+
             {/* Notifications */}
             <button className="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
               <BellIcon className="h-5 w-5" />

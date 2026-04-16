@@ -1,10 +1,13 @@
 from django.contrib import admin
+from django.contrib.sitemaps.views import sitemap
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from core.admin import dashboard_view
 from core import feature_flags_views
 from core.views import dashboard_stats, health
+from core.sitemaps import sitemaps as public_sitemaps
+from core.robots_view import robots_txt
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularRedocView,
@@ -13,6 +16,9 @@ from drf_spectacular.views import (
 
 urlpatterns = [
     path("api/health/", health, name="health"),
+    path("", include("django_prometheus.urls")),  # /metrics
+    path("sitemap.xml", sitemap, {"sitemaps": public_sitemaps}, name="sitemap"),
+    path("robots.txt", robots_txt, name="robots"),
     path("admin/dashboard/", dashboard_view, name="admin_dashboard"),
     path("admin/", admin.site.urls),
     path("api/auth/", include("accounts.urls")),
@@ -26,6 +32,7 @@ urlpatterns = [
     path("api/telegram/", include("telegram_bot.urls")),
     path("api/instagram/", include("core.instagram_urls")),
     path("api/subscriptions/", include("core.subscription_urls")),
+    path("api/promotions/", include("promotions.urls")),
     # Feature Flags API
     path(
         "api/feature-flags/user/",

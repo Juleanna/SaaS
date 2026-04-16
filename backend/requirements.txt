@@ -32,6 +32,16 @@ python-dotenv==1.0.0
 # Safe expression evaluation for pricing formulas
 simpleeval==1.0.3
 
+# Observability
+sentry-sdk[django]==2.18.0
+python-json-logger==2.0.7
+
+# Audit log for models
+django-auditlog==3.0.0
+
+# Prometheus-style metrics
+django-prometheus==2.3.1
+
 # File Storage & Static Files
 django-storages==1.14.2
 whitenoise==6.6.0

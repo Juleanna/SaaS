@@ -5,6 +5,26 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import toast, { Toaster, ToastBar } from 'react-hot-toast';
 import './index.css';
 import App from './App.jsx';
+import { useThemeStore } from './stores/themeStore';
+
+// Sentry (опційно, активується якщо VITE_SENTRY_DSN задано)
+const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN;
+if (SENTRY_DSN) {
+  // Динамічний імпорт щоб не тягнути Sentry bundle без потреби
+  import('@sentry/react').then(({ init, browserTracingIntegration }) => {
+    init({
+      dsn: SENTRY_DSN,
+      environment: import.meta.env.VITE_SENTRY_ENVIRONMENT || 'development',
+      integrations: [browserTracingIntegration()],
+      tracesSampleRate: 0.1,
+    });
+  }).catch(() => {
+    // Sentry не встановлений — це OK
+  });
+}
+
+// Ініціалізуємо тему (читає збережене значення)
+useThemeStore.getState().setTheme(useThemeStore.getState().theme);
 
 const queryClient = new QueryClient({
   defaultOptions: {

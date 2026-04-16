@@ -3,13 +3,20 @@
 
 Токен зберігається в httpOnly cookie `access_token`, недоступний з JavaScript,
 що захищає від XSS-атак (крадіжки токена).
+
+Додатково — CSRF-токен у звичайному (не httpOnly) cookie. Фронтенд читає його і надсилає
+у заголовку X-CSRF-Token при модифікуючих запитах. Це double-submit cookie pattern.
 """
+import secrets
+
 from django.conf import settings
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 
 ACCESS_COOKIE_NAME = 'access_token'
 REFRESH_COOKIE_NAME = 'refresh_token'
+CSRF_COOKIE_NAME = 'csrf_token'
+CSRF_HEADER_NAME = 'X-CSRF-Token'
 
 
 class CookieJWTAuthentication(JWTAuthentication):
@@ -28,7 +35,7 @@ class CookieJWTAuthentication(JWTAuthentication):
 
 
 def set_auth_cookies(response, access_token, refresh_token=None):
-    """Встановлює httpOnly cookies для access/refresh токенів."""
+    """Встановлює httpOnly cookies для access/refresh + non-httpOnly CSRF."""
     is_secure = not settings.DEBUG
     samesite = 'Lax'
 
@@ -49,11 +56,22 @@ def set_auth_cookies(response, access_token, refresh_token=None):
             httponly=True,
             secure=is_secure,
             samesite=samesite,
-            path='/api/auth/',  # обмежуємо область видимості refresh
+            path='/api/auth/',
         )
+    # CSRF токен — доступний JS щоб фронтенд міг прочитати і надіслати в заголовку
+    response.set_cookie(
+        CSRF_COOKIE_NAME,
+        secrets.token_urlsafe(32),
+        max_age=60 * 60 * 24 * 7,
+        httponly=False,
+        secure=is_secure,
+        samesite=samesite,
+        path='/',
+    )
 
 
 def clear_auth_cookies(response):
     """Видаляє auth cookies."""
     response.delete_cookie(ACCESS_COOKIE_NAME, path='/')
     response.delete_cookie(REFRESH_COOKIE_NAME, path='/api/auth/')
+    response.delete_cookie(CSRF_COOKIE_NAME, path='/')

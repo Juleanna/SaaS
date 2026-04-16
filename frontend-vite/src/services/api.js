@@ -8,6 +8,24 @@ const api = axios.create({
   },
 });
 
+// Читаємо CSRF-токен із cookie (not httpOnly — це за замислом double-submit)
+const readCookie = (name) => {
+  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : null;
+};
+
+// Для модифікуючих запитів додаємо X-CSRF-Token з cookie
+api.interceptors.request.use((config) => {
+  const method = (config.method || 'get').toUpperCase();
+  if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
+    const csrf = readCookie('csrf_token');
+    if (csrf) {
+      config.headers['X-CSRF-Token'] = csrf;
+    }
+  }
+  return config;
+});
+
 // Єдине у пам'яті рішення про те, чи робимо refresh — щоб паралельні 401
 // не створювали шторм refresh-запитів.
 let refreshPromise = null;

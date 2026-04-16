@@ -16,3 +16,19 @@ class CoreConfig(AppConfig):
 
         # Реєстрація сигналів
         core.signals.ready()
+
+        # Реєструємо ключові моделі в auditlog (хто коли що змінив)
+        try:
+            from auditlog.registry import auditlog
+            from stores.models import Store
+            from products.models import Product, Category
+            from orders.models import Order
+            from pricelists.models import PriceList, PriceListItem
+            from accounts.models import User
+
+            for model in (Store, Product, Category, Order, PriceList, PriceListItem, User):
+                if not auditlog.contains(model):
+                    auditlog.register(model)
+        except Exception:
+            # Не блокуємо старт якщо auditlog ще не встановлено
+            pass

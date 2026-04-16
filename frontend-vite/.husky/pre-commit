@@ -1,0 +1,1 @@
+cd frontend-vite && npx lint-staged
