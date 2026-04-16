@@ -1,24 +1,25 @@
-// @ts-nocheck — TODO: поетапно прибирати, мігруючи на суворі типи
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuthStore } from '../../stores/authStore';
 import { EyeIcon, EyeSlashIcon, EnvelopeIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
-import { loginSchema } from '../../schemas';
+import { loginSchema, type LoginFormValues } from '../../schemas';
 
 const forgotSchema = z.object({
   email: z.string().email('Невалідний email'),
 });
 
+type ForgotFormValues = z.input<typeof forgotSchema>;
+type AuthMode = 'login' | 'forgot';
+
 const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [mode, setMode] = useState('login'); // 'login' | 'forgot'
+  const [mode, setMode] = useState<AuthMode>('login');
   const { login } = useAuthStore();
   const navigate = useNavigate();
 
@@ -27,30 +28,30 @@ const Login: React.FC = () => {
     handleSubmit,
     formState: { errors },
     reset,
-  } = useForm({
-    resolver: zodResolver(mode === 'login' ? loginSchema : forgotSchema),
+  } = useForm<LoginFormValues & ForgotFormValues>({
+    resolver: zodResolver(mode === 'login' ? loginSchema : forgotSchema) as never,
   });
 
-  const onSubmit = async (data) => {
+  const onSubmit: SubmitHandler<LoginFormValues> = async (data) => {
     setIsLoading(true);
 
     try {
-      const result = await login(data);
+      const result = await login({ email: data.email, password: data.password });
 
       if (result.success) {
         toast.success('Успішний вхід в систему!');
         navigate('/');
       } else {
-        toast.error(result.error);
+        toast.error(result.error ?? 'Помилка входу');
       }
-    } catch (error) {
+    } catch {
       toast.error('Помилка входу в систему');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const onForgotPassword = async (data) => {
+  const onForgotPassword: SubmitHandler<ForgotFormValues> = async (data) => {
     setIsLoading(true);
 
     try {
@@ -58,8 +59,8 @@ const Login: React.FC = () => {
       toast.success('Інструкції для відновлення пароля надіслано на вашу пошту');
       setMode('login');
       reset();
-    } catch (error) {
-      // Показуємо успіх навіть при помилці (щоб не розкривати які email є в системі)
+    } catch {
+      // Не розкриваємо які email зареєстровані — показуємо успіх у будь-якому випадку
       toast.success('Якщо цей email зареєстрований, ви отримаєте інструкції для відновлення пароля');
       setMode('login');
       reset();
@@ -68,12 +69,12 @@ const Login: React.FC = () => {
     }
   };
 
-  const switchToForgot = () => {
+  const switchToForgot = (): void => {
     setMode('forgot');
     reset();
   };
 
-  const switchToLogin = () => {
+  const switchToLogin = (): void => {
     setMode('login');
     reset();
   };
@@ -98,7 +99,10 @@ const Login: React.FC = () => {
               </p>
             </div>
 
-            <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
+            <form
+              className="mt-8 space-y-6"
+              onSubmit={handleSubmit(onSubmit as SubmitHandler<LoginFormValues & ForgotFormValues>)}
+            >
               <div className="space-y-4">
                 <div>
                   <label htmlFor="email" className="form-label">
@@ -108,13 +112,7 @@ const Login: React.FC = () => {
                     id="email"
                     type="email"
                     autoComplete="email"
-                    {...register('email', {
-                      required: 'Email обов\'язковий',
-                      pattern: {
-                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                        message: 'Неправильний формат email',
-                      },
-                    })}
+                    {...register('email')}
                     className="input"
                     placeholder="your@email.com"
                   />
@@ -132,9 +130,7 @@ const Login: React.FC = () => {
                       id="password"
                       type={showPassword ? 'text' : 'password'}
                       autoComplete="current-password"
-                      {...register('password', {
-                        required: 'Пароль обов\'язковий',
-                      })}
+                      {...register('password')}
                       className="input pr-10"
                       placeholder="••••••••"
                     />
@@ -188,7 +184,10 @@ const Login: React.FC = () => {
               </p>
             </div>
 
-            <form className="mt-8 space-y-6" onSubmit={handleSubmit(onForgotPassword)}>
+            <form
+              className="mt-8 space-y-6"
+              onSubmit={handleSubmit(onForgotPassword as SubmitHandler<LoginFormValues & ForgotFormValues>)}
+            >
               <div>
                 <label htmlFor="email" className="form-label">
                   Email
@@ -198,13 +197,7 @@ const Login: React.FC = () => {
                     id="email"
                     type="email"
                     autoComplete="email"
-                    {...register('email', {
-                      required: 'Email обов\'язковий',
-                      pattern: {
-                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                        message: 'Неправильний формат email',
-                      },
-                    })}
+                    {...register('email')}
                     className="input pl-10"
                     placeholder="your@email.com"
                   />

@@ -1,13 +1,8 @@
-// @ts-nocheck — TODO: поетапно прибирати, мігруючи на суворі типи
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
-  PlusIcon,
   EyeIcon,
-  PencilIcon, 
-  TrashIcon, 
   MagnifyingGlassIcon,
   CreditCardIcon,
   BanknotesIcon,
@@ -15,27 +10,58 @@ import {
   CheckCircleIcon,
   XCircleIcon,
   ClockIcon,
-  ChartBarIcon
+  ChartBarIcon,
+  PencilIcon,
 } from '@heroicons/react/24/outline';
 import api, { getResults } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
 import logger from '../services/logger';
+import type { PaymentStatus } from '../types/models';
+
+interface PaymentMethod {
+  id: number;
+  name: string;
+  type: 'cash' | 'card' | 'online' | 'transfer';
+  is_active: boolean;
+  settings?: Record<string, unknown>;
+}
+
+interface Payment {
+  id: number;
+  order: { id: number; order_number: string; customer_name?: string };
+  amount: number;
+  status: PaymentStatus;
+  payment_method?: PaymentMethod | null;
+  created_at: string;
+  updated_at?: string;
+}
+
+interface PaymentStatistics {
+  total_amount: number;
+  completed_count: number;
+  pending_count: number;
+  failed_count: number;
+  today_amount?: number;
+  this_month_amount?: number;
+}
+
+type TabKey = 'payments' | 'methods' | 'analytics';
 
 const Payments: React.FC = () => {
   const { storeId } = useParams<{ storeId?: string }>();
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
   const { user } = useAuthStore();
-  
-  const [payments, setPayments] = useState([]);
-  const [paymentMethods, setPaymentMethods] = useState([]);
-  const [statistics, setStatistics] = useState(null);
+
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [statistics, setStatistics] = useState<PaymentStatistics | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [_error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [methodFilter, setMethodFilter] = useState('all');
-  const [activeTab, setActiveTab] = useState('payments'); // payments, methods, analytics
-  
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [methodFilter, setMethodFilter] = useState<string>('all');
+  const [activeTab, setActiveTab] = useState<TabKey>('payments');
+
   // Get store ID (from URL or user's first store)
   const currentStoreId = storeId || user?.stores?.[0]?.id || 1;
 
@@ -48,60 +74,35 @@ const Payments: React.FC = () => {
       if (methodFilter !== 'all') params.append('payment_method', methodFilter);
       
       const response = await api.get(`/payments/stores/${currentStoreId}/payments/?${params}`);
-      setPayments(getResults(response.data));
+      setPayments(getResults<Payment>(response.data));
     } catch (error) {
       logger.error('Error fetching payments:', error);
       setError('Помилка завантаження платежів');
-      // Fallback to mock data if API fails
       setPayments([
         {
           id: 1,
-          order: {
-            id: 1,
-            order_number: 'ORD-12345678',
-            customer_name: 'Іван Петренко'
-          },
+          order: { id: 1, order_number: 'ORD-12345678', customer_name: 'Іван Петренко' },
           amount: 45000,
           status: 'pending',
-          payment_method: {
-            id: 1,
-            name: 'Готівка при отриманні',
-            type: 'cash'
-          },
+          payment_method: { id: 1, name: 'Готівка при отриманні', type: 'cash', is_active: true },
           created_at: '2024-01-15T10:30:00Z',
           updated_at: '2024-01-15T10:30:00Z',
         },
         {
           id: 2,
-          order: {
-            id: 2,
-            order_number: 'ORD-12345679',
-            customer_name: 'Марія Коваленко'
-          },
+          order: { id: 2, order_number: 'ORD-12345679', customer_name: 'Марія Коваленко' },
           amount: 35000,
-          status: 'completed',
-          payment_method: {
-            id: 2,
-            name: 'Картка при отриманні',
-            type: 'card'
-          },
+          status: 'paid',
+          payment_method: { id: 2, name: 'Картка при отриманні', type: 'card', is_active: true },
           created_at: '2024-01-14T11:20:00Z',
           updated_at: '2024-01-14T15:45:00Z',
         },
         {
           id: 3,
-          order: {
-            id: 3,
-            order_number: 'ORD-12345680',
-            customer_name: 'Олексій Сидоренко'
-          },
+          order: { id: 3, order_number: 'ORD-12345680', customer_name: 'Олексій Сидоренко' },
           amount: 60000,
           status: 'failed',
-          payment_method: {
-            id: 3,
-            name: 'Онлайн оплата',
-            type: 'online'
-          },
+          payment_method: { id: 3, name: 'Онлайн оплата', type: 'online', is_active: true },
           created_at: '2024-01-13T14:45:00Z',
           updated_at: '2024-01-13T14:50:00Z',
         },
@@ -111,13 +112,12 @@ const Payments: React.FC = () => {
     }
   };
 
-  const fetchPaymentMethods = async () => {
+  const fetchPaymentMethods = async (): Promise<void> => {
     try {
       const response = await api.get(`/payments/stores/${currentStoreId}/payment-methods/`);
-      setPaymentMethods(getResults(response.data));
+      setPaymentMethods(getResults<PaymentMethod>(response.data));
     } catch (error) {
       logger.error('Error fetching payment methods:', error);
-      // Fallback payment methods
       setPaymentMethods([
         { id: 1, name: 'Готівка при отриманні', type: 'cash', is_active: true, settings: {} },
         { id: 2, name: 'Картка при отриманні', type: 'card', is_active: true, settings: {} },
@@ -127,28 +127,27 @@ const Payments: React.FC = () => {
     }
   };
 
-  const fetchStatistics = async () => {
+  const fetchStatistics = async (): Promise<void> => {
     try {
       const response = await api.get(`/payments/stores/${currentStoreId}/payments/analytics/`);
-      setStatistics(response.data);
+      setStatistics(response.data as PaymentStatistics);
     } catch (error) {
       logger.error('Error fetching payment statistics:', error);
-      // Fallback statistics
       setStatistics({
         total_amount: payments.reduce((sum, p) => sum + (p.amount || 0), 0),
-        completed_count: payments.filter(p => p.status === 'completed').length,
-        pending_count: payments.filter(p => p.status === 'pending').length,
-        failed_count: payments.filter(p => p.status === 'failed').length,
+        completed_count: payments.filter((p) => p.status === 'paid').length,
+        pending_count: payments.filter((p) => p.status === 'pending').length,
+        failed_count: payments.filter((p) => p.status === 'failed').length,
         today_amount: 0,
         this_month_amount: 0,
       });
     }
   };
 
-  const updatePaymentStatus = async (paymentId, newStatus) => {
+  const updatePaymentStatus = async (paymentId: number, newStatus: PaymentStatus): Promise<void> => {
     try {
       await api.post(`/payments/stores/${currentStoreId}/payments/${paymentId}/status/`, {
-        status: newStatus
+        status: newStatus,
       });
       fetchPayments();
       fetchStatistics();
@@ -158,7 +157,7 @@ const Payments: React.FC = () => {
     }
   };
 
-  const markAsPaid = async (paymentId) => {
+  const markAsPaid = async (paymentId: number): Promise<void> => {
     try {
       await api.post(`/payments/stores/${currentStoreId}/payments/${paymentId}/mark-paid/`);
       fetchPayments();
@@ -169,10 +168,10 @@ const Payments: React.FC = () => {
     }
   };
 
-  const togglePaymentMethod = async (methodId, isActive) => {
+  const togglePaymentMethod = async (methodId: number, isActive: boolean): Promise<void> => {
     try {
       await api.patch(`/payments/stores/${currentStoreId}/payment-methods/${methodId}/`, {
-        is_active: !isActive
+        is_active: !isActive,
       });
       fetchPaymentMethods();
     } catch (error) {
@@ -192,9 +191,10 @@ const Payments: React.FC = () => {
     }
   }, [payments]);
 
-  const getStatusBadge = (status) => {
-    const statusMap = {
+  const getStatusBadge = (status: string): string => {
+    const statusMap: Record<string, string> = {
       pending: 'badge-warning',
+      paid: 'badge-success',
       completed: 'badge-success',
       failed: 'badge-danger',
       refunded: 'badge-info',
@@ -203,9 +203,10 @@ const Payments: React.FC = () => {
     return statusMap[status] || 'badge-secondary';
   };
 
-  const getStatusText = (status) => {
-    const statusMap = {
+  const getStatusText = (status: string): string => {
+    const statusMap: Record<string, string> = {
       pending: 'Очікує оплати',
+      paid: 'Оплачено',
       completed: 'Оплачено',
       failed: 'Помилка оплати',
       refunded: 'Повернено',
@@ -267,11 +268,11 @@ const Payments: React.FC = () => {
       {/* Tabs */}
       <div className="border-b border-gray-200">
         <nav className="-mb-px flex space-x-8">
-          {[
+          {([
             { id: 'payments', name: 'Платежі', icon: CreditCardIcon },
             { id: 'methods', name: 'Методи оплати', icon: BanknotesIcon },
             { id: 'analytics', name: 'Аналітика', icon: ChartBarIcon },
-          ].map((tab) => (
+          ] as const).map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
@@ -380,7 +381,7 @@ const Payments: React.FC = () => {
                         Оплачено
                       </dt>
                       <dd className="text-lg font-medium text-gray-900">
-                        {statistics?.completed_count || payments.filter(p => p.status === 'completed').length}
+                        {statistics?.completed_count || payments.filter((p) => p.status === 'paid').length}
                       </dd>
                     </dl>
                   </div>
@@ -481,7 +482,7 @@ const Payments: React.FC = () => {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {payments.length === 0 ? (
                     <tr>
-                      <td colSpan="7" className="px-6 py-12 text-center">
+                      <td colSpan={7} className="px-6 py-12 text-center">
                         <CreditCardIcon className="mx-auto h-12 w-12 text-gray-400" />
                         <h3 className="mt-2 text-sm font-medium text-gray-900">Немає платежів</h3>
                         <p className="mt-1 text-sm text-gray-500">
@@ -546,7 +547,7 @@ const Payments: React.FC = () => {
                             </button>
                             <div className="absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg z-10 hidden group-hover:block">
                               <div className="py-1">
-                                {['pending', 'completed', 'failed', 'refunded', 'cancelled'].map(status => (
+                                {(['pending', 'paid', 'failed', 'refunded'] as const).map((status) => (
                                   <button
                                     key={status}
                                     onClick={() => updatePaymentStatus(payment.id, status)}

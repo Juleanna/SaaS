@@ -1,7 +1,5 @@
-// @ts-nocheck — TODO: поетапно прибирати, мігруючи на суворі типи
-
 import React, { useState } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import {
@@ -10,7 +8,6 @@ import {
   XCircleIcon,
   ClockIcon,
   MagnifyingGlassIcon,
-  FunnelIcon,
   PlusIcon,
   ArrowDownTrayIcon,
   PencilIcon,
@@ -19,9 +16,20 @@ import api, { getResults } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
 import logger from '../services/logger';
 import { useDebounce } from '../hooks/useDebounce';
-import EmptyState from '../components/EmptyState';
+import type { Order, OrderStatus, Store } from '../types/models';
 
-const buildOrdersParams = (searchTerm, statusFilter, dateFilter) => {
+interface OrderStats {
+  pending_count?: number;
+  processing_count?: number;
+  completed_count?: number;
+  total_amount?: number;
+}
+
+const buildOrdersParams = (
+  searchTerm: string,
+  statusFilter: string,
+  dateFilter: string
+): URLSearchParams => {
   const params = new URLSearchParams();
   if (searchTerm) params.append('search', searchTerm);
   if (statusFilter !== 'all') params.append('status', statusFilter);
@@ -48,32 +56,33 @@ const buildOrdersParams = (searchTerm, statusFilter, dateFilter) => {
 
 const Orders: React.FC = () => {
   const { storeId } = useParams<{ storeId?: string }>();
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
 
   const [searchInput, setSearchInput] = useState('');
   const searchTerm = useDebounce(searchInput, 300);
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [dateFilter, setDateFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [dateFilter, setDateFilter] = useState<string>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [_selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   // Магазини користувача
-  const { data: userStores = [] } = useQuery({
+  const { data: userStores = [] } = useQuery<Store[]>({
     queryKey: ['stores'],
     enabled: !storeId,
     queryFn: async () => {
       const res = await api.get('/stores/');
-      return getResults(res.data);
+      return getResults<Store>(res.data);
     },
   });
 
-  const currentStoreId = storeId || userStores?.[0]?.id || user?.stores?.[0]?.id;
+  const currentStoreId =
+    storeId || userStores?.[0]?.id || (user?.stores?.[0]?.id);
 
-  // Замовлення (react-query сам передає signal → axios → AbortController)
-  const ordersKey = ['orders', currentStoreId, searchTerm, statusFilter, dateFilter];
-  const { data: orders = [], isLoading: loading } = useQuery({
+  // Замовлення
+  const ordersKey = ['orders', currentStoreId, searchTerm, statusFilter, dateFilter] as const;
+  const { data: orders = [], isLoading: loading } = useQuery<Order[]>({
     queryKey: ordersKey,
     enabled: !!currentStoreId,
     queryFn: async ({ signal }) => {
@@ -82,21 +91,26 @@ const Orders: React.FC = () => {
         `/orders/stores/${currentStoreId}/orders/?${params}`,
         { signal }
       );
-      return getResults(res.data);
+      return getResults<Order>(res.data);
     },
   });
 
   // Статистика — оновлюється коли є замовлення
-  const { data: statistics = null } = useQuery({
+  const { data: statistics = null } = useQuery<OrderStats | null>({
     queryKey: ['orders-statistics', currentStoreId],
     enabled: !!currentStoreId && orders.length > 0,
     queryFn: async () => {
       const res = await api.get(`/orders/stores/${currentStoreId}/orders/statistics/`);
-      return res.data;
+      return res.data as OrderStats;
     },
   });
 
-  const statusMutation = useMutation({
+  interface StatusVars {
+    orderId: number;
+    status: OrderStatus;
+  }
+
+  const statusMutation = useMutation<unknown, Error, StatusVars>({
     mutationFn: ({ orderId, status }) =>
       api.post(`/orders/stores/${currentStoreId}/orders/${orderId}/status/`, { status }),
     onSuccess: () => {
@@ -109,10 +123,11 @@ const Orders: React.FC = () => {
     },
   });
 
-  const handleStatusUpdate = (orderId, newStatus) =>
+  const handleStatusUpdate = (orderId: number, newStatus: OrderStatus): void => {
     statusMutation.mutate({ orderId, status: newStatus });
+  };
 
-  const handleExport = async () => {
+  const handleExport = async (): Promise<void> => {
     try {
       const params = buildOrdersParams('', statusFilter, dateFilter);
       if (dateFilter !== 'all') params.set('date_filter', dateFilter);
@@ -133,31 +148,29 @@ const Orders: React.FC = () => {
     }
   };
 
-  const getStatusBadge = (status) => {
-    const statusMap = {
-      pending: 'badge-warning',
-      confirmed: 'badge-info',
-      processing: 'badge-info',
-      shipped: 'badge-primary',
-      delivered: 'badge-success',
-      cancelled: 'badge-danger',
-    };
-    return statusMap[status] || 'badge-secondary';
+  const STATUS_BADGES: Record<OrderStatus, string> = {
+    pending: 'badge-warning',
+    confirmed: 'badge-info',
+    processing: 'badge-info',
+    shipped: 'badge-primary',
+    delivered: 'badge-success',
+    cancelled: 'badge-danger',
   };
+  const getStatusBadge = (status: OrderStatus | string): string =>
+    STATUS_BADGES[status as OrderStatus] || 'badge-secondary';
 
-  const getStatusText = (status) => {
-    const statusMap = {
-      pending: 'Очікує підтвердження',
-      confirmed: 'Підтверджено',
-      processing: 'В обробці',
-      shipped: 'Відправлено',
-      delivered: 'Доставлено',
-      cancelled: 'Скасовано',
-    };
-    return statusMap[status] || status;
+  const STATUS_TEXTS: Record<OrderStatus, string> = {
+    pending: 'Очікує підтвердження',
+    confirmed: 'Підтверджено',
+    processing: 'В обробці',
+    shipped: 'Відправлено',
+    delivered: 'Доставлено',
+    cancelled: 'Скасовано',
   };
+  const getStatusText = (status: OrderStatus | string): string =>
+    STATUS_TEXTS[status as OrderStatus] || String(status);
 
-  const getStatusIcon = (status) => {
+  const getStatusIcon = (status: OrderStatus | string): React.ReactElement => {
     switch (status) {
       case 'delivered':
         return <CheckCircleIcon className="h-5 w-5 text-green-500" />;
@@ -384,14 +397,14 @@ const Orders: React.FC = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan="6" className="px-6 py-12 text-center">
+                  <td colSpan={6} className="px-6 py-12 text-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
                     <p className="mt-2 text-sm text-gray-500">Завантаження замовлень...</p>
                   </td>
                 </tr>
               ) : orders.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="px-6 py-12 text-center">
+                  <td colSpan={6} className="px-6 py-12 text-center">
                     <ClockIcon className="mx-auto h-12 w-12 text-gray-400" />
                     <h3 className="mt-2 text-sm font-medium text-gray-900">Немає замовлень</h3>
                     <p className="mt-1 text-sm text-gray-500">
@@ -455,7 +468,7 @@ const Orders: React.FC = () => {
                         </button>
                         <div className="absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg z-10 hidden group-hover:block">
                           <div className="py-1">
-                            {['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'].map(status => (
+                            {(['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'] as const).map(status => (
                               <button
                                 key={status}
                                 onClick={() => handleStatusUpdate(order.id, status)}

@@ -1,5 +1,3 @@
-// @ts-nocheck — TODO: поетапно прибирати, мігруючи на суворі типи
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -16,6 +14,14 @@ import EmptyState from '../components/EmptyState';
 import { SkeletonTableRow } from '../components/Skeleton';
 import { useDebounce } from '../hooks/useDebounce';
 import toast from 'react-hot-toast';
+import type { Category, Store } from '../types/models';
+
+interface ConfirmModalState {
+  open: boolean;
+  title: string;
+  message: string;
+  onConfirm: (() => void) | null;
+}
 
 const Categories: React.FC = () => {
   const { storeId } = useParams<{ storeId?: string }>();
@@ -25,16 +31,21 @@ const Categories: React.FC = () => {
   const [searchInput, setSearchInput] = useState('');
   const searchTerm = useDebounce(searchInput, 300);
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState(null);
-  const [selectedStoreId, setSelectedStoreId] = useState(storeId || null);
-  const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null });
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [selectedStoreId, setSelectedStoreId] = useState<number | string | null>(storeId || null);
+  const [confirmModal, setConfirmModal] = useState<ConfirmModalState>({
+    open: false,
+    title: '',
+    message: '',
+    onConfirm: null,
+  });
 
   // === Магазини ===
-  const { data: stores = [], isLoading: storesLoading } = useQuery({
+  const { data: stores = [], isLoading: storesLoading } = useQuery<Store[]>({
     queryKey: ['stores'],
     queryFn: async () => {
       const res = await api.get('/stores/');
-      return getResults(res.data);
+      return getResults<Store>(res.data);
     },
   });
 
@@ -53,25 +64,27 @@ const Categories: React.FC = () => {
   }, [currentStoreId, storeId, navigate]);
 
   // === Категорії ===
-  const categoriesKey = ['categories', currentStoreId, searchTerm];
+  const categoriesKey = ['categories', currentStoreId, searchTerm] as const;
 
-  const { data: categories = [], isLoading: categoriesLoading } = useQuery({
+  const { data: categories = [], isLoading: categoriesLoading } = useQuery<Category[]>({
     queryKey: categoriesKey,
     enabled: !!currentStoreId,
     queryFn: async () => {
       const params = searchTerm ? `?search=${encodeURIComponent(searchTerm)}` : '';
       const res = await api.get(`/products/stores/${currentStoreId}/categories/${params}`);
-      return getResults(res.data);
+      return getResults<Category>(res.data);
     },
   });
 
   // === Mutations ===
-  const deleteMutation = useMutation({
+  const deleteMutation = useMutation<unknown, Error, number, { previous: Category[] | undefined }>({
     mutationFn: (id) => api.delete(`/products/stores/${currentStoreId}/categories/${id}/`),
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: categoriesKey });
-      const previous = queryClient.getQueryData(categoriesKey);
-      queryClient.setQueryData(categoriesKey, (old = []) => old.filter((c) => c.id !== id));
+      const previous = queryClient.getQueryData<Category[]>(categoriesKey);
+      queryClient.setQueryData<Category[]>(categoriesKey, (old = []) =>
+        old.filter((c) => c.id !== id)
+      );
       return { previous };
     },
     onError: (_err, _id, ctx) => {
@@ -81,13 +94,18 @@ const Categories: React.FC = () => {
     onSuccess: () => toast.success('Категорію видалено'),
   });
 
-  const toggleMutation = useMutation({
+  interface ToggleVars {
+    id: number;
+    isActive: boolean;
+  }
+
+  const toggleMutation = useMutation<unknown, Error, ToggleVars, { previous: Category[] | undefined }>({
     mutationFn: ({ id, isActive }) =>
       api.patch(`/products/stores/${currentStoreId}/categories/${id}/`, { is_active: isActive }),
     onMutate: async ({ id, isActive }) => {
       await queryClient.cancelQueries({ queryKey: categoriesKey });
-      const previous = queryClient.getQueryData(categoriesKey);
-      queryClient.setQueryData(categoriesKey, (old = []) =>
+      const previous = queryClient.getQueryData<Category[]>(categoriesKey);
+      queryClient.setQueryData<Category[]>(categoriesKey, (old = []) =>
         old.map((c) => (c.id === id ? { ...c, is_active: isActive } : c))
       );
       toast.success(isActive ? 'Категорію активовано' : 'Категорію деактивовано');
@@ -100,7 +118,7 @@ const Categories: React.FC = () => {
   });
 
   // === UI ===
-  const handleDelete = (id) => {
+  const handleDelete = (id: number): void => {
     setConfirmModal({
       open: true,
       title: 'Видалення',
@@ -109,21 +127,21 @@ const Categories: React.FC = () => {
     });
   };
 
-  const handleToggleStatus = (cat) => {
+  const handleToggleStatus = (cat: Category): void => {
     toggleMutation.mutate({ id: cat.id, isActive: !cat.is_active });
   };
 
-  const openCreate = () => { setEditingCategory(null); setModalOpen(true); };
-  const openEdit = (cat) => { setEditingCategory(cat); setModalOpen(true); };
-  const closeModal = () => { setModalOpen(false); setEditingCategory(null); };
+  const openCreate = (): void => { setEditingCategory(null); setModalOpen(true); };
+  const openEdit = (cat: Category): void => { setEditingCategory(cat); setModalOpen(true); };
+  const closeModal = (): void => { setModalOpen(false); setEditingCategory(null); };
 
-  const handleModalSuccess = (savedData, isEditing) => {
+  const handleModalSuccess = (savedData: Category, isEditing: boolean): void => {
     if (isEditing && savedData?.id) {
-      queryClient.setQueryData(categoriesKey, (old = []) =>
+      queryClient.setQueryData<Category[]>(categoriesKey, (old = []) =>
         old.map((c) => (c.id === savedData.id ? { ...c, ...savedData } : c))
       );
     } else if (savedData) {
-      queryClient.setQueryData(categoriesKey, (old = []) => [...old, savedData]);
+      queryClient.setQueryData<Category[]>(categoriesKey, (old = []) => [...old, savedData]);
     }
     queryClient.invalidateQueries({ queryKey: ['categories', currentStoreId] });
   };
@@ -317,7 +335,7 @@ const Categories: React.FC = () => {
       <ConfirmModal
         isOpen={confirmModal.open}
         onClose={() => setConfirmModal({ ...confirmModal, open: false })}
-        onConfirm={confirmModal.onConfirm}
+        onConfirm={confirmModal.onConfirm ?? (() => {})}
         title={confirmModal.title}
         message={confirmModal.message}
       />

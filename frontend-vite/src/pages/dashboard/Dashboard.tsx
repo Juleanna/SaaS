@@ -1,5 +1,3 @@
-// @ts-nocheck — TODO: поетапно прибирати, мігруючи на суворі типи
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -17,123 +15,154 @@ import {
 } from '@heroicons/react/24/outline';
 import api, { getResults } from '../../services/api';
 import { useAuthStore } from '../../stores/authStore';
-import logger from '../../services/logger';
+import type { Order, OrderStatus, Product, Store } from '../../types/models';
+
+interface TrendInfo {
+  value: number;
+  direction: 'up' | 'down';
+}
+
+interface DashboardStats {
+  stores_count: number;
+  products_count: number;
+  orders_count: number;
+  total_revenue: number;
+  monthly_revenue: number;
+  weekly_orders: number;
+  conversion_rate: number;
+  average_order_value: number;
+  trends: {
+    orders: TrendInfo;
+    revenue: TrendInfo;
+    products: TrendInfo;
+    customers: TrendInfo;
+    stores?: TrendInfo;
+  };
+}
+
+interface TopProduct {
+  id: number;
+  name: string;
+  price?: string | number;
+  current_price?: string | number;
+  image?: string | null;
+  images?: { image: string }[];
+  sales_count?: number;
+  order_count?: number;
+  revenue?: number;
+  store?: { name?: string };
+  [key: string]: unknown;
+}
+
+const EMPTY_STATS: DashboardStats = {
+  stores_count: 0,
+  products_count: 0,
+  orders_count: 0,
+  total_revenue: 0,
+  monthly_revenue: 0,
+  weekly_orders: 0,
+  conversion_rate: 0,
+  average_order_value: 0,
+  trends: {
+    orders: { value: 0, direction: 'up' },
+    revenue: { value: 0, direction: 'up' },
+    products: { value: 0, direction: 'up' },
+    customers: { value: 0, direction: 'up' },
+  },
+};
 
 const Dashboard: React.FC = () => {
   const { user } = useAuthStore();
 
   // Отримуємо статистику дашборда
-  const { data: dashboardStats, isLoading: statsLoading } = useQuery({
+  const { data: dashboardStats, isLoading: statsLoading } = useQuery<DashboardStats>({
     queryKey: ['dashboard-stats'],
     queryFn: async () => {
       try {
-        // Спробуємо отримати реальні дані з різних endpoints
         const [storesResponse, ordersResponse] = await Promise.allSettled([
           api.get('/stores/'),
-          api.get('/orders/recent/?limit=1')
+          api.get('/orders/recent/?limit=1'),
         ]);
 
-        const stores_count = storesResponse.status === 'fulfilled' 
-          ? getResults(storesResponse.value.data).length
-          : 2;
+        const stores_count =
+          storesResponse.status === 'fulfilled'
+            ? getResults<Store>(storesResponse.value.data).length
+            : 2;
 
-        // Отримуємо кількість товарів з усіх магазинів користувача
         let products_count = 0;
         if (storesResponse.status === 'fulfilled') {
-          const stores = getResults(storesResponse.value.data);
-          const productPromises = stores.map(store => 
-            api.get(`/products/stores/${store.id}/products/?page_size=1`).catch(() => ({ data: { count: 0 } }))
+          const stores = getResults<Store>(storesResponse.value.data);
+          const productPromises = stores.map((store) =>
+            api
+              .get(`/products/stores/${store.id}/products/?page_size=1`)
+              .catch(() => ({ data: { count: 0 } as { count: number } }))
           );
           const productResponses = await Promise.allSettled(productPromises);
-          products_count = productResponses.reduce((total, response) => {
+          products_count = productResponses.reduce<number>((total, response) => {
             if (response.status === 'fulfilled') {
-              return total + (response.value.data.count || 0);
+              return total + ((response.value.data as { count?: number })?.count || 0);
             }
             return total;
           }, 0);
         }
 
-        const orders_count = ordersResponse.status === 'fulfilled'
-          ? (ordersResponse.value.data.count || 0)
-          : 0;
+        const orders_count =
+          ordersResponse.status === 'fulfilled'
+            ? (ordersResponse.value.data as { count?: number })?.count || 0
+            : 0;
 
         return {
+          ...EMPTY_STATS,
           stores_count,
           products_count,
           orders_count,
-          total_revenue: 0,
-          monthly_revenue: 0,
-          weekly_orders: 0,
-          conversion_rate: 0,
-          average_order_value: 0,
-          trends: {
-            orders: { value: 0, direction: 'up' },
-            revenue: { value: 0, direction: 'up' },
-            products: { value: 0, direction: 'up' },
-            customers: { value: 0, direction: 'up' }
-          }
         };
-      } catch (error) {
-        return {
-          stores_count: 0,
-          products_count: 0,
-          orders_count: 0,
-          total_revenue: 0,
-          monthly_revenue: 0,
-          weekly_orders: 0,
-          conversion_rate: 0,
-          average_order_value: 0,
-          trends: {
-            orders: { value: 0, direction: 'up' },
-            revenue: { value: 0, direction: 'up' },
-            products: { value: 0, direction: 'up' },
-            customers: { value: 0, direction: 'up' }
-          }
-        };
+      } catch {
+        return EMPTY_STATS;
       }
     },
   });
 
   // Отримуємо останні замовлення
-  const { data: recentOrders = [], isLoading: ordersLoading } = useQuery({
+  const { data: recentOrders = [], isLoading: ordersLoading } = useQuery<Order[]>({
     queryKey: ['recent-orders'],
     queryFn: async () => {
       try {
         const response = await api.get('/orders/recent/?limit=5');
-        return getResults(response.data);
-      } catch (error) {
+        return getResults<Order>(response.data);
+      } catch {
         return [];
       }
     },
   });
 
   // Отримуємо популярні товари
-  const { data: topProducts = [], isLoading: productsLoading } = useQuery({
+  const { data: topProducts = [], isLoading: productsLoading } = useQuery<TopProduct[]>({
     queryKey: ['top-products'],
     queryFn: async () => {
       try {
-        // Спробуємо отримати топ товари з API
         const response = await api.get('/products/top/?limit=5');
-        return getResults(response.data);
-      } catch (error) {
-        // Якщо не вдалося, спробуємо отримати останні товари з магазинів
+        return getResults<TopProduct>(response.data);
+      } catch {
         try {
           const storesResponse = await api.get('/stores/');
-          const stores = getResults(storesResponse.data);
+          const stores = getResults<Store>(storesResponse.data);
 
           if (stores.length > 0) {
-            const productsResponse = await api.get(`/products/stores/${stores[0].id}/products/?page_size=5&ordering=-created_at`);
-            const products = getResults(productsResponse.data);
+            const productsResponse = await api.get(
+              `/products/stores/${stores[0].id}/products/?page_size=5&ordering=-created_at`
+            );
+            const products = getResults<Product>(productsResponse.data);
 
-            return products.map(product => ({
+            return products.map((product) => ({
               ...product,
               order_count: 0,
               revenue: 0,
-              store: { name: stores[0].name }
+              store: { name: stores[0].name },
             }));
           }
-        } catch (err) {
-          // Не вдалося отримати товари
+        } catch {
+          // Ігноруємо — повертаємо порожній масив
         }
 
         return [];
@@ -186,56 +215,50 @@ const Dashboard: React.FC = () => {
     },
   ];
 
-  const formatPrice = (price) => {
+  const formatPrice = (price: number | string): string => {
+    const numeric = typeof price === 'number' ? price : Number(price) || 0;
     return new Intl.NumberFormat('uk-UA', {
       style: 'currency',
       currency: 'UAH',
       minimumFractionDigits: 0,
-    }).format(price);
+    }).format(numeric);
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString('uk-UA', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
-  const getTrendIcon = (direction) => {
-    return direction === 'up' ? ArrowUpIcon : ArrowDownIcon;
-  };
-
-  const getTrendColor = (direction) => {
+  const getTrendColor = (direction: 'up' | 'down'): string => {
     return direction === 'up' ? 'text-green-500' : 'text-red-500';
   };
 
-
-  const getStatusBadge = (status) => {
-    const statusMap = {
-      pending: 'badge-warning',
-      confirmed: 'badge-info',
-      processing: 'badge-info',
-      shipped: 'badge-success',
-      delivered: 'badge-success',
-      cancelled: 'badge-danger',
-    };
-    return statusMap[status] || 'badge-secondary';
+  const STATUS_BADGES: Record<OrderStatus, string> = {
+    pending: 'badge-warning',
+    confirmed: 'badge-info',
+    processing: 'badge-info',
+    shipped: 'badge-success',
+    delivered: 'badge-success',
+    cancelled: 'badge-danger',
   };
+  const getStatusBadge = (status: OrderStatus | string): string =>
+    STATUS_BADGES[status as OrderStatus] || 'badge-secondary';
 
-  const getStatusText = (status) => {
-    const statusMap = {
-      pending: 'Очікує підтвердження',
-      confirmed: 'Підтверджено',
-      processing: 'В обробці',
-      shipped: 'Відправлено',
-      delivered: 'Доставлено',
-      cancelled: 'Скасовано',
-    };
-    return statusMap[status] || status;
+  const STATUS_TEXTS: Record<OrderStatus, string> = {
+    pending: 'Очікує підтвердження',
+    confirmed: 'Підтверджено',
+    processing: 'В обробці',
+    shipped: 'Відправлено',
+    delivered: 'Доставлено',
+    cancelled: 'Скасовано',
   };
+  const getStatusText = (status: OrderStatus | string): string =>
+    STATUS_TEXTS[status as OrderStatus] || String(status);
 
   return (
     <div className="space-y-6 overflow-hidden">
@@ -516,7 +539,8 @@ const Dashboard: React.FC = () => {
                             {order.order_number}
                           </p>
                           <p className="text-sm text-gray-500 truncate">
-                            {order.customer.first_name} {order.customer.last_name} • {order.store.name}
+                            {order.customer_name || order.customer_email || '—'}
+                            {typeof order.store === 'object' && order.store?.name ? ` • ${order.store.name}` : ''}
                           </p>
                         </div>
                         <div className="flex-shrink-0 text-right">
@@ -609,7 +633,10 @@ const Dashboard: React.FC = () => {
                         </div>
                         <div className="flex-shrink-0 text-right">
                           <p className="text-sm font-medium text-gray-900">
-                            {formatPrice(product.revenue || (product.current_price * (product.order_count || 0)))}
+                            {formatPrice(
+                            product.revenue ||
+                              (Number(product.current_price ?? 0) * (product.order_count || 0))
+                          )}
                           </p>
                           <p className="text-xs text-gray-500">
                             дохід

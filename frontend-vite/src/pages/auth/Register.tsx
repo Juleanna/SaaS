@@ -1,13 +1,11 @@
-// @ts-nocheck — TODO: поетапно прибирати, мігруючи на суворі типи
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useForm, type SubmitHandler, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuthStore } from '../../stores/authStore';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
-import { registerSchema } from '../../schemas';
+import { registerSchema, type RegisterFormValues } from '../../schemas';
 
 const Register: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -19,27 +17,33 @@ const Register: React.FC = () => {
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors },
-  } = useForm({
-    resolver: zodResolver(registerSchema),
+  } = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema) as unknown as Resolver<RegisterFormValues>,
   });
 
-  const password = watch('password');
-
-  const onSubmit = async (data) => {
+  const onSubmit: SubmitHandler<RegisterFormValues> = async (data) => {
     setIsLoading(true);
-    
+
     try {
-      const result = await registerUser(data);
-      
+      const result = await registerUser({
+        email: data.email,
+        username: data.username,
+        password: data.password,
+        password_confirm: data.password_confirm,
+        first_name: data.first_name || '',
+        last_name: data.last_name || '',
+        phone: data.phone || '',
+        company_name: data.company_name || '',
+      });
+
       if (result.success) {
         toast.success('Реєстрація успішна!');
         navigate('/');
       } else {
-        toast.error(result.error);
+        toast.error(result.error ?? 'Помилка реєстрації');
       }
-    } catch (error) {
+    } catch {
       toast.error('Помилка реєстрації');
     } finally {
       setIsLoading(false);
@@ -74,9 +78,7 @@ const Register: React.FC = () => {
                 <input
                   id="first_name"
                   type="text"
-                  {...register('first_name', {
-                    required: "Ім'я обов'язкове",
-                  })}
+                  {...register('first_name')}
                   className="input"
                   placeholder="Ім'я"
                 />
@@ -92,9 +94,7 @@ const Register: React.FC = () => {
                 <input
                   id="last_name"
                   type="text"
-                  {...register('last_name', {
-                    required: 'Прізвище обов\'язкове',
-                  })}
+                  {...register('last_name')}
                   className="input"
                   placeholder="Прізвище"
                 />
@@ -111,13 +111,7 @@ const Register: React.FC = () => {
               <input
                 id="username"
                 type="text"
-                {...register('username', {
-                  required: 'Логін обов\'язковий',
-                  minLength: {
-                    value: 3,
-                    message: 'Логін повинен містити мінімум 3 символи',
-                  },
-                })}
+                {...register('username')}
                 className="input"
                 placeholder="username"
               />
@@ -133,13 +127,7 @@ const Register: React.FC = () => {
               <input
                 id="email"
                 type="email"
-                {...register('email', {
-                  required: 'Email обов\'язковий',
-                  pattern: {
-                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                    message: 'Неправильний формат email',
-                  },
-                })}
+                {...register('email')}
                 className="input"
                 placeholder="your@email.com"
               />
@@ -155,9 +143,7 @@ const Register: React.FC = () => {
               <input
                 id="phone"
                 type="tel"
-                {...register('phone', {
-                  required: 'Телефон обов\'язковий',
-                })}
+                {...register('phone')}
                 className="input"
                 placeholder="+380501234567"
               />
@@ -187,13 +173,7 @@ const Register: React.FC = () => {
                 <input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  {...register('password', {
-                    required: 'Пароль обов\'язковий',
-                    minLength: {
-                      value: 8,
-                      message: 'Пароль повинен містити мінімум 8 символів',
-                    },
-                  })}
+                  {...register('password')}
                   className="input pr-10"
                   placeholder="••••••••"
                 />
@@ -222,11 +202,7 @@ const Register: React.FC = () => {
                 <input
                   id="password_confirm"
                   type={showConfirmPassword ? 'text' : 'password'}
-                  {...register('password_confirm', {
-                    required: 'Підтвердження пароля обов\'язкове',
-                    validate: (value) =>
-                      value === password || 'Паролі не співпадають',
-                  })}
+                  {...register('password_confirm')}
                   className="input pr-10"
                   placeholder="••••••••"
                 />

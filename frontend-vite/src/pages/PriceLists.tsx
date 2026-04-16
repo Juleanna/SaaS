@@ -1,7 +1,4 @@
-// @ts-nocheck — TODO: поетапно прибирати, мігруючи на суворі типи
-
 import React, { useState, useEffect } from 'react';
-import { useAuthStore } from '../stores/authStore';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api, { getResults } from '../services/api';
 import toast from 'react-hot-toast';
@@ -13,53 +10,78 @@ import {
   EyeIcon,
   DocumentDuplicateIcon,
   ChartBarIcon,
-  Cog6ToothIcon,
   CalendarDaysIcon,
   CurrencyDollarIcon,
-  AdjustmentsHorizontalIcon,
-  ArrowPathIcon
+  Cog6ToothIcon,
 } from '@heroicons/react/24/outline';
 import PriceListModal from '../components/PriceListModal';
 import PriceListItemsModal from '../components/PriceListItemsModal';
 import ConfirmModal from '../components/ConfirmModal';
 import logger from '../services/logger';
+import type { Store } from '../types/models';
+
+interface PriceList {
+  id: string | number;
+  name: string;
+  description?: string;
+  pricing_strategy: string;
+  pricing_strategy_display?: string;
+  default_markup_percentage?: string | number;
+  is_active: boolean;
+  is_default: boolean;
+  items_count?: number;
+  is_valid?: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+interface ConfirmModalState {
+  open: boolean;
+  title: string;
+  message: string;
+  onConfirm: (() => void) | null;
+}
 
 const PriceLists: React.FC = () => {
-  const { user } = useAuthStore();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStore, setSelectedStore] = useState('');
+  const [selectedStore, setSelectedStore] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedPriceList, setSelectedPriceList] = useState(null);
+  const [selectedPriceList, setSelectedPriceList] = useState<PriceList | null>(null);
   const [isItemsModalOpen, setIsItemsModalOpen] = useState(false);
-  const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null });
+  const [confirmModal, setConfirmModal] = useState<ConfirmModalState>({
+    open: false,
+    title: '',
+    message: '',
+    onConfirm: null,
+  });
 
   // Отримуємо магазини користувача
-  const { data: stores = [] } = useQuery({
+  const { data: stores = [] } = useQuery<Store[]>({
     queryKey: ['user-stores'],
     queryFn: async () => {
       const response = await api.get('/stores/');
-      return getResults(response.data);
+      return getResults<Store>(response.data);
     },
   });
 
   // Встановлюємо перший магазин за замовчуванням
   useEffect(() => {
     if (stores.length > 0 && !selectedStore) {
-      setSelectedStore(stores[0].id.toString());
+      setSelectedStore(String(stores[0].id));
     }
   }, [stores, selectedStore]);
 
   // Отримуємо прайс-листи для вибраного магазину
-  const { data: priceLists = [], isLoading } = useQuery({
+  const { data: priceLists = [], isLoading } = useQuery<PriceList[]>({
     queryKey: ['pricelists', selectedStore],
     queryFn: async () => {
       if (!selectedStore) return [];
       try {
         const response = await api.get(`/pricelists/stores/${selectedStore}/pricelists/`);
-        return getResults(response.data);
+        return getResults<PriceList>(response.data);
       } catch (error) {
         logger.error('Error fetching price lists:', error);
         // Fallback до mock даних
@@ -98,14 +120,16 @@ const PriceLists: React.FC = () => {
     enabled: !!selectedStore,
   });
 
+  type PriceListPayload = Partial<PriceList>;
+
   // Створення прайс-листа
-  const createMutation = useMutation({
+  const createMutation = useMutation<PriceList, Error, PriceListPayload>({
     mutationFn: async (data) => {
       const response = await api.post(`/pricelists/stores/${selectedStore}/pricelists/`, data);
-      return response.data;
+      return response.data as PriceList;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['pricelists', selectedStore]);
+      queryClient.invalidateQueries({ queryKey: ['pricelists', selectedStore] });
       setIsCreateModalOpen(false);
       toast.success('Прайс-лист створено');
     },
@@ -116,13 +140,20 @@ const PriceLists: React.FC = () => {
   });
 
   // Оновлення прайс-листа
-  const updateMutation = useMutation({
+  const updateMutation = useMutation<
+    PriceList,
+    Error,
+    { id: string | number; data: PriceListPayload }
+  >({
     mutationFn: async ({ id, data }) => {
-      const response = await api.patch(`/pricelists/stores/${selectedStore}/pricelists/${id}/`, data);
-      return response.data;
+      const response = await api.patch(
+        `/pricelists/stores/${selectedStore}/pricelists/${id}/`,
+        data
+      );
+      return response.data as PriceList;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['pricelists', selectedStore]);
+      queryClient.invalidateQueries({ queryKey: ['pricelists', selectedStore] });
       setIsEditModalOpen(false);
       setSelectedPriceList(null);
       toast.success('Прайс-лист оновлено');
@@ -134,12 +165,12 @@ const PriceLists: React.FC = () => {
   });
 
   // Видалення прайс-листа
-  const deleteMutation = useMutation({
+  const deleteMutation = useMutation<unknown, Error, string | number>({
     mutationFn: async (id) => {
       await api.delete(`/pricelists/stores/${selectedStore}/pricelists/${id}/`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['pricelists', selectedStore]);
+      queryClient.invalidateQueries({ queryKey: ['pricelists', selectedStore] });
       toast.success('Прайс-лист видалено');
     },
     onError: (error) => {
@@ -149,31 +180,35 @@ const PriceLists: React.FC = () => {
   });
 
   // Фільтрація прайс-листів
-  const filteredPriceLists = priceLists.filter(priceList => {
-    const matchesSearch = priceList.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         priceList.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || 
-                         (statusFilter === 'active' && priceList.is_active) ||
-                         (statusFilter === 'inactive' && !priceList.is_active) ||
-                         (statusFilter === 'default' && priceList.is_default);
-    
+  const filteredPriceLists = priceLists.filter((priceList) => {
+    const term = searchTerm.toLowerCase();
+    const matchesSearch =
+      priceList.name.toLowerCase().includes(term) ||
+      (priceList.description ?? '').toLowerCase().includes(term);
+    const matchesStatus =
+      statusFilter === 'all' ||
+      (statusFilter === 'active' && priceList.is_active) ||
+      (statusFilter === 'inactive' && !priceList.is_active) ||
+      (statusFilter === 'default' && priceList.is_default);
+
     return matchesSearch && matchesStatus;
   });
 
-  const handleCreate = (formData) => {
+  const handleCreate = (formData: PriceListPayload): void => {
     createMutation.mutate(formData);
   };
 
-  const handleEdit = (priceList) => {
+  const handleEdit = (priceList: PriceList): void => {
     setSelectedPriceList(priceList);
     setIsEditModalOpen(true);
   };
 
-  const handleUpdate = (formData) => {
+  const handleUpdate = (formData: PriceListPayload): void => {
+    if (!selectedPriceList) return;
     updateMutation.mutate({ id: selectedPriceList.id, data: formData });
   };
 
-  const handleDelete = (priceList) => {
+  const handleDelete = (priceList: PriceList): void => {
     setConfirmModal({
       open: true,
       title: 'Видалення прайс-листа',
@@ -184,32 +219,32 @@ const PriceLists: React.FC = () => {
     });
   };
 
-  const handleViewItems = (priceList) => {
+  const handleViewItems = (priceList: PriceList): void => {
     setSelectedPriceList(priceList);
     setIsItemsModalOpen(true);
   };
 
-  const copyPriceList = async (priceList) => {
+  const copyPriceList = async (priceList: PriceList): Promise<void> => {
     try {
       await api.post(`/pricelists/stores/${selectedStore}/pricelists/${priceList.id}/copy/`);
-      queryClient.invalidateQueries(['pricelists', selectedStore]);
+      queryClient.invalidateQueries({ queryKey: ['pricelists', selectedStore] });
       toast.success('Прайс-лист скопійовано');
-    } catch (error) {
+    } catch {
       toast.error('Помилка копіювання прайс-листа');
     }
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString('uk-UA', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
-  const getStatusBadge = (priceList) => {
+  const getStatusBadge = (priceList: PriceList): React.ReactElement => {
     if (!priceList.is_active) {
       return <span className="badge badge-secondary">Неактивний</span>;
     }
@@ -386,7 +421,7 @@ const PriceLists: React.FC = () => {
       <PriceListModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        onSave={handleCreate}
+        onSave={handleCreate as (data: unknown) => void}
       />
 
       {/* Edit Modal */}
@@ -396,8 +431,8 @@ const PriceLists: React.FC = () => {
           setIsEditModalOpen(false);
           setSelectedPriceList(null);
         }}
-        priceList={selectedPriceList}
-        onSave={handleUpdate}
+        priceList={selectedPriceList as unknown as { id?: string | number; [key: string]: unknown }}
+        onSave={handleUpdate as (data: unknown) => void}
       />
 
       {/* Items Modal */}
@@ -407,14 +442,14 @@ const PriceLists: React.FC = () => {
           setIsItemsModalOpen(false);
           setSelectedPriceList(null);
         }}
-        priceList={selectedPriceList}
+        priceList={selectedPriceList ? { id: selectedPriceList.id, name: selectedPriceList.name } : null}
         storeId={selectedStore}
       />
 
       <ConfirmModal
         isOpen={confirmModal.open}
         onClose={() => setConfirmModal({ ...confirmModal, open: false })}
-        onConfirm={confirmModal.onConfirm}
+        onConfirm={confirmModal.onConfirm ?? (() => {})}
         title={confirmModal.title}
         message={confirmModal.message}
       />

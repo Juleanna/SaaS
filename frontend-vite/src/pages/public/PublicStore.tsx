@@ -1,5 +1,3 @@
-// @ts-nocheck — TODO: поетапно прибирати, мігруючи на суворі типи
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -26,15 +24,80 @@ import toast from 'react-hot-toast';
 import logger from '../../services/logger';
 
 // ============================================================
+// Типи
+// ============================================================
+interface PublicProductCategory {
+  id: number;
+  name?: string;
+}
+
+interface PublicProduct {
+  id: number;
+  name: string;
+  description?: string;
+  price: number;
+  sale_price?: number | null;
+  image?: string | null;
+  category?: PublicProductCategory;
+  rating?: number;
+  reviews_count?: number;
+  is_available?: boolean;
+  stock_quantity?: number;
+  sku?: string;
+  created_at?: string;
+  [key: string]: unknown;
+}
+
+interface CartItemDraft extends PublicProduct {
+  quantity: number;
+}
+
+interface PublicStoreData {
+  id?: number;
+  name: string;
+  slug?: string;
+  description?: string;
+  logo?: string | null;
+  banner?: string | null;
+  address?: string;
+  phone?: string;
+  email?: string;
+  website?: string;
+  is_active?: boolean;
+  working_hours?: string;
+  social_links?: Record<string, string>;
+  rating?: number;
+  reviews_count?: number;
+  [key: string]: unknown;
+}
+
+// ============================================================
 // ProductQuickView Modal
 // ============================================================
-const ProductQuickView = ({ product, onClose, onAddToCart, favorites, onToggleFavorite, formatPrice }) => {
+interface ProductQuickViewProps {
+  product: PublicProduct | null;
+  onClose: () => void;
+  onAddToCart: (product: PublicProduct) => void;
+  favorites: number[];
+  onToggleFavorite: (id: number) => void;
+  formatPrice: (price: number) => string;
+}
+
+const ProductQuickView: React.FC<ProductQuickViewProps> = ({
+  product,
+  onClose,
+  onAddToCart,
+  favorites,
+  onToggleFavorite,
+  formatPrice,
+}) => {
   if (!product) return null;
 
-  const effectivePrice = product.sale_price || product.price;
-  const discountPercent = product.sale_price
-    ? Math.round((1 - product.sale_price / product.price) * 100)
-    : 0;
+  const effectivePrice = product.sale_price ?? product.price;
+  const discountPercent =
+    product.sale_price && product.price
+      ? Math.round((1 - product.sale_price / product.price) * 100)
+      : 0;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -73,16 +136,16 @@ const ProductQuickView = ({ product, onClose, onAddToCart, favorites, onToggleFa
               <h2 className="text-2xl font-bold text-gray-900 mb-2">{product.name}</h2>
 
               {/* Rating */}
-              {product.rating && (
+              {product.rating !== undefined && (
                 <div className="flex items-center mb-4">
                   <div className="flex items-center">
-                    {[...Array(5)].map((_, i) => (
-                      i < Math.floor(product.rating) ? (
+                    {[...Array(5)].map((_, i) =>
+                      i < Math.floor(product.rating ?? 0) ? (
                         <StarIconSolid key={i} className="h-5 w-5 text-yellow-400" />
                       ) : (
                         <StarIcon key={i} className="h-5 w-5 text-gray-300" />
                       )
-                    ))}
+                    )}
                   </div>
                   <span className="text-sm text-gray-600 ml-2">
                     {product.rating} ({product.reviews_count} відгуків)
@@ -114,7 +177,7 @@ const ProductQuickView = ({ product, onClose, onAddToCart, favorites, onToggleFa
 
               {/* Availability */}
               <div className="mb-2">
-                {product.is_available && product.stock_quantity > 0 ? (
+                {product.is_available && (product.stock_quantity ?? 0) > 0 ? (
                   <span className="text-green-600 font-medium">
                     В наявності ({product.stock_quantity} шт.)
                   </span>
@@ -135,7 +198,7 @@ const ProductQuickView = ({ product, onClose, onAddToCart, favorites, onToggleFa
                     e.stopPropagation();
                     onAddToCart(product);
                   }}
-                  disabled={!product.is_available || product.stock_quantity === 0}
+                  disabled={!product.is_available || (product.stock_quantity ?? 0) === 0}
                   className="btn btn-primary flex-1 disabled:bg-gray-300 disabled:cursor-not-allowed"
                 >
                   <ShoppingCartIcon className="h-5 w-5 mr-2" />
@@ -171,16 +234,16 @@ const PublicStore: React.FC = () => {
 
   // Existing state
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [sortBy, setSortBy] = useState('name');
-  const [favorites, setFavorites] = useState([]);
+  const [favorites, setFavorites] = useState<number[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [cartItems, setCartItems] = useState([]);
+  const [cartItems, setCartItems] = useState<CartItemDraft[]>([]);
 
   // New state
   const [viewMode, setViewMode] = useState('grid');
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
-  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedProduct, setSelectedProduct] = useState<PublicProduct | null>(null);
   const [cartBounce, setCartBounce] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
 
@@ -189,7 +252,7 @@ const PublicStore: React.FC = () => {
   // ----------------------------------------------------------
 
   // Store info
-  const { data: store, isLoading: storeLoading } = useQuery({
+  const { data: store, isLoading: storeLoading } = useQuery<PublicStoreData>({
     queryKey: ['public-store', storeSlug],
     queryFn: async () => {
       try {
@@ -222,7 +285,7 @@ const PublicStore: React.FC = () => {
   });
 
   // Products
-  const { data: products = [], isLoading: productsLoading } = useQuery({
+  const { data: products = [], isLoading: productsLoading } = useQuery<PublicProduct[]>({
     queryKey: ['public-products', storeSlug, searchTerm, selectedCategory, sortBy],
     queryFn: async () => {
       try {
@@ -288,7 +351,7 @@ const PublicStore: React.FC = () => {
   });
 
   // Categories
-  const { data: categories = [] } = useQuery({
+  const { data: categories = [] } = useQuery<PublicProductCategory[]>({
     queryKey: ['public-categories', storeSlug],
     queryFn: async () => {
       try {
@@ -309,12 +372,12 @@ const PublicStore: React.FC = () => {
   // Filtering & Sorting
   // ----------------------------------------------------------
 
-  const filteredProducts = products.filter(product => {
+  const filteredProducts = products.filter((product) => {
     const matchesSearch =
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchTerm.toLowerCase());
+      (product.description ?? '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory =
-      !selectedCategory || product.category.id.toString() === selectedCategory;
+      !selectedCategory || product.category?.id.toString() === selectedCategory;
 
     // Price range filter
     const effectivePrice = product.sale_price || product.price;
@@ -333,7 +396,7 @@ const PublicStore: React.FC = () => {
       case 'rating':
         return (b.rating || 0) - (a.rating || 0);
       case 'newest':
-        return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+        return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
       default:
         return a.name.localeCompare(b.name);
     }
@@ -619,7 +682,7 @@ const PublicStore: React.FC = () => {
                           : 'text-gray-600 hover:bg-gray-100'
                       }`}
                     >
-                      {category.name} ({products.filter(p => p.category.id === category.id).length})
+                      {category.name} ({products.filter((p) => p.category?.id === category.id).length})
                     </button>
                   ))}
                 </div>
@@ -847,7 +910,7 @@ const PublicStore: React.FC = () => {
                             )}
                           </div>
                           <div className="text-sm">
-                            {product.is_available && product.stock_quantity > 0 ? (
+                            {product.is_available && (product.stock_quantity ?? 0) > 0 ? (
                               <span className="text-green-600 font-medium">В наявності</span>
                             ) : (
                               <span className="text-red-600 font-medium">Немає</span>
@@ -956,7 +1019,7 @@ const PublicStore: React.FC = () => {
                               </span>
                             )}
                             <div className="text-sm mt-0.5">
-                              {product.is_available && product.stock_quantity > 0 ? (
+                              {product.is_available && (product.stock_quantity ?? 0) > 0 ? (
                                 <span className="text-green-600 font-medium">В наявності</span>
                               ) : (
                                 <span className="text-red-600 font-medium">Немає в наявності</span>
@@ -1018,7 +1081,7 @@ const PublicStore: React.FC = () => {
       <ShoppingCart
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
-        storeSlug={storeSlug}
+        storeSlug={storeSlug ?? ''}
         onCheckout={handleCheckout}
       />
 
@@ -1026,8 +1089,14 @@ const PublicStore: React.FC = () => {
       <CheckoutModal
         isOpen={showCheckout}
         onClose={() => setShowCheckout(false)}
-        cart={{ items: cartItems, total_amount: cartItems.reduce((s, i) => s + (i.sale_price || i.price) * i.quantity, 0), items_count: cartItems.reduce((s, i) => s + i.quantity, 0) }}
-        storeSlug={storeSlug}
+        cart={{
+          items: cartItems,
+          total: cartItems.reduce(
+            (s, i) => s + ((i.sale_price ?? i.price) ?? 0) * i.quantity,
+            0
+          ),
+        }}
+        storeSlug={storeSlug ?? ''}
         onOrderCreated={handleOrderCreated}
       />
     </div>

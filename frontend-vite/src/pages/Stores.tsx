@@ -1,5 +1,3 @@
-// @ts-nocheck — TODO: поетапно прибирати, мігруючи на суворі типи
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
@@ -8,6 +6,26 @@ import { PlusIcon, EyeIcon, PencilIcon, TrashIcon, XMarkIcon, ChevronUpIcon, Che
 import toast from 'react-hot-toast';
 import api, { getResults } from '../services/api';
 import logger from '../services/logger';
+import type { Store, SocialLink, ContentBlock } from '../types/models';
+
+interface StoreFormValues {
+  name: string;
+  description?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  primary_color?: string;
+  secondary_color?: string;
+  accent_color?: string;
+  show_instagram_feed?: boolean;
+  show_telegram_button?: boolean;
+  meta_title?: string;
+  meta_description?: string;
+  is_active?: boolean;
+}
+
+type SocialLinkDraft = Partial<SocialLink> & { isNew?: boolean; tempId?: string };
+type StoreBlockDraft = Partial<ContentBlock> & { isNew?: boolean; tempId?: string; block_type?: string };
 
 const SOCIAL_TYPES = [
   { value: 'instagram', label: 'Instagram', icon: '📷' },
@@ -30,61 +48,54 @@ const Stores: React.FC = () => {
   const location = useLocation();
   
   // Мутація для видалення магазину
-  const deleteStoreMutation = useMutation({
+  const deleteStoreMutation = useMutation<unknown, Error, number>({
     mutationFn: async (storeId) => {
       await api.delete(`/stores/${storeId}/`);
     },
     onSuccess: (_, storeId) => {
-      // Оновлюємо кеш після успішного видалення
-      queryClient.setQueryData(['stores'], (oldData) => {
+      queryClient.setQueryData<Store[] | { results: Store[] } | undefined>(['stores'], (oldData) => {
         if (!oldData) return oldData;
         if (Array.isArray(oldData)) {
-          return oldData.filter(store => store.id !== storeId);
+          return oldData.filter((store) => store.id !== storeId);
         }
-        if (oldData.results) {
-          return {
-            ...oldData,
-            results: oldData.results.filter(store => store.id !== storeId)
-          };
+        if ('results' in oldData) {
+          return { ...oldData, results: oldData.results.filter((store) => store.id !== storeId) };
         }
         return oldData;
       });
-      
+
       toast.success('Магазин успішно видалено!');
       setShowDeleteModal(false);
       setStoreToDelete(null);
     },
-    onError: (error) => {
-      const errorMessage = error.response?.data?.message || 
-                          error.response?.data?.detail || 
-                          'Помилка видалення магазину';
-      toast.error(errorMessage);
-    }
+    onError: (error: unknown) => {
+      const data = (error as { response?: { data?: { message?: string; detail?: string } } })?.response?.data;
+      toast.error(data?.message || data?.detail || 'Помилка видалення магазину');
+    },
   });
-  
+
   const [showModal, setShowModal] = useState(false);
-  const [editingStore, setEditingStore] = useState(null);
+  const [editingStore, setEditingStore] = useState<Store | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [storeToDelete, setStoreToDelete] = useState(null);
+  const [storeToDelete, setStoreToDelete] = useState<Store | null>(null);
   const [activeTab, setActiveTab] = useState('basic');
-  const [logoPreview, setLogoPreview] = useState(null);
-  const [bannerPreview, setBannerPreview] = useState(null);
-  const [logoFile, setLogoFile] = useState(null);
-  const [bannerFile, setBannerFile] = useState(null);
-  const [socialLinks, setSocialLinks] = useState([]);
-  const [storeBlocks, setStoreBlocks] = useState([]);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [socialLinks, setSocialLinks] = useState<SocialLinkDraft[]>([]);
+  const [storeBlocks, setStoreBlocks] = useState<StoreBlockDraft[]>([]);
 
   // Отримуємо дані магазинів з API
-  const { data: stores = [], isLoading: isLoadingStores, refetch } = useQuery({
+  const { data: stores = [], isLoading: isLoadingStores, refetch } = useQuery<Store[]>({
     queryKey: ['stores'],
     queryFn: async () => {
       try {
         const response = await api.get('/stores/');
-        return getResults(response.data);
+        return getResults<Store>(response.data);
       } catch (error) {
         logger.error('Stores fetch error:', error);
-        // Fallback на моковані дані якщо API недоступне
         return [
           {
             id: 1,
@@ -92,10 +103,12 @@ const Stores: React.FC = () => {
             slug: 'my-online-store',
             description: 'Продаж електроніки та аксесуарів',
             status: 'active',
+            is_active: true,
             products_count: 12,
             orders_count: 8,
             revenue: 15600,
-          },
+            created_at: new Date().toISOString(),
+          } as Store,
         ];
       }
     },
@@ -108,10 +121,10 @@ const Stores: React.FC = () => {
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm();
+  } = useForm<StoreFormValues>();
 
   // Функція для відкриття модального вікна створення магазину
-  const handleCreateStore = () => {
+  const handleCreateStore = (): void => {
     setEditingStore(null);
     reset({
       name: '',
@@ -135,7 +148,7 @@ const Stores: React.FC = () => {
   };
 
   // Функція для відкриття модального вікна редагування
-  const handleEditStore = (store) => {
+  const handleEditStore = (store: Store): void => {
     setEditingStore(store);
     reset({
       name: store.name,
@@ -186,37 +199,28 @@ const Stores: React.FC = () => {
   };
 
   // Функція для збереження магазину
-  const onSubmit = async (data) => {
+  const onSubmit = async (data: StoreFormValues): Promise<void> => {
     setIsLoading(true);
-    
+
     try {
-      let storeData;
-      
-      // Створюємо FormData якщо є файли для завантаження
+      let storeData: FormData | StoreFormValues;
+
       if (logoFile || bannerFile) {
         const formData = new FormData();
-        
-        // Додаємо всі поля форми
-        Object.keys(data).forEach(key => {
-          if (data[key] !== null && data[key] !== undefined) {
-            formData.append(key, data[key]);
+        (Object.keys(data) as Array<keyof StoreFormValues>).forEach((key) => {
+          const value = data[key];
+          if (value !== null && value !== undefined) {
+            formData.append(String(key), String(value));
           }
         });
-        
-        // Додаємо файли якщо є
-        if (logoFile) {
-          formData.append('logo', logoFile);
-        }
-        if (bannerFile) {
-          formData.append('banner_image', bannerFile);
-        }
-        
+        if (logoFile) formData.append('logo', logoFile);
+        if (bannerFile) formData.append('banner_image', bannerFile);
         storeData = formData;
       } else {
         storeData = data;
       }
-      
-      let storeId;
+
+      let storeId: number;
       
       if (editingStore) {
         // Редагування існуючого магазину
@@ -238,54 +242,50 @@ const Stores: React.FC = () => {
         toast.success('Магазин успішно створено!');
       }
       
-      // Зберігаємо соціальні мережі
       if (socialLinks.length > 0) {
         await saveSocialLinks(storeId);
       }
-      
-      // Зберігаємо блоки магазину
+
       if (storeBlocks.length > 0) {
         await saveStoreBlocks(storeId);
       }
-      
+
       setShowModal(false);
       setActiveTab('basic');
       clearFiles();
       clearSocialLinks();
       clearStoreBlocks();
-      refetch(); // Оновлюємо список магазинів
-    } catch (error) {
+      refetch();
+    } catch (error: unknown) {
       logger.error('Store save error:', error);
-      const errorMessage = error.response?.data?.message || 
-                          error.response?.data?.detail || 
-                          (editingStore ? 'Помилка оновлення магазину' : 'Помилка створення магазину');
+      const data = (error as { response?: { data?: { message?: string; detail?: string } } })?.response?.data;
+      const errorMessage =
+        data?.message ||
+        data?.detail ||
+        (editingStore ? 'Помилка оновлення магазину' : 'Помилка створення магазину');
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Функція для відкриття модального вікна видалення
-  const handleDeleteStore = (store) => {
+  const handleDeleteStore = (store: Store): void => {
     setStoreToDelete(store);
     setShowDeleteModal(true);
   };
 
-  // Функція для підтвердження видалення магазину
-  const confirmDeleteStore = () => {
+  const confirmDeleteStore = (): void => {
     if (!storeToDelete) return;
     deleteStoreMutation.mutate(storeToDelete.id);
   };
 
-  // Функція для скасування видалення
-  const cancelDelete = () => {
+  const cancelDelete = (): void => {
     setShowDeleteModal(false);
     setStoreToDelete(null);
   };
 
-  // Функція для обробки завантаження логотипу
-  const handleLogoUpload = (event) => {
-    const file = event.target.files[0];
+  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>): void => {
+    const file = event.target.files?.[0];
     if (!file) return;
 
     // Перевіряємо тип файлу
@@ -301,16 +301,14 @@ const Stores: React.FC = () => {
     }
 
     setLogoFile(file);
-    
-    // Створюємо preview
+
     const reader = new FileReader();
-    reader.onload = (e) => setLogoPreview(e.target.result);
+    reader.onload = (e) => setLogoPreview(String(e.target?.result ?? ''));
     reader.readAsDataURL(file);
   };
 
-  // Функція для обробки завантаження банеру
-  const handleBannerUpload = (event) => {
-    const file = event.target.files[0];
+  const handleBannerUpload = (event: React.ChangeEvent<HTMLInputElement>): void => {
+    const file = event.target.files?.[0];
     if (!file) return;
 
     // Перевіряємо тип файлу
@@ -326,15 +324,13 @@ const Stores: React.FC = () => {
     }
 
     setBannerFile(file);
-    
-    // Створюємо preview
+
     const reader = new FileReader();
-    reader.onload = (e) => setBannerPreview(e.target.result);
+    reader.onload = (e) => setBannerPreview(String(e.target?.result ?? ''));
     reader.readAsDataURL(file);
   };
 
-  // Функція для очищення файлів
-  const clearFiles = () => {
+  const clearFiles = (): void => {
     setLogoFile(null);
     setBannerFile(null);
     setLogoPreview(null);
@@ -342,119 +338,124 @@ const Stores: React.FC = () => {
   };
 
   // Функції для роботи з соціальними мережами
-  const addSocialLink = () => {
-    setSocialLinks([...socialLinks, { 
-      id: Date.now(), // Тимчасовий ID для нових записів
-      social_type: 'instagram', 
-      url: '', 
-      title: '', 
-      is_active: true,
-      isNew: true // Позначаємо як новий запис
-    }]);
+  const addSocialLink = (): void => {
+    setSocialLinks([
+      ...socialLinks,
+      {
+        id: Date.now(),
+        social_type: 'instagram',
+        url: '',
+        title: '',
+        is_active: true,
+        isNew: true,
+      },
+    ]);
   };
 
-  const updateSocialLink = (index, field, value) => {
+  const updateSocialLink = (
+    index: number,
+    field: keyof SocialLinkDraft,
+    value: SocialLinkDraft[keyof SocialLinkDraft]
+  ): void => {
     const updatedLinks = [...socialLinks];
-    updatedLinks[index][field] = value;
+    updatedLinks[index] = { ...updatedLinks[index], [field]: value };
     setSocialLinks(updatedLinks);
   };
 
-  const removeSocialLink = (index) => {
-    const updatedLinks = socialLinks.filter((_, i) => i !== index);
-    setSocialLinks(updatedLinks);
+  const removeSocialLink = (index: number): void => {
+    setSocialLinks(socialLinks.filter((_, i) => i !== index));
   };
 
-  const clearSocialLinks = () => {
+  const clearSocialLinks = (): void => {
     setSocialLinks([]);
   };
 
   // Функція для збереження соціальних мереж
-  const saveSocialLinks = async (storeId) => {
+  const saveSocialLinks = async (storeId: number): Promise<void> => {
     if (!storeId) return;
 
     for (const link of socialLinks) {
       try {
         if (link.isNew) {
-          // Створюємо новий запис
-          if (link.url.trim()) { // Тільки якщо URL не порожній
+          if ((link.url ?? '').trim()) {
             await api.post(`/stores/${storeId}/social-links/`, {
               social_type: link.social_type,
               url: link.url,
               title: link.title,
-              is_active: link.is_active
+              is_active: link.is_active,
             });
           }
         } else {
-          // Оновлюємо існуючий запис
           await api.put(`/stores/${storeId}/social-links/${link.id}/`, {
             social_type: link.social_type,
             url: link.url,
             title: link.title,
-            is_active: link.is_active
+            is_active: link.is_active,
           });
         }
       } catch (error) {
         logger.error('Error saving social link:', error);
-        // Не блокуємо весь процес збереження через помилку в одній соціальній мережі
       }
     }
   };
 
   // Функції для роботи з блоками магазину
-  const addStoreBlock = () => {
-    const newOrder = storeBlocks.length > 0 ? Math.max(...storeBlocks.map(b => b.order)) + 1 : 0;
-    setStoreBlocks([...storeBlocks, { 
-      id: Date.now(), // Тимчасовий ID для нових записів
-      title: '', 
-      content: '', 
-      block_type: 'custom',
-      order: newOrder,
-      is_active: true,
-      isNew: true // Позначаємо як новий запис
-    }]);
+  const addStoreBlock = (): void => {
+    const newOrder = storeBlocks.length > 0 ? Math.max(...storeBlocks.map((b) => b.order ?? 0)) + 1 : 0;
+    setStoreBlocks([
+      ...storeBlocks,
+      {
+        id: Date.now(),
+        title: '',
+        content: '',
+        block_type: 'custom',
+        order: newOrder,
+        is_active: true,
+        isNew: true,
+      },
+    ]);
   };
 
-  const updateStoreBlock = (index, field, value) => {
+  const updateStoreBlock = (
+    index: number,
+    field: keyof StoreBlockDraft,
+    value: StoreBlockDraft[keyof StoreBlockDraft]
+  ): void => {
     const updatedBlocks = [...storeBlocks];
-    updatedBlocks[index][field] = value;
+    updatedBlocks[index] = { ...updatedBlocks[index], [field]: value };
     setStoreBlocks(updatedBlocks);
   };
 
-  const removeStoreBlock = (index) => {
-    const updatedBlocks = storeBlocks.filter((_, i) => i !== index);
-    setStoreBlocks(updatedBlocks);
+  const removeStoreBlock = (index: number): void => {
+    setStoreBlocks(storeBlocks.filter((_, i) => i !== index));
   };
 
-  const moveStoreBlock = (index, direction) => {
+  const moveStoreBlock = (index: number, direction: 'up' | 'down'): void => {
     const updatedBlocks = [...storeBlocks];
     const newIndex = direction === 'up' ? index - 1 : index + 1;
-    
+
     if (newIndex >= 0 && newIndex < updatedBlocks.length) {
-      // Міняємо місцями
       [updatedBlocks[index], updatedBlocks[newIndex]] = [updatedBlocks[newIndex], updatedBlocks[index]];
-      
-      // Оновлюємо order
       updatedBlocks.forEach((block, i) => {
         block.order = i;
       });
-      
       setStoreBlocks(updatedBlocks);
     }
   };
 
-  const clearStoreBlocks = () => {
+  const clearStoreBlocks = (): void => {
     setStoreBlocks([]);
   };
 
   // Функція для збереження блоків магазину
-  const saveStoreBlocks = async (storeId) => {
+  const saveStoreBlocks = async (storeId: number): Promise<void> => {
     if (!storeId) return;
 
     for (const block of storeBlocks) {
       try {
         if (block.isNew) {
           // Створюємо новий запис
-          if (block.title.trim() && block.content.trim()) { // Тільки якщо є заголовок і контент
+          if ((block.title ?? '').trim() && (block.content ?? '').trim()) {
             await api.post(`/stores/${storeId}/blocks/`, {
               title: block.title,
               content: block.content,
