@@ -9,7 +9,7 @@ const ALLOWED_TAGS = [
 
 const ALLOWED_ATTR = ['href', 'title', 'target', 'rel', 'src', 'alt', 'class', 'style'];
 
-export const sanitizeHtml = (html) => {
+export const sanitizeHtml = (html: string | null | undefined): string => {
   if (!html) return '';
   return DOMPurify.sanitize(String(html), {
     ALLOWED_TAGS,

@@ -1,9 +1,15 @@
 import React from 'react';
 
-/**
- * Єдиний порожній стан для списків: іконка, заголовок, опис, (опційно) CTA-кнопка.
- */
-const EmptyState = ({
+interface EmptyStateProps {
+  icon?: React.ComponentType<{ className?: string }>;
+  title?: string;
+  description?: string;
+  action?: () => void;
+  actionLabel?: string;
+  className?: string;
+}
+
+const EmptyState: React.FC<EmptyStateProps> = ({
   icon: Icon,
   title = 'Нічого не знайдено',
   description,

@@ -15,7 +15,7 @@ describe('useDebounce', () => {
     });
 
     rerender({ v: 'ab' });
-    expect(result.current).toBe('a'); // ще не оновилося
+    expect(result.current).toBe('a');
 
     act(() => {
       vi.advanceTimersByTime(300);

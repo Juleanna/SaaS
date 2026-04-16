@@ -1,6 +1,8 @@
 const isDev = import.meta.env.DEV;
 
-const logger = {
+type LogFn = (...args: unknown[]) => void;
+
+const logger: { error: LogFn; warn: LogFn; log: LogFn } = {
   error: (...args) => {
     if (isDev) console.error(...args);
   },

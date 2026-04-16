@@ -1,7 +1,31 @@
 import React from 'react';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
-const ConfirmModal = ({
+export type ConfirmVariant = 'danger' | 'warning';
+
+interface ConfirmModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title?: string;
+  message?: string;
+  confirmText?: string;
+  cancelText?: string;
+  variant?: ConfirmVariant;
+}
+
+const VARIANTS: Record<ConfirmVariant, { icon: string; button: string }> = {
+  danger: {
+    icon: 'bg-red-100 text-red-600',
+    button: 'bg-red-600 hover:bg-red-700 focus:ring-red-500',
+  },
+  warning: {
+    icon: 'bg-amber-100 text-amber-600',
+    button: 'bg-amber-600 hover:bg-amber-700 focus:ring-amber-500',
+  },
+};
+
+const ConfirmModal: React.FC<ConfirmModalProps> = ({
   isOpen,
   onClose,
   onConfirm,
@@ -12,19 +36,7 @@ const ConfirmModal = ({
   variant = 'danger',
 }) => {
   if (!isOpen) return null;
-
-  const variants = {
-    danger: {
-      icon: 'bg-red-100 text-red-600',
-      button: 'bg-red-600 hover:bg-red-700 focus:ring-red-500',
-    },
-    warning: {
-      icon: 'bg-amber-100 text-amber-600',
-      button: 'bg-amber-600 hover:bg-amber-700 focus:ring-amber-500',
-    },
-  };
-
-  const v = variants[variant] || variants.danger;
+  const v = VARIANTS[variant];
 
   return (
     <div className="fixed inset-0 z-[60] overflow-y-auto">

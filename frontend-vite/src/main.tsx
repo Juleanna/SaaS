@@ -4,26 +4,28 @@ import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import toast, { Toaster, ToastBar } from 'react-hot-toast';
 import './index.css';
-import App from './App.jsx';
+import App from './App';
 import { useThemeStore } from './stores/themeStore';
 
-// Sentry (опційно, активується якщо VITE_SENTRY_DSN задано)
+// Sentry (опційно)
 const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN;
 if (SENTRY_DSN) {
-  // Динамічний імпорт щоб не тягнути Sentry bundle без потреби
-  import('@sentry/react').then(({ init, browserTracingIntegration }) => {
-    init({
-      dsn: SENTRY_DSN,
-      environment: import.meta.env.VITE_SENTRY_ENVIRONMENT || 'development',
-      integrations: [browserTracingIntegration()],
-      tracesSampleRate: 0.1,
+  // @ts-expect-error — Sentry опційний (можливо не встановлений)
+  import('@sentry/react')
+    .then(({ init, browserTracingIntegration }) => {
+      init({
+        dsn: SENTRY_DSN,
+        environment: import.meta.env.VITE_SENTRY_ENVIRONMENT || 'development',
+        integrations: [browserTracingIntegration()],
+        tracesSampleRate: 0.1,
+      });
+    })
+    .catch(() => {
+      // Sentry не встановлений — це OK
     });
-  }).catch(() => {
-    // Sentry не встановлений — це OK
-  });
 }
 
-// Ініціалізуємо тему (читає збережене значення)
+// Ініціалізація теми
 useThemeStore.getState().setTheme(useThemeStore.getState().theme);
 
 const queryClient = new QueryClient({
@@ -35,7 +37,10 @@ const queryClient = new QueryClient({
   },
 });
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+const rootElement = document.getElementById('root');
+if (!rootElement) throw new Error('Root element not found');
+
+ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter
@@ -56,12 +61,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
               padding: '0',
               maxWidth: '420px',
             },
-            success: {
-              style: { background: '#065f46', color: '#fff' },
-            },
-            error: {
-              style: { background: '#991b1b', color: '#fff' },
-            },
+            success: { style: { background: '#065f46', color: '#fff' } },
+            error: { style: { background: '#991b1b', color: '#fff' } },
           }}
         >
           {(t) => (

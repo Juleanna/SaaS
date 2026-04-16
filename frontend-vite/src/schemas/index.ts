@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 // Допоміжні
-const optionalString = (max) =>
+const optionalString = (max: number) =>
   z.string().max(max, `Максимум ${max} символів`).optional().or(z.literal(''));
 
 const decimalString = z
@@ -72,3 +72,9 @@ export const registerSchema = z
     path: ['password_confirm'],
     message: 'Паролі не співпадають',
   });
+
+export type CategoryFormValues = z.infer<typeof categorySchema>;
+export type ProductFormValues = z.infer<typeof productSchema>;
+export type PriceListFormValues = z.infer<typeof priceListSchema>;
+export type LoginFormValues = z.infer<typeof loginSchema>;
+export type RegisterFormValues = z.infer<typeof registerSchema>;

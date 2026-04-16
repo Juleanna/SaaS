@@ -1,43 +1,43 @@
-import axios from 'axios';
+import axios, { type AxiosInstance, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
 
-const api = axios.create({
+import type { PaginatedResponse } from '../types/models';
+
+const api: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api',
-  withCredentials: true, // httpOnly cookies надсилаються автоматично
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
 // Читаємо CSRF-токен із cookie (not httpOnly — це за замислом double-submit)
-const readCookie = (name) => {
+const readCookie = (name: string): string | null => {
   const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
   return match ? decodeURIComponent(match[1]) : null;
 };
 
 // Для модифікуючих запитів додаємо X-CSRF-Token з cookie
-api.interceptors.request.use((config) => {
+api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const method = (config.method || 'get').toUpperCase();
   if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
     const csrf = readCookie('csrf_token');
-    if (csrf) {
+    if (csrf && config.headers) {
       config.headers['X-CSRF-Token'] = csrf;
     }
   }
   return config;
 });
 
-// Єдине у пам'яті рішення про те, чи робимо refresh — щоб паралельні 401
-// не створювали шторм refresh-запитів.
-let refreshPromise = null;
+// Єдине у пам'яті рішення про refresh — щоб паралельні 401 не створювали шторм запитів
+let refreshPromise: Promise<AxiosResponse> | null = null;
 
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config || {};
+    const originalRequest = (error.config || {}) as InternalAxiosRequestConfig & { _retry?: boolean };
     const status = error.response?.status;
     const url = originalRequest.url || '';
 
-    // Не пробуємо рефрешити для auth-endpoints (інакше loop)
     const isAuthEndpoint =
       url.includes('/auth/token/') ||
       url.includes('/auth/login/') ||
@@ -54,8 +54,7 @@ api.interceptors.response.use(
         }
         await refreshPromise;
         return api(originalRequest);
-      } catch (refreshError) {
-        // Імпортуємо store динамічно, щоб уникнути циклічного імпорту
+      } catch {
         const { useAuthStore } = await import('../stores/authStore');
         useAuthStore.getState().clearAuth();
         if (window.location.pathname !== '/login') {
@@ -71,9 +70,11 @@ api.interceptors.response.use(
 /**
  * Витягує масив даних з API-відповіді (пагінована або пласка).
  */
-export const getResults = (data) => {
+export const getResults = <T = unknown>(data: T[] | PaginatedResponse<T> | undefined | null): T[] => {
   if (Array.isArray(data)) return data;
-  if (data?.results && Array.isArray(data.results)) return data.results;
+  if (data && typeof data === 'object' && 'results' in data && Array.isArray(data.results)) {
+    return data.results;
+  }
   return [];
 };
 

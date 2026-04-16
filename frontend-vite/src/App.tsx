@@ -28,7 +28,7 @@ import PublicStore from './pages/public/PublicStore';
 import PublicStoresList from './pages/public/PublicStoresList';
 import Landing from './pages/public/Landing';
 
-function App() {
+const App: React.FC = () => {
   const { isAuthenticated, checkSession } = useAuthStore();
 
   // При першому завантаженні перевіряємо чи httpOnly cookie ще валідний
@@ -36,6 +36,7 @@ function App() {
     if (isAuthenticated) {
       checkSession();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -44,10 +45,10 @@ function App() {
         {/* Public routes */}
         <Route path="/marketplace" element={<PublicStoresList />} />
         <Route path="/store/:storeSlug" element={<PublicStore />} />
-        
+
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        
+
         {isAuthenticated ? (
           <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />
@@ -83,6 +84,6 @@ function App() {
       </Routes>
     </div>
   );
-}
+};
 
 export default App;
