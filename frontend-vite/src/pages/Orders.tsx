@@ -1,0 +1,482 @@
+import React, { useState } from 'react';
+import { Link, useParams, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
+import {
+  EyeIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  ClockIcon,
+  MagnifyingGlassIcon,
+  FunnelIcon,
+  PlusIcon,
+  ArrowDownTrayIcon,
+  PencilIcon,
+} from '@heroicons/react/24/outline';
+import api, { getResults } from '../services/api';
+import { useAuthStore } from '../stores/authStore';
+import logger from '../services/logger';
+import { useDebounce } from '../hooks/useDebounce';
+import EmptyState from '../components/EmptyState';
+
+const buildOrdersParams = (searchTerm, statusFilter, dateFilter) => {
+  const params = new URLSearchParams();
+  if (searchTerm) params.append('search', searchTerm);
+  if (statusFilter !== 'all') params.append('status', statusFilter);
+  if (dateFilter !== 'all') {
+    const today = new Date();
+    let startDate;
+    switch (dateFilter) {
+      case 'today':
+        startDate = today.toISOString().split('T')[0];
+        params.append('created_at__gte', startDate);
+        break;
+      case 'week':
+        startDate = new Date(today.setDate(today.getDate() - 7)).toISOString().split('T')[0];
+        params.append('created_at__gte', startDate);
+        break;
+      case 'month':
+        startDate = new Date(today.setMonth(today.getMonth() - 1)).toISOString().split('T')[0];
+        params.append('created_at__gte', startDate);
+        break;
+    }
+  }
+  return params;
+};
+
+const Orders: React.FC = () => {
+  const { storeId } = useParams<{ storeId?: string }>();
+  const navigate = useNavigate();
+  const { user } = useAuthStore();
+  const queryClient = useQueryClient();
+
+  const [searchInput, setSearchInput] = useState('');
+  const searchTerm = useDebounce(searchInput, 300);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState('all');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+
+  // Магазини користувача
+  const { data: userStores = [] } = useQuery({
+    queryKey: ['stores'],
+    enabled: !storeId,
+    queryFn: async () => {
+      const res = await api.get('/stores/');
+      return getResults(res.data);
+    },
+  });
+
+  const currentStoreId = storeId || userStores?.[0]?.id || user?.stores?.[0]?.id;
+
+  // Замовлення (react-query сам передає signal → axios → AbortController)
+  const ordersKey = ['orders', currentStoreId, searchTerm, statusFilter, dateFilter];
+  const { data: orders = [], isLoading: loading } = useQuery({
+    queryKey: ordersKey,
+    enabled: !!currentStoreId,
+    queryFn: async ({ signal }) => {
+      const params = buildOrdersParams(searchTerm, statusFilter, dateFilter);
+      const res = await api.get(
+        `/orders/stores/${currentStoreId}/orders/?${params}`,
+        { signal }
+      );
+      return getResults(res.data);
+    },
+  });
+
+  // Статистика — оновлюється коли є замовлення
+  const { data: statistics = null } = useQuery({
+    queryKey: ['orders-statistics', currentStoreId],
+    enabled: !!currentStoreId && orders.length > 0,
+    queryFn: async () => {
+      const res = await api.get(`/orders/stores/${currentStoreId}/orders/statistics/`);
+      return res.data;
+    },
+  });
+
+  const statusMutation = useMutation({
+    mutationFn: ({ orderId, status }) =>
+      api.post(`/orders/stores/${currentStoreId}/orders/${orderId}/status/`, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders', currentStoreId] });
+      queryClient.invalidateQueries({ queryKey: ['orders-statistics', currentStoreId] });
+    },
+    onError: (error) => {
+      logger.error('Error updating order status:', error);
+      toast.error('Помилка оновлення статусу замовлення');
+    },
+  });
+
+  const handleStatusUpdate = (orderId, newStatus) =>
+    statusMutation.mutate({ orderId, status: newStatus });
+
+  const handleExport = async () => {
+    try {
+      const params = buildOrdersParams('', statusFilter, dateFilter);
+      if (dateFilter !== 'all') params.set('date_filter', dateFilter);
+      const response = await api.get(
+        `/orders/stores/${currentStoreId}/orders/export/?${params}`,
+        { responseType: 'blob' }
+      );
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `orders-${new Date().toISOString().split('T')[0]}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      logger.error('Error exporting orders:', error);
+      toast.error('Помилка експорту замовлень');
+    }
+  };
+
+  const getStatusBadge = (status) => {
+    const statusMap = {
+      pending: 'badge-warning',
+      confirmed: 'badge-info',
+      processing: 'badge-info',
+      shipped: 'badge-primary',
+      delivered: 'badge-success',
+      cancelled: 'badge-danger',
+    };
+    return statusMap[status] || 'badge-secondary';
+  };
+
+  const getStatusText = (status) => {
+    const statusMap = {
+      pending: 'Очікує підтвердження',
+      confirmed: 'Підтверджено',
+      processing: 'В обробці',
+      shipped: 'Відправлено',
+      delivered: 'Доставлено',
+      cancelled: 'Скасовано',
+    };
+    return statusMap[status] || status;
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'delivered':
+        return <CheckCircleIcon className="h-5 w-5 text-green-500" />;
+      case 'cancelled':
+        return <XCircleIcon className="h-5 w-5 text-red-500" />;
+      case 'pending':
+        return <ClockIcon className="h-5 w-5 text-yellow-500" />;
+      default:
+        return <ClockIcon className="h-5 w-5 text-blue-500" />;
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Заголовок */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Замовлення</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            Керуйте всіма замовленнями вашого магазину
+          </p>
+        </div>
+        <div className="flex space-x-3">
+          <button 
+            onClick={handleExport}
+            className="btn-outline"
+          >
+            <ArrowDownTrayIcon className="h-4 w-4 mr-2" />
+            Експорт
+          </button>
+          <button 
+            onClick={() => setShowCreateModal(true)}
+            className="btn-primary"
+          >
+            <PlusIcon className="h-4 w-4 mr-2" />
+            Нове замовлення
+          </button>
+        </div>
+      </div>
+
+      {/* Фільтри та пошук */}
+      <div className="card">
+        <div className="card-body">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+            <div>
+              <label className="form-label">
+                Пошук
+              </label>
+              <div className="relative">
+                <MagnifyingGlassIcon className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Номер замовлення, клієнт..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  className="input pl-10"
+                />
+              </div>
+            </div>
+            
+            <div>
+              <label className="form-label">
+                Статус
+              </label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="input"
+              >
+                <option value="all">Всі</option>
+                <option value="pending">Очікують</option>
+                <option value="confirmed">Підтверджені</option>
+                <option value="processing">В обробці</option>
+                <option value="shipped">Відправлені</option>
+                <option value="delivered">Доставлені</option>
+                <option value="cancelled">Скасовані</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="form-label">
+                Період
+              </label>
+              <select
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="input"
+              >
+                <option value="all">Весь час</option>
+                <option value="today">Сьогодні</option>
+                <option value="week">Останній тиждень</option>
+                <option value="month">Останній місяць</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="form-label">
+                Дії
+              </label>
+              <button
+                onClick={() => {
+                  setSearchInput('');
+                  setStatusFilter('all');
+                  setDateFilter('all');
+                }}
+                className="btn btn-outline w-full"
+              >
+                Очистити
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Статистика */}
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="card">
+          <div className="card-body">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <ClockIcon className="h-6 w-6 text-yellow-400" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">
+                    Очікують
+                  </dt>
+                  <dd className="text-lg font-medium text-gray-900">
+                    {statistics?.pending_count || orders.filter(o => o.status === 'pending').length}
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="card-body">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <CheckCircleIcon className="h-6 w-6 text-blue-400" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">
+                    В обробці
+                  </dt>
+                  <dd className="text-lg font-medium text-gray-900">
+                    {statistics?.processing_count || orders.filter(o => ['confirmed', 'processing', 'shipped'].includes(o.status)).length}
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="card-body">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <CheckCircleIcon className="h-6 w-6 text-green-400" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">
+                    Виконані
+                  </dt>
+                  <dd className="text-lg font-medium text-gray-900">
+                    {statistics?.completed_count || orders.filter(o => o.status === 'delivered').length}
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="card-body">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <span className="text-2xl">₴</span>
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">
+                    Загальна сума
+                  </dt>
+                  <dd className="text-lg font-medium text-gray-900">
+                    {(statistics?.total_amount || orders.reduce((sum, o) => sum + (o.total_amount || 0), 0)).toLocaleString()} ₴
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Таблиця замовлень */}
+      <div className="card">
+        <div className="overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Замовлення
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Клієнт
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Сума
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Статус
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Дата
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Дії
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {loading ? (
+                <tr>
+                  <td colSpan="6" className="px-6 py-12 text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+                    <p className="mt-2 text-sm text-gray-500">Завантаження замовлень...</p>
+                  </td>
+                </tr>
+              ) : orders.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="px-6 py-12 text-center">
+                    <ClockIcon className="mx-auto h-12 w-12 text-gray-400" />
+                    <h3 className="mt-2 text-sm font-medium text-gray-900">Немає замовлень</h3>
+                    <p className="mt-1 text-sm text-gray-500">
+                      Почніть з створення першого замовлення.
+                    </p>
+                    <div className="mt-6">
+                      <button
+                        onClick={() => setShowCreateModal(true)}
+                        className="btn-primary"
+                      >
+                        <PlusIcon className="h-4 w-4 mr-2" />
+                        Нове замовлення
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ) : orders.map((order) => (
+                <tr key={order.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      {getStatusIcon(order.status)}
+                      <div className="ml-3">
+                        <div className="text-sm font-medium text-gray-900">
+                          {order.order_number}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {order.items_count || order.items?.length || 0} товар(ів)
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">
+                      {order.customer_name}
+                    </div>
+                    <div className="text-sm text-gray-500">{order.customer_email || order.customer_phone}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {order.total_amount?.toLocaleString()} ₴
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`badge ${getStatusBadge(order.status)}`}>
+                      {getStatusText(order.status)}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {order.created_at ? new Date(order.created_at).toLocaleDateString('uk-UA') : 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <div className="flex space-x-2">
+                      <button 
+                        onClick={() => setSelectedOrder(order)}
+                        className="text-blue-600 hover:text-blue-900"
+                        title="Переглянути"
+                      >
+                        <EyeIcon className="h-4 w-4" />
+                      </button>
+                      <div className="relative group">
+                        <button className="text-green-600 hover:text-green-900" title="Змінити статус">
+                          <PencilIcon className="h-4 w-4" />
+                        </button>
+                        <div className="absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg z-10 hidden group-hover:block">
+                          <div className="py-1">
+                            {['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'].map(status => (
+                              <button
+                                key={status}
+                                onClick={() => handleStatusUpdate(order.id, status)}
+                                className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
+                                  order.status === status ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                                }`}
+                              >
+                                {getStatusText(status)}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Orders;
