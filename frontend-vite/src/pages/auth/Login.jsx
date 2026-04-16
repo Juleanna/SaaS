@@ -1,10 +1,17 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { useAuthStore } from '../../stores/authStore';
 import { EyeIcon, EyeSlashIcon, EnvelopeIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
+import { loginSchema } from '../../schemas';
+
+const forgotSchema = z.object({
+  email: z.string().email('Невалідний email'),
+});
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -18,7 +25,9 @@ const Login = () => {
     handleSubmit,
     formState: { errors },
     reset,
-  } = useForm();
+  } = useForm({
+    resolver: zodResolver(mode === 'login' ? loginSchema : forgotSchema),
+  });
 
   const onSubmit = async (data) => {
     setIsLoading(true);

@@ -350,42 +350,16 @@ class PriceListItem(models.Model):
             calculated_price = self.markup_value if self.markup_value > 0 else cost
         elif self.markup_type == 'formula' and self.markup_formula:
             try:
-                # Безпечний калькулятор формул через AST
-                import ast
-                import operator
+                from simpleeval import SimpleEval, InvalidExpression
 
-                allowed_ops = {
-                    ast.Add: operator.add,
-                    ast.Sub: operator.sub,
-                    ast.Mult: operator.mul,
-                    ast.Div: operator.truediv,
-                    ast.Pow: operator.pow,
-                    ast.USub: operator.neg,
-                }
-
-                context = {
+                evaluator = SimpleEval(names={
                     'cost': float(cost),
                     'category_markup': float(self.price_list.default_markup_percentage),
-                }
-
-                def _safe_eval(node):
-                    if isinstance(node, ast.Expression):
-                        return _safe_eval(node.body)
-                    elif isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
-                        return node.value
-                    elif isinstance(node, ast.Name) and node.id in context:
-                        return context[node.id]
-                    elif isinstance(node, ast.BinOp) and type(node.op) in allowed_ops:
-                        return allowed_ops[type(node.op)](_safe_eval(node.left), _safe_eval(node.right))
-                    elif isinstance(node, ast.UnaryOp) and type(node.op) in allowed_ops:
-                        return allowed_ops[type(node.op)](_safe_eval(node.operand))
-                    else:
-                        raise ValueError(f'Недопустима операція у формулі: {ast.dump(node)}')
-
-                tree = ast.parse(self.markup_formula.strip(), mode='eval')
-                result = _safe_eval(tree)
+                })
+                evaluator.functions = {}
+                result = evaluator.eval(self.markup_formula.strip())
                 calculated_price = Decimal(str(result))
-            except (ValueError, TypeError, SyntaxError, KeyError, ZeroDivisionError):
+            except (InvalidExpression, ValueError, TypeError, SyntaxError, KeyError, ZeroDivisionError):
                 calculated_price = cost
         else:
             calculated_price = cost

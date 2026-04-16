@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import {
   EyeIcon,
@@ -16,93 +17,104 @@ import api, { getResults } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
 import logger from '../services/logger';
 
+const buildOrdersParams = (searchTerm, statusFilter, dateFilter) => {
+  const params = new URLSearchParams();
+  if (searchTerm) params.append('search', searchTerm);
+  if (statusFilter !== 'all') params.append('status', statusFilter);
+  if (dateFilter !== 'all') {
+    const today = new Date();
+    let startDate;
+    switch (dateFilter) {
+      case 'today':
+        startDate = today.toISOString().split('T')[0];
+        params.append('created_at__gte', startDate);
+        break;
+      case 'week':
+        startDate = new Date(today.setDate(today.getDate() - 7)).toISOString().split('T')[0];
+        params.append('created_at__gte', startDate);
+        break;
+      case 'month':
+        startDate = new Date(today.setMonth(today.getMonth() - 1)).toISOString().split('T')[0];
+        params.append('created_at__gte', startDate);
+        break;
+    }
+  }
+  return params;
+};
+
 const Orders = () => {
   const { storeId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  
-  const [orders, setOrders] = useState([]);
-  const [statistics, setStatistics] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const queryClient = useQueryClient();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
-  
-  const [userStores, setUserStores] = useState([]);
+
+  // Магазини користувача
+  const { data: userStores = [] } = useQuery({
+    queryKey: ['stores'],
+    enabled: !storeId,
+    queryFn: async () => {
+      const res = await api.get('/stores/');
+      return getResults(res.data);
+    },
+  });
 
   const currentStoreId = storeId || userStores?.[0]?.id || user?.stores?.[0]?.id;
 
-  const fetchOrders = async (signal) => {
-    try {
-      setLoading(true);
-      const params = new URLSearchParams();
-      if (searchTerm) params.append('search', searchTerm);
-      if (statusFilter !== 'all') params.append('status', statusFilter);
-      if (dateFilter !== 'all') {
-        const today = new Date();
-        let startDate;
-        switch (dateFilter) {
-          case 'today':
-            startDate = today.toISOString().split('T')[0];
-            params.append('created_at__gte', startDate);
-            break;
-          case 'week':
-            startDate = new Date(today.setDate(today.getDate() - 7)).toISOString().split('T')[0];
-            params.append('created_at__gte', startDate);
-            break;
-          case 'month':
-            startDate = new Date(today.setMonth(today.getMonth() - 1)).toISOString().split('T')[0];
-            params.append('created_at__gte', startDate);
-            break;
-        }
-      }
+  // Замовлення (react-query сам передає signal → axios → AbortController)
+  const ordersKey = ['orders', currentStoreId, searchTerm, statusFilter, dateFilter];
+  const { data: orders = [], isLoading: loading } = useQuery({
+    queryKey: ordersKey,
+    enabled: !!currentStoreId,
+    queryFn: async ({ signal }) => {
+      const params = buildOrdersParams(searchTerm, statusFilter, dateFilter);
+      const res = await api.get(
+        `/orders/stores/${currentStoreId}/orders/?${params}`,
+        { signal }
+      );
+      return getResults(res.data);
+    },
+  });
 
-      const response = await api.get(`/orders/stores/${currentStoreId}/orders/?${params}`, { signal });
-      setOrders(getResults(response.data));
-    } catch (error) {
-      if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') return;
-      setError('Помилка завантаження замовлень');
-      setOrders([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Статистика — оновлюється коли є замовлення
+  const { data: statistics = null } = useQuery({
+    queryKey: ['orders-statistics', currentStoreId],
+    enabled: !!currentStoreId && orders.length > 0,
+    queryFn: async () => {
+      const res = await api.get(`/orders/stores/${currentStoreId}/orders/statistics/`);
+      return res.data;
+    },
+  });
 
-  const fetchStatistics = async () => {
-    try {
-      const response = await api.get(`/orders/stores/${currentStoreId}/orders/statistics/`);
-      setStatistics(response.data);
-    } catch (error) {
-      setStatistics(null);
-    }
-  };
-
-  const handleStatusUpdate = async (orderId, newStatus) => {
-    try {
-      await api.post(`/orders/stores/${currentStoreId}/orders/${orderId}/status/`, {
-        status: newStatus
-      });
-      fetchOrders();
-      fetchStatistics();
-    } catch (error) {
+  const statusMutation = useMutation({
+    mutationFn: ({ orderId, status }) =>
+      api.post(`/orders/stores/${currentStoreId}/orders/${orderId}/status/`, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders', currentStoreId] });
+      queryClient.invalidateQueries({ queryKey: ['orders-statistics', currentStoreId] });
+    },
+    onError: (error) => {
       logger.error('Error updating order status:', error);
       toast.error('Помилка оновлення статусу замовлення');
-    }
-  };
+    },
+  });
+
+  const handleStatusUpdate = (orderId, newStatus) =>
+    statusMutation.mutate({ orderId, status: newStatus });
 
   const handleExport = async () => {
     try {
-      const params = new URLSearchParams();
-      if (statusFilter !== 'all') params.append('status', statusFilter);
-      if (dateFilter !== 'all') params.append('date_filter', dateFilter);
-      
-      const response = await api.get(`/orders/stores/${currentStoreId}/orders/export/?${params}`, {
-        responseType: 'blob'
-      });
-      
+      const params = buildOrdersParams('', statusFilter, dateFilter);
+      if (dateFilter !== 'all') params.set('date_filter', dateFilter);
+      const response = await api.get(
+        `/orders/stores/${currentStoreId}/orders/export/?${params}`,
+        { responseType: 'blob' }
+      );
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -115,31 +127,6 @@ const Orders = () => {
       toast.error('Помилка експорту замовлень');
     }
   };
-
-  useEffect(() => {
-    const fetchUserStores = async () => {
-      try {
-        const response = await api.get('/stores/');
-        setUserStores(getResults(response.data));
-      } catch (error) {
-        setUserStores([]);
-      }
-    };
-    if (!storeId) fetchUserStores();
-  }, [storeId]);
-
-  useEffect(() => {
-    if (!currentStoreId) return;
-    const controller = new AbortController();
-    fetchOrders(controller.signal);
-    return () => controller.abort();
-  }, [currentStoreId, searchTerm, statusFilter, dateFilter]);
-
-  useEffect(() => {
-    if (orders.length > 0) {
-      fetchStatistics();
-    }
-  }, [orders]);
 
   const getStatusBadge = (status) => {
     const statusMap = {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
 import Layout from './components/Layout';
@@ -29,7 +29,14 @@ import PublicStoresList from './pages/public/PublicStoresList';
 import Landing from './pages/public/Landing';
 
 function App() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, checkSession } = useAuthStore();
+
+  // При першому завантаженні перевіряємо чи httpOnly cookie ще валідний
+  useEffect(() => {
+    if (isAuthenticated) {
+      checkSession();
+    }
+  }, []);
 
   return (
     <div className="App">

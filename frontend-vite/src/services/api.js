@@ -1,62 +1,57 @@
 import axios from 'axios';
-import { useAuthStore } from '../stores/authStore';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api',
+  withCredentials: true, // httpOnly cookies надсилаються автоматично
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Request interceptor для додавання токена
-api.interceptors.request.use(
-  (config) => {
-    const token = useAuthStore.getState().token;
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+// Єдине у пам'яті рішення про те, чи робимо refresh — щоб паралельні 401
+// не створювали шторм refresh-запитів.
+let refreshPromise = null;
 
-// Response interceptor для обробки помилок
 api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   async (error) => {
-    const originalRequest = error.config;
-    
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      
-      try {
-        const result = await useAuthStore.getState().refreshToken();
-        if (result.success) {
-          const token = useAuthStore.getState().token;
-          originalRequest.headers.Authorization = `Bearer ${token}`;
-          return api(originalRequest);
-        }
-      } catch (refreshError) {
-        // Refresh не вдався — виходимо з системи
-      }
+    const originalRequest = error.config || {};
+    const status = error.response?.status;
+    const url = originalRequest.url || '';
 
-      useAuthStore.getState().logout();
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
+    // Не пробуємо рефрешити для auth-endpoints (інакше loop)
+    const isAuthEndpoint =
+      url.includes('/auth/token/') ||
+      url.includes('/auth/login/') ||
+      url.includes('/auth/logout/');
+
+    if (status === 401 && !originalRequest._retry && !isAuthEndpoint) {
+      originalRequest._retry = true;
+
+      try {
+        if (!refreshPromise) {
+          refreshPromise = api.post('/auth/token/refresh/').finally(() => {
+            refreshPromise = null;
+          });
+        }
+        await refreshPromise;
+        return api(originalRequest);
+      } catch (refreshError) {
+        // Імпортуємо store динамічно, щоб уникнути циклічного імпорту
+        const { useAuthStore } = await import('../stores/authStore');
+        useAuthStore.getState().clearAuth();
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
       }
     }
-    
+
     return Promise.reject(error);
   }
 );
 
 /**
  * Витягує масив даних з API-відповіді (пагінована або пласка).
- * Використання: const items = getResults(response.data);
  */
 export const getResults = (data) => {
   if (Array.isArray(data)) return data;

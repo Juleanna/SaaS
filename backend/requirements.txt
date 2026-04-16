@@ -29,6 +29,9 @@ paypalrestsdk==1.7.1
 # Configuration & Environment
 python-dotenv==1.0.0
 
+# Safe expression evaluation for pricing formulas
+simpleeval==1.0.3
+
 # File Storage & Static Files
 django-storages==1.14.2
 whitenoise==6.6.0

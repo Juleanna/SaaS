@@ -3,10 +3,19 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import update_session_auth_hash
 from django.db import transaction
 from decimal import Decimal
 import logging
+
+from .authentication import (
+    ACCESS_COOKIE_NAME,
+    REFRESH_COOKIE_NAME,
+    clear_auth_cookies,
+    set_auth_cookies,
+)
 
 logger = logging.getLogger(__name__)
 from .serializers import (
@@ -18,13 +27,56 @@ from .models import User
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
-    """Кастомний view для отримання JWT токенів"""
+    """Отримання JWT: access/refresh встановлюються як httpOnly cookies."""
     serializer_class = CustomTokenObtainPairSerializer
+
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        if response.status_code == status.HTTP_200_OK:
+            access = response.data.get('access')
+            refresh = response.data.get('refresh')
+            set_auth_cookies(response, access, refresh)
+            # Прибираємо токени з тіла відповіді — вони вже в cookies
+            response.data.pop('access', None)
+            response.data.pop('refresh', None)
+        return response
 
 
 class CustomTokenRefreshView(TokenRefreshView):
-    """Кастомний view для оновлення JWT токенів"""
-    pass
+    """Оновлення JWT: бере refresh з cookie, встановлює нові access/refresh в cookies."""
+
+    def post(self, request, *args, **kwargs):
+        refresh_cookie = request.COOKIES.get(REFRESH_COOKIE_NAME)
+        if refresh_cookie and 'refresh' not in request.data:
+            # Підмішуємо refresh з cookie щоб серіалізатор міг його провалідувати
+            request.data._mutable = True if hasattr(request.data, '_mutable') else None
+            data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
+            data['refresh'] = refresh_cookie
+            request._full_data = data
+        response = super().post(request, *args, **kwargs)
+        if response.status_code == status.HTTP_200_OK:
+            access = response.data.get('access')
+            refresh = response.data.get('refresh')
+            set_auth_cookies(response, access, refresh)
+            response.data.pop('access', None)
+            response.data.pop('refresh', None)
+        return response
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def logout_view(request):
+    """Вихід із системи — видаляє auth cookies і блеклистить refresh."""
+    refresh_cookie = request.COOKIES.get(REFRESH_COOKIE_NAME)
+    if refresh_cookie:
+        try:
+            token = RefreshToken(refresh_cookie)
+            token.blacklist()
+        except (TokenError, InvalidToken):
+            pass
+    response = Response({'message': 'Вихід виконано'}, status=status.HTTP_200_OK)
+    clear_auth_cookies(response)
+    return response
 
 
 class UserRegistrationView(generics.CreateAPIView):
@@ -74,32 +126,29 @@ def change_password(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login_view(request):
-    """Кастомний view для входу в систему"""
+    """Вхід у систему. Токени встановлюються як httpOnly cookies."""
     serializer = LoginSerializer(data=request.data)
-    
-    if serializer.is_valid():
-        user = serializer.validated_data['user']
-        
-        # Генеруємо JWT токени
-        from rest_framework_simplejwt.tokens import RefreshToken
-        refresh = RefreshToken.for_user(user)
-        
-        return Response({
-            'access': str(refresh.access_token),
-            'refresh': str(refresh),
-            'user': {
-                'id': user.id,
-                'email': user.email,
-                'username': user.username,
-                'first_name': user.first_name,
-                'last_name': user.last_name,
-                'company_name': user.company_name,
-                'subscription_plan': user.subscription_plan,
-                'is_subscribed': user.is_subscribed,
-            }
-        }, status=status.HTTP_200_OK)
-    
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    user = serializer.validated_data['user']
+    refresh = RefreshToken.for_user(user)
+
+    response = Response({
+        'user': {
+            'id': user.id,
+            'email': user.email,
+            'username': user.username,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'company_name': user.company_name,
+            'subscription_plan': user.subscription_plan,
+            'is_subscribed': user.is_subscribed,
+        }
+    }, status=status.HTTP_200_OK)
+    set_auth_cookies(response, refresh.access_token, refresh)
+    return response
 
 
 @api_view(['GET'])

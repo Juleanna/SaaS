@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   PlusIcon, PencilIcon, TrashIcon, MagnifyingGlassIcon,
-  FolderIcon, ChartBarIcon, BuildingStorefrontIcon,
+  FolderIcon, ChartBarIcon,
   CheckCircleIcon, XCircleIcon, TagIcon, EyeIcon,
   PauseCircleIcon, PlayCircleIcon,
 } from '@heroicons/react/24/outline';
 import api, { getResults } from '../services/api';
-import { useAuthStore } from '../stores/authStore';
 import CategoryModal from '../components/CategoryModal';
 import ConfirmModal from '../components/ConfirmModal';
 import toast from 'react-hot-toast';
@@ -15,94 +15,96 @@ import toast from 'react-hot-toast';
 const Categories = () => {
   const { storeId } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const queryClient = useQueryClient();
 
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
-  const [stores, setStores] = useState([]);
-  const [storesLoaded, setStoresLoaded] = useState(false);
   const [selectedStoreId, setSelectedStoreId] = useState(storeId || null);
   const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null });
 
+  // === Магазини ===
+  const { data: stores = [], isLoading: storesLoading } = useQuery({
+    queryKey: ['stores'],
+    queryFn: async () => {
+      const res = await api.get('/stores/');
+      return getResults(res.data);
+    },
+  });
+
   const currentStoreId = selectedStoreId || stores[0]?.id;
 
-  // Завантаження магазинів — один раз
   useEffect(() => {
-    api.get('/stores/')
-      .then(res => {
-        const list = getResults(res.data);
-        setStores(list);
-        if (!selectedStoreId && list.length > 0) {
-          setSelectedStoreId(list[0].id);
-        }
-      })
-      .catch(() => setStores([]))
-      .finally(() => setStoresLoaded(true));
-  }, []);
-
-  // Завантаження категорій — при зміні магазину або пошуку
-  const loadCategories = useCallback(async () => {
-    if (!currentStoreId) return;
-    setLoading(true);
-    try {
-      const params = searchTerm ? `?search=${encodeURIComponent(searchTerm)}` : '';
-      const res = await api.get(`/products/stores/${currentStoreId}/categories/${params}`);
-      setCategories(getResults(res.data));
-    } catch {
-      setCategories([]);
-    } finally {
-      setLoading(false);
+    if (!selectedStoreId && stores.length > 0) {
+      setSelectedStoreId(stores[0].id);
     }
-  }, [currentStoreId, searchTerm]);
+  }, [stores, selectedStoreId]);
 
-  useEffect(() => {
-    loadCategories();
-  }, [loadCategories]);
-
-  // URL sync
   useEffect(() => {
     if (currentStoreId && !storeId) {
       navigate(`/categories/${currentStoreId}`, { replace: true });
     }
   }, [currentStoreId, storeId, navigate]);
 
-  // Дії
+  // === Категорії ===
+  const categoriesKey = ['categories', currentStoreId, searchTerm];
+
+  const { data: categories = [], isLoading: categoriesLoading } = useQuery({
+    queryKey: categoriesKey,
+    enabled: !!currentStoreId,
+    queryFn: async () => {
+      const params = searchTerm ? `?search=${encodeURIComponent(searchTerm)}` : '';
+      const res = await api.get(`/products/stores/${currentStoreId}/categories/${params}`);
+      return getResults(res.data);
+    },
+  });
+
+  // === Mutations ===
+  const deleteMutation = useMutation({
+    mutationFn: (id) => api.delete(`/products/stores/${currentStoreId}/categories/${id}/`),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: categoriesKey });
+      const previous = queryClient.getQueryData(categoriesKey);
+      queryClient.setQueryData(categoriesKey, (old = []) => old.filter((c) => c.id !== id));
+      return { previous };
+    },
+    onError: (_err, _id, ctx) => {
+      if (ctx?.previous) queryClient.setQueryData(categoriesKey, ctx.previous);
+      toast.error('Помилка видалення');
+    },
+    onSuccess: () => toast.success('Категорію видалено'),
+  });
+
+  const toggleMutation = useMutation({
+    mutationFn: ({ id, isActive }) =>
+      api.patch(`/products/stores/${currentStoreId}/categories/${id}/`, { is_active: isActive }),
+    onMutate: async ({ id, isActive }) => {
+      await queryClient.cancelQueries({ queryKey: categoriesKey });
+      const previous = queryClient.getQueryData(categoriesKey);
+      queryClient.setQueryData(categoriesKey, (old = []) =>
+        old.map((c) => (c.id === id ? { ...c, is_active: isActive } : c))
+      );
+      toast.success(isActive ? 'Категорію активовано' : 'Категорію деактивовано');
+      return { previous };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previous) queryClient.setQueryData(categoriesKey, ctx.previous);
+      toast.error('Помилка зміни статусу');
+    },
+  });
+
+  // === UI ===
   const handleDelete = (id) => {
     setConfirmModal({
       open: true,
       title: 'Видалення',
       message: 'Видалити цю категорію?',
-      onConfirm: async () => {
-        const backup = categories;
-        setCategories(prev => prev.filter(c => c.id !== id));
-        toast.success('Категорію видалено');
-        try {
-          await api.delete(`/products/stores/${currentStoreId}/categories/${id}/`);
-        } catch {
-          setCategories(backup);
-          toast.error('Помилка видалення');
-        }
-      },
+      onConfirm: () => deleteMutation.mutate(id),
     });
   };
 
-  const handleToggleStatus = async (cat) => {
-    const newStatus = !cat.is_active;
-    // Оптимістичне оновлення — одразу показуємо зміну
-    setCategories(prev => prev.map(c => c.id === cat.id ? { ...c, is_active: newStatus } : c));
-    toast.success(newStatus ? 'Категорію активовано' : 'Категорію деактивовано');
-    try {
-      await api.patch(`/products/stores/${currentStoreId}/categories/${cat.id}/`, {
-        is_active: newStatus,
-      });
-    } catch {
-      // Відкат при помилці
-      setCategories(prev => prev.map(c => c.id === cat.id ? { ...c, is_active: cat.is_active } : c));
-      toast.error('Помилка зміни статусу');
-    }
+  const handleToggleStatus = (cat) => {
+    toggleMutation.mutate({ id: cat.id, isActive: !cat.is_active });
   };
 
   const openCreate = () => { setEditingCategory(null); setModalOpen(true); };
@@ -111,21 +113,20 @@ const Categories = () => {
 
   const handleModalSuccess = (savedData, isEditing) => {
     if (isEditing && savedData?.id) {
-      setCategories(prev => prev.map(c => c.id === savedData.id ? { ...c, ...savedData } : c));
-      toast.success('Категорію оновлено');
+      queryClient.setQueryData(categoriesKey, (old = []) =>
+        old.map((c) => (c.id === savedData.id ? { ...c, ...savedData } : c))
+      );
     } else if (savedData) {
-      setCategories(prev => [...prev, savedData]);
-      toast.success('Категорію створено');
+      queryClient.setQueryData(categoriesKey, (old = []) => [...old, savedData]);
     }
+    queryClient.invalidateQueries({ queryKey: ['categories', currentStoreId] });
   };
 
-  // Фільтрація (додатковий клієнтський пошук)
   const filtered = categories;
-  const activeCount = filtered.filter(c => c.is_active).length;
+  const activeCount = filtered.filter((c) => c.is_active).length;
   const totalProducts = filtered.reduce((s, c) => s + (c.products_count || 0), 0);
 
-  // Поки магазини не завантажились — спінер
-  if (!storesLoaded) {
+  if (storesLoading) {
     return (
       <div className="flex items-center justify-center h-40">
         <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
@@ -133,7 +134,6 @@ const Categories = () => {
     );
   }
 
-  // Немає магазинів — пропонуємо створити
   if (stores.length === 0) {
     return (
       <div className="text-center py-16">
@@ -146,9 +146,9 @@ const Categories = () => {
         <p className="text-gray-600 mb-4">Спочатку створіть магазин, щоб керувати категоріями.</p>
         <button
           onClick={() => navigate('/stores')}
-          className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 border border-transparent rounded-xl text-sm font-semibold text-white hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-4 focus:ring-blue-500/20 transition-all duration-200 shadow-lg transform hover:scale-105 active:scale-95 relative overflow-hidden group"
+          className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl text-sm font-semibold text-white"
         >
-          <span className="relative z-10">Створити магазин</span>
+          Створити магазин
         </button>
       </div>
     );
@@ -156,7 +156,6 @@ const Categories = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
@@ -174,7 +173,7 @@ const Categories = () => {
               onChange={(e) => setSelectedStoreId(e.target.value)}
               className="px-3 py-2.5 text-sm border border-gray-200 rounded-xl bg-white"
             >
-              {stores.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              {stores.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
           )}
           <button onClick={openCreate} className="inline-flex items-center px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl hover:shadow-lg transition-all">
@@ -184,7 +183,6 @@ const Categories = () => {
         </div>
       </div>
 
-      {/* Search */}
       <div className="bg-white rounded-2xl border border-gray-200/80 p-5">
         <div className="relative">
           <MagnifyingGlassIcon className="h-5 w-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -198,7 +196,6 @@ const Categories = () => {
         </div>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: 'Всього', value: filtered.length, icon: FolderIcon, gradient: 'from-blue-500 to-blue-600', bg: 'bg-blue-50' },
@@ -220,8 +217,7 @@ const Categories = () => {
         ))}
       </div>
 
-      {/* Table */}
-      {loading ? (
+      {categoriesLoading ? (
         <div className="flex items-center justify-center h-40">
           <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
         </div>
@@ -248,7 +244,7 @@ const Categories = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {filtered.map(cat => (
+              {filtered.map((cat) => (
                 <tr key={cat.id} className="hover:bg-gray-50/50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -298,7 +294,6 @@ const Categories = () => {
         </div>
       )}
 
-      {/* Modal */}
       <CategoryModal
         isOpen={modalOpen}
         onClose={closeModal}

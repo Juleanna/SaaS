@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import {
   PlusIcon,
-  EyeIcon, 
-  PencilIcon, 
-  TrashIcon, 
+  EyeIcon,
+  PencilIcon,
+  TrashIcon,
   MagnifyingGlassIcon,
   QrCodeIcon,
   PrinterIcon,
@@ -25,11 +26,8 @@ const Products = () => {
   const { storeId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const queryClient = useQueryClient();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -41,163 +39,158 @@ const Products = () => {
   const [selectedProducts, setSelectedProducts] = useState(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null });
-  const [userStores, setUserStores] = useState([]);
-  const [storesLoading, setStoresLoading] = useState(true);
-  const [pagination, setPagination] = useState({
-    count: 0,
-    next: null,
-    previous: null,
-    current_page: 1,
-    total_pages: 1
-  });
+  const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
+
+  // Магазини
+  const { data: userStores = [], isLoading: storesLoading } = useQuery({
+    queryKey: ['stores'],
+    queryFn: async () => {
+      const res = await api.get('/stores/');
+      return getResults(res.data);
+    },
+  });
 
   const currentStoreId = storeId || userStores?.[0]?.id;
 
-  const fetchUserStores = async () => {
-    try {
-      setStoresLoading(true);
-      const response = await api.get('/stores/');
-      setUserStores(getResults(response.data));
-    } catch (error) {
-      logger.error('Error fetching user stores:', error);
-      setUserStores([]);
-    } finally {
-      setStoresLoading(false);
-    }
-  };
-
-  const fetchProducts = async (page = 1) => {
-    if (!currentStoreId) return;
-    
-    try {
-      setLoading(true);
+  // Товари (пагінована відповідь)
+  const productsKey = [
+    'products', currentStoreId, searchTerm, selectedCategory, sortBy, statusFilter, page, pageSize,
+  ];
+  const { data: productsData, isLoading: loading, error } = useQuery({
+    queryKey: productsKey,
+    enabled: !!currentStoreId && !storesLoading,
+    keepPreviousData: true,
+    queryFn: async ({ signal }) => {
       const params = new URLSearchParams();
-      
       if (searchTerm) params.append('search', searchTerm);
       if (selectedCategory) params.append('category', selectedCategory);
       if (statusFilter === 'active') params.append('is_active', 'true');
       if (statusFilter === 'inactive') params.append('is_active', 'false');
       if (statusFilter === 'featured') params.append('is_featured', 'true');
-      
       params.append('ordering', sortBy);
-      params.append('page', page.toString());
-      params.append('page_size', pageSize.toString());
-      
-      const response = await api.get(`/products/stores/${currentStoreId}/products/?${params}`);
-      
-      if (response.data.results) {
-        setProducts(response.data.results);
-        setPagination({
-          count: response.data.count,
-          next: response.data.next,
-          previous: response.data.previous,
-          current_page: page,
-          total_pages: Math.ceil(response.data.count / pageSize)
-        });
-      } else {
-        setProducts(response.data || []);
-      }
-    } catch (error) {
-      logger.error('Error fetching products:', error);
-      const errorMessage = error.response?.data?.detail || 'Помилка завантаження товарів';
-      setError(errorMessage);
-      setProducts([]);
-    } finally {
-      setLoading(false);
-    }
+      params.append('page', String(page));
+      params.append('page_size', String(pageSize));
+      const res = await api.get(
+        `/products/stores/${currentStoreId}/products/?${params}`,
+        { signal }
+      );
+      return res.data;
+    },
+  });
+
+  const products = Array.isArray(productsData?.results)
+    ? productsData.results
+    : (Array.isArray(productsData) ? productsData : []);
+  const pagination = {
+    count: productsData?.count || products.length,
+    next: productsData?.next || null,
+    previous: productsData?.previous || null,
+    current_page: page,
+    total_pages: Math.ceil((productsData?.count || products.length) / pageSize) || 1,
   };
 
-  const fetchCategories = async () => {
-    if (!currentStoreId) return;
-    
-    try {
-      const response = await api.get(`/products/stores/${currentStoreId}/categories/`);
-      setCategories(getResults(response.data));
-    } catch (error) {
-      logger.error('Error fetching categories:', error);
-      setCategories([]);
-    }
-  };
+  // Категорії
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories', currentStoreId],
+    enabled: !!currentStoreId,
+    queryFn: async () => {
+      const res = await api.get(`/products/stores/${currentStoreId}/categories/`);
+      return getResults(res.data);
+    },
+  });
+
+  const invalidateProducts = () =>
+    queryClient.invalidateQueries({ queryKey: ['products', currentStoreId] });
+
+  // Mutations
+  const deleteMutation = useMutation({
+    mutationFn: (productId) =>
+      api.delete(`/products/stores/${currentStoreId}/products/${productId}/`),
+    onSuccess: invalidateProducts,
+    onError: (err) => {
+      logger.error('Error deleting product:', err);
+      toast.error('Помилка видалення товару');
+    },
+  });
+
+  const toggleMutation = useMutation({
+    mutationFn: ({ id, is_active }) =>
+      api.patch(`/products/stores/${currentStoreId}/products/${id}/`, { is_active }),
+    onSuccess: invalidateProducts,
+    onError: (err) => {
+      logger.error('Error toggling product status:', err);
+      toast.error('Помилка зміни статусу товару');
+    },
+  });
+
+  const bulkPatchMutation = useMutation({
+    mutationFn: async ({ ids, is_active }) => {
+      await Promise.all(
+        ids.map((id) =>
+          api.patch(`/products/stores/${currentStoreId}/products/${id}/`, { is_active })
+        )
+      );
+    },
+    onSuccess: () => {
+      setSelectedProducts(new Set());
+      invalidateProducts();
+    },
+    onError: (err) => {
+      logger.error('Error performing bulk action:', err);
+      toast.error('Помилка виконання масової дії');
+    },
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids) => {
+      await Promise.all(
+        ids.map((id) =>
+          api.delete(`/products/stores/${currentStoreId}/products/${id}/`)
+        )
+      );
+    },
+    onSuccess: () => {
+      setSelectedProducts(new Set());
+      invalidateProducts();
+    },
+    onError: (err) => {
+      logger.error('Error performing bulk delete:', err);
+      toast.error('Помилка виконання масового видалення');
+    },
+  });
+
+  // Wrappers що підтримують старе API компонента
+  const fetchProducts = () => invalidateProducts();
 
   const handleDelete = (productId) => {
     setConfirmModal({
       open: true,
       title: 'Видалення товару',
       message: 'Ви впевнені, що хочете видалити цей товар?',
-      onConfirm: async () => {
-        try {
-          await api.delete(`/products/stores/${currentStoreId}/products/${productId}/`);
-          fetchProducts(pagination.current_page);
-        } catch (error) {
-          logger.error('Error deleting product:', error);
-          toast.error('Помилка видалення товару');
-        }
-      },
+      onConfirm: () => deleteMutation.mutate(productId),
     });
   };
 
-  const handleToggleStatus = async (product) => {
-    try {
-      await api.patch(`/products/stores/${currentStoreId}/products/${product.id}/`, {
-        is_active: !product.is_active
-      });
-      fetchProducts(pagination.current_page);
-    } catch (error) {
-      logger.error('Error toggling product status:', error);
-      toast.error('Помилка зміни статусу товару');
-    }
+  const handleToggleStatus = (product) => {
+    toggleMutation.mutate({ id: product.id, is_active: !product.is_active });
   };
 
-  const handleBulkAction = async (action) => {
+  const handleBulkAction = (action) => {
     if (selectedProducts.size === 0) return;
-    
     const productIds = Array.from(selectedProducts);
-    
-    try {
-      switch (action) {
-        case 'activate':
-          await Promise.all(
-            productIds.map(id => 
-              api.patch(`/products/stores/${currentStoreId}/products/${id}/`, { is_active: true })
-            )
-          );
-          break;
-        case 'deactivate':
-          await Promise.all(
-            productIds.map(id => 
-              api.patch(`/products/stores/${currentStoreId}/products/${id}/`, { is_active: false })
-            )
-          );
-          break;
-        case 'delete':
-          setConfirmModal({
-            open: true,
-            title: 'Видалення товарів',
-            message: `Ви впевнені, що хочете видалити ${productIds.length} товарів?`,
-            onConfirm: async () => {
-              try {
-                await Promise.all(
-                  productIds.map(id =>
-                    api.delete(`/products/stores/${currentStoreId}/products/${id}/`)
-                  )
-                );
-                setSelectedProducts(new Set());
-                fetchProducts(pagination.current_page);
-              } catch (error) {
-                logger.error('Error performing bulk delete:', error);
-                toast.error('Помилка виконання масового видалення');
-              }
-            },
-          });
-          return;
-      }
 
-      setSelectedProducts(new Set());
-      fetchProducts(pagination.current_page);
-    } catch (error) {
-      logger.error('Error performing bulk action:', error);
-      toast.error('Помилка виконання масової дії');
+    if (action === 'activate') {
+      bulkPatchMutation.mutate({ ids: productIds, is_active: true });
+    } else if (action === 'deactivate') {
+      bulkPatchMutation.mutate({ ids: productIds, is_active: false });
+    } else if (action === 'delete') {
+      setConfirmModal({
+        open: true,
+        title: 'Видалення товарів',
+        message: `Ви впевнені, що хочете видалити ${productIds.length} товарів?`,
+        onConfirm: () => bulkDeleteMutation.mutate(productIds),
+      });
     }
   };
 
@@ -230,7 +223,7 @@ const Products = () => {
   const generateBarcode = async (productId) => {
     try {
       await api.post(`/products/${productId}/generate-barcode/`);
-      fetchProducts(pagination.current_page);
+      invalidateProducts();
       toast.success('Штрихкод успішно згенеровано');
     } catch (error) {
       logger.error('Error generating barcode:', error);
@@ -241,7 +234,7 @@ const Products = () => {
   const generateQRCode = async (productId) => {
     try {
       await api.post(`/products/${productId}/generate-qr/`);
-      fetchProducts(pagination.current_page);
+      invalidateProducts();
       toast.success('QR код успішно згенеровано');
     } catch (error) {
       logger.error('Error generating QR code:', error);
@@ -249,19 +242,9 @@ const Products = () => {
     }
   };
 
-  useEffect(() => {
-    fetchUserStores();
-  }, []);
-
-  useEffect(() => {
-    if (!storesLoading && currentStoreId) {
-      fetchProducts();
-      fetchCategories();
-    }
-  }, [currentStoreId, searchTerm, selectedCategory, sortBy, statusFilter, storesLoading, pageSize]);
-
   const handleSearch = () => {
     setSearchTerm(searchInput);
+    setPage(1);
   };
 
   const clearSearch = () => {
@@ -317,12 +300,11 @@ const Products = () => {
           </svg>
         </div>
         <h3 className="text-lg font-medium text-gray-900 mb-2">Помилка завантаження</h3>
-        <p className="text-gray-600 mb-4">{error}</p>
+        <p className="text-gray-600 mb-4">{error?.response?.data?.detail || error?.message || 'Помилка завантаження'}</p>
         <button
           onClick={() => {
-            setError(null);
-            fetchProducts();
-            fetchCategories();
+            queryClient.invalidateQueries({ queryKey: ['products', currentStoreId] });
+            queryClient.invalidateQueries({ queryKey: ['categories', currentStoreId] });
           }}
           className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 border border-transparent rounded-xl text-sm font-semibold text-white hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-4 focus:ring-blue-500/20 transition-all duration-200 shadow-lg transform hover:scale-105 active:scale-95 relative overflow-hidden group"
         >
@@ -831,7 +813,7 @@ const Products = () => {
           </div>
           <div className="flex space-x-1">
             <button
-              onClick={() => fetchProducts(pagination.current_page - 1)}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={!pagination.previous}
               className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -855,7 +837,7 @@ const Products = () => {
               return (
                 <button
                   key={page}
-                  onClick={() => fetchProducts(page)}
+                  onClick={() => setPage(page)}
                   className={`px-3 py-2 text-sm font-medium border ${
                     isCurrentPage
                       ? 'text-blue-600 bg-blue-50 border-blue-500'
@@ -868,7 +850,7 @@ const Products = () => {
             })}
             
             <button
-              onClick={() => fetchProducts(pagination.current_page + 1)}
+              onClick={() => setPage((p) => p + 1)}
               disabled={!pagination.next}
               className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -908,7 +890,7 @@ const Products = () => {
         storeId={currentStoreId}
         categories={categories}
         onSave={() => {
-          fetchProducts(pagination.current_page);
+          invalidateProducts();
           setShowCreateModal(false);
           setEditingProduct(null);
         }}
