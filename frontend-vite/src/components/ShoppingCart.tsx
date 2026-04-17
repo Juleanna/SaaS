@@ -112,7 +112,7 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({
     }
   };
 
-  const updateQuantity = async (itemId, newQuantity) => {
+  const updateQuantity = async (itemId: number, newQuantity: number): Promise<void> => {
     if (newQuantity < 1) {
       await removeItem(itemId);
       return;
@@ -129,7 +129,7 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({
     }
   };
 
-  const removeItem = async (itemId) => {
+  const removeItem = async (itemId: number): Promise<void> => {
     try {
       await api.delete(`/orders/public/${storeSlug}/cart/items/${itemId}/`);
       fetchCart();

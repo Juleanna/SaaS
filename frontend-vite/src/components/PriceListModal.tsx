@@ -3,10 +3,26 @@ import React, { useState, useEffect } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import logger from '../services/logger';
 
+interface PriceListData {
+  id?: string | number;
+  name?: string;
+  description?: string;
+  pricing_strategy?: string;
+  default_markup_percentage?: string | number;
+  default_markup_amount?: string | number;
+  is_active?: boolean;
+  is_default?: boolean;
+  auto_update_from_cost?: boolean;
+  update_frequency?: string;
+  valid_from?: string | null;
+  valid_until?: string | null;
+  [key: string]: unknown;
+}
+
 interface PriceListModalProps {
   isOpen: boolean;
   onClose: () => void;
-  priceList?: { id?: string | number; [key: string]: unknown } | null;
+  priceList?: PriceListData | null;
   onSave?: (data: unknown) => void;
 }
 
@@ -53,17 +69,17 @@ const PriceListModal: React.FC<PriceListModalProps> = ({
   useEffect(() => {
     if (priceList) {
       setFormData({
-        name: priceList.name || '',
-        description: priceList.description || '',
-        pricing_strategy: priceList.pricing_strategy || 'cost_plus_markup',
-        default_markup_percentage: parseFloat(priceList.default_markup_percentage) || 20.00,
-        default_markup_amount: parseFloat(priceList.default_markup_amount) || 0.00,
-        is_active: priceList.is_active !== undefined ? priceList.is_active : true,
-        is_default: priceList.is_default !== undefined ? priceList.is_default : false,
-        auto_update_from_cost: priceList.auto_update_from_cost !== undefined ? priceList.auto_update_from_cost : false,
-        update_frequency: priceList.update_frequency || 'manual',
-        valid_from: priceList.valid_from ? new Date(priceList.valid_from).toISOString().slice(0, 16) : '',
-        valid_until: priceList.valid_until ? new Date(priceList.valid_until).toISOString().slice(0, 16) : '',
+        name: String(priceList.name ?? ''),
+        description: String(priceList.description ?? ''),
+        pricing_strategy: String(priceList.pricing_strategy ?? 'cost_plus_markup'),
+        default_markup_percentage: parseFloat(String(priceList.default_markup_percentage ?? '20')) || 20.00,
+        default_markup_amount: parseFloat(String(priceList.default_markup_amount ?? '0')) || 0.00,
+        is_active: priceList.is_active !== undefined ? Boolean(priceList.is_active) : true,
+        is_default: priceList.is_default !== undefined ? Boolean(priceList.is_default) : false,
+        auto_update_from_cost: priceList.auto_update_from_cost !== undefined ? Boolean(priceList.auto_update_from_cost) : false,
+        update_frequency: String(priceList.update_frequency ?? 'manual'),
+        valid_from: priceList.valid_from ? new Date(String(priceList.valid_from)).toISOString().slice(0, 16) : '',
+        valid_until: priceList.valid_until ? new Date(String(priceList.valid_until)).toISOString().slice(0, 16) : '',
       });
     } else {
       // Reset form for new price list
@@ -84,8 +100,9 @@ const PriceListModal: React.FC<PriceListModalProps> = ({
     setErrors({});
   }, [priceList, isOpen]);
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>): void => {
+    const { name, value, type } = e.target;
+    const checked = 'checked' in e.target ? e.target.checked : false;
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : 
@@ -99,8 +116,8 @@ const PriceListModal: React.FC<PriceListModalProps> = ({
     }
   };
 
-  const validateForm = () => {
-    const newErrors = {};
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
     
     if (!formData.name.trim()) {
       newErrors.name = 'Назва прайс-листа обов\'язкова';
@@ -126,7 +143,7 @@ const PriceListModal: React.FC<PriceListModalProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     
     if (!validateForm()) {

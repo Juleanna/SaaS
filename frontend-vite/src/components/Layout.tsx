@@ -37,6 +37,19 @@ import {
   MoonIcon,
 } from '@heroicons/react/24/outline';
 
+interface NavSubItem {
+  name: string;
+  href: string;
+  icon?: React.ComponentType<{ className?: string }>;
+}
+
+interface NavItem {
+  name: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  submenu?: NavSubItem[];
+}
+
 const ThemeToggle: React.FC = () => {
   const { theme, toggle } = useThemeStore();
   return (
@@ -145,7 +158,7 @@ const Layout: React.FC = () => {
   // ========================================
   // Рендер елементу навігації
   // ========================================
-  const renderNavItem = (item, isMobile = false, collapsed = false) => {
+  const renderNavItem = (item: NavItem, isMobile = false, collapsed = false) => {
     const hasSubmenu = item.submenu && item.submenu.length > 0;
     const isSubmenuOpen = openSubmenu === item.name;
     const isItemActive = isActive(item.href);

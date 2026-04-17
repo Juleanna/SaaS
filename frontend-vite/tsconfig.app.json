@@ -22,20 +22,13 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
 
-    /* Linting — strict mode, але noImplicitAny: false для legacy pages.
-       TODO: поступово увімкнути true коли всі pages матимуть типи. */
+    /* Linting — повний strict mode */
     "strict": true,
-    "noImplicitAny": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "erasableSyntaxOnly": false,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": false,
-
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"]
-    }
+    "noUncheckedSideEffectImports": false
   },
   "include": ["src", "src/vite-env.d.ts"]
 }

@@ -92,8 +92,9 @@ const ProductModal: React.FC<ProductModalProps> = ({
     setErrors({});
   }, [product, isOpen]);
 
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>): void => {
+    const { name, value, type } = e.target;
+    const checked = 'checked' in e.target ? e.target.checked : false;
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
@@ -108,8 +109,8 @@ const ProductModal: React.FC<ProductModalProps> = ({
     }
   };
 
-  const handleImageUpload = async (e) => {
-    const files = Array.from(e.target.files);
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+    const files = Array.from(e.target.files ?? []);
     if (files.length === 0) return;
 
     setLoading(true);
@@ -140,7 +141,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
     }
   };
 
-  const handleRemoveImage = async (imageId) => {
+  const handleRemoveImage = async (imageId: number | undefined): Promise<void> => {
     try {
       if (product?.id) {
         await api.delete(`/products/stores/${storeId}/products/${product.id}/images/${imageId}/`);
@@ -163,18 +164,18 @@ const ProductModal: React.FC<ProductModalProps> = ({
     }]);
   };
 
-  const removeVariant = (variantId) => {
+  const removeVariant = (variantId: unknown): void => {
     setVariants(prev => prev.filter(v => v.id !== variantId));
   };
 
-  const updateVariant = (variantId, field, value) => {
-    setVariants(prev => prev.map(v => 
+  const updateVariant = (variantId: unknown, field: string, value: unknown): void => {
+    setVariants(prev => prev.map(v =>
       v.id === variantId ? { ...v, [field]: value } : v
     ));
   };
 
-  const validateForm = () => {
-    const newErrors = {};
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
     
     if (!formData.name.trim()) {
       newErrors.name = 'Назва товару обов\'язкова';
@@ -192,7 +193,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -237,14 +238,14 @@ const ProductModal: React.FC<ProductModalProps> = ({
 
       onSave && onSave(response.data);
       onClose();
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Error saving product:', error);
-      if (error.response?.data) {
-        const serverErrors = {};
-        Object.keys(error.response.data).forEach(key => {
-          serverErrors[key] = Array.isArray(error.response.data[key]) 
-            ? error.response.data[key][0] 
-            : error.response.data[key];
+      const responseData = (error as { response?: { data?: Record<string, unknown> } })?.response?.data;
+      if (responseData) {
+        const serverErrors: Record<string, string> = {};
+        Object.keys(responseData).forEach((key) => {
+          const raw = responseData[key];
+          serverErrors[key] = Array.isArray(raw) ? String(raw[0]) : String(raw);
         });
         setErrors(serverErrors);
       } else {

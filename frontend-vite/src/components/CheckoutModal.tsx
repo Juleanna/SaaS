@@ -13,10 +13,19 @@ import {
 import api, { getResults } from '../services/api';
 import logger from '../services/logger';
 
+interface CartItemLike {
+  id: number;
+  product?: { name?: string; price?: number; images?: { image: string }[] };
+  quantity: number;
+  unit_price?: number;
+  total_price?: number;
+  price?: number;
+}
+
 interface CheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
-  cart: { items?: unknown[]; total?: number } | null;
+  cart: { items?: CartItemLike[]; total?: number; total_amount?: number } | null;
   storeSlug: string;
   onOrderCreated?: (data: { order_number: string }) => void;
 }
@@ -60,24 +69,23 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
     }
   };
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>): void => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
-    
-    // Clear error when user starts typing
+
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
-        [name]: null
+        [name]: '',
       }));
     }
   };
 
-  const validateStep = (stepNumber) => {
-    const newErrors = {};
+  const validateStep = (stepNumber: number): boolean => {
+    const newErrors: Record<string, string> = {};
     
     if (stepNumber === 1) {
       if (!formData.customer_name.trim()) {
@@ -117,7 +125,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
     setStep(step - 1);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     
     if (!validateStep(3)) {
@@ -145,14 +153,14 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
       // Show success message
       toast.success(`Замовлення #${response.data.order_number} успішно створено!`);
       
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Error creating order:', error);
-      if (error.response?.data) {
-        const serverErrors = {};
-        Object.keys(error.response.data).forEach(key => {
-          serverErrors[key] = Array.isArray(error.response.data[key]) 
-            ? error.response.data[key][0] 
-            : error.response.data[key];
+      const responseData = (error as { response?: { data?: Record<string, unknown> } })?.response?.data;
+      if (responseData) {
+        const serverErrors: Record<string, string> = {};
+        Object.keys(responseData).forEach((key) => {
+          const raw = responseData[key];
+          serverErrors[key] = Array.isArray(raw) ? String(raw[0]) : String(raw);
         });
         setErrors(serverErrors);
       } else {
