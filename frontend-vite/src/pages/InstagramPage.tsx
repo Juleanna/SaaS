@@ -4,6 +4,24 @@ import toast from 'react-hot-toast';
 import api, { getResults } from '../services/api';
 import ConfirmModal from '../components/ConfirmModal';
 
+interface InstagramAccount {
+  id: number;
+  instagram_username?: string;
+  instagram_name?: string;
+  profile_picture_url?: string;
+  followers_count?: number;
+  bio?: string;
+  total_posts?: number;
+  total_interactions?: number;
+  status?: string;
+  account_type?: string;
+  auto_post_products?: boolean;
+  hashtags?: string;
+  auto_respond_enabled?: boolean;
+  last_sync?: string;
+  [key: string]: unknown;
+}
+
 interface InstagramPageProps {
   storeId?: number | string;
 }
@@ -12,7 +30,7 @@ interface InstagramPageProps {
  * Сторінка Instagram інтеграції
  */
 const InstagramPage: React.FC<InstagramPageProps> = ({ storeId: _storeId }) => {
-  const [account, setAccount] = useState<Record<string, unknown> | null>(null);
+  const [account, setAccount] = useState<InstagramAccount | null>(null);
   const [statistics, setStatistics] = useState<Array<Record<string, unknown>>>([]);
   const [recentPosts, setRecentPosts] = useState<Array<Record<string, unknown>>>([]);
   const [autoPosts, setAutoPosts] = useState<Array<Record<string, unknown>>>([]);
@@ -35,7 +53,7 @@ const InstagramPage: React.FC<InstagramPageProps> = ({ storeId: _storeId }) => {
       const accounts = getResults(accountRes.data);
 
       if (accounts.length > 0) {
-        const acc = accounts[0];
+        const acc = accounts[0] as InstagramAccount;
         setAccount(acc);
 
         const detailRes = await api.get(`/instagram/accounts/${acc.id}/statistics/`);
@@ -80,7 +98,7 @@ const InstagramPage: React.FC<InstagramPageProps> = ({ storeId: _storeId }) => {
       message: 'Ви впевнені, що хочете відключити Instagram акаунт?',
       onConfirm: async () => {
         try {
-          await api.post(`/instagram/accounts/${account.id}/disconnect/`);
+          await api.post(`/instagram/accounts/${account?.id}/disconnect/`);
           setAccount(null);
           setStatistics([]);
           setRecentPosts([]);
@@ -95,7 +113,7 @@ const InstagramPage: React.FC<InstagramPageProps> = ({ storeId: _storeId }) => {
 
   const handleSyncMedia = async () => {
     try {
-      await api.post(`/instagram/accounts/${account.id}/sync_media/`);
+      await api.post(`/instagram/accounts/${account?.id}/sync_media/`);
       toast.success('Синхронізація розпочата');
     } catch {
       toast.error('Помилка при синхронізації');
@@ -174,8 +192,8 @@ const InstagramPage: React.FC<InstagramPageProps> = ({ storeId: _storeId }) => {
                 <div className="flex items-center">
                   {account.profile_picture_url && (
                     <img
-                      src={account.profile_picture_url}
-                      alt={account.instagram_username}
+                      src={String(account.profile_picture_url)}
+                      alt={String(account.instagram_username ?? '')}
                       className="w-20 h-20 rounded-full mr-6"
                     />
                   )}
@@ -257,16 +275,16 @@ const InstagramPage: React.FC<InstagramPageProps> = ({ storeId: _storeId }) => {
                       {statistics.map((stat, idx) => (
                         <tr key={idx} className="border-b hover:bg-gray-50">
                           <td className="px-6 py-4 text-sm text-gray-900">
-                            {new Date(stat.date).toLocaleDateString('uk-UA')}
+                            {new Date(String(stat.date)).toLocaleDateString('uk-UA')}
                           </td>
                           <td className="px-6 py-4 text-right text-sm text-gray-900">
-                            {stat.followers}
+                            {String(stat.followers ?? '')}
                           </td>
                           <td className="px-6 py-4 text-right text-sm text-green-600">
-                            +{stat.new_followers}
+                            +{String(stat.new_followers ?? '')}
                           </td>
                           <td className="px-6 py-4 text-right text-sm text-gray-900">
-                            {(stat.engagement_rate || 0).toFixed(2)}%
+                            {(Number(stat.engagement_rate) || 0).toFixed(2)}%
                           </td>
                         </tr>
                       ))}
@@ -285,16 +303,16 @@ const InstagramPage: React.FC<InstagramPageProps> = ({ storeId: _storeId }) => {
                 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {recentPosts.slice(0, 8).map(post => (
-                    <div key={post.id} className="rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+                    <div key={String(post.id)} className="rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
                       <img
-                        src={post.media_url}
-                        alt={post.caption}
+                        src={String(post.media_url ?? '')}
+                        alt={String(post.caption ?? '')}
                         className="w-full h-32 object-cover"
                       />
                       <div className="p-3 bg-gray-50">
                         <div className="flex justify-between text-sm text-gray-600">
-                          <span>❤️ {post.likes_count}</span>
-                          <span>💬 {post.comments_count}</span>
+                          <span>❤️ {String(post.likes_count ?? 0)}</span>
+                          <span>💬 {String(post.comments_count ?? 0)}</span>
                         </div>
                       </div>
                     </div>
@@ -311,7 +329,7 @@ const InstagramPage: React.FC<InstagramPageProps> = ({ storeId: _storeId }) => {
                 <label className="flex items-center">
                   <input
                     type="checkbox"
-                    checked={account.auto_post_products}
+                    checked={!!account.auto_post_products}
                     disabled
                     className="h-4 w-4 text-blue-600"
                   />
@@ -323,7 +341,7 @@ const InstagramPage: React.FC<InstagramPageProps> = ({ storeId: _storeId }) => {
                 <label className="flex items-center">
                   <input
                     type="checkbox"
-                    checked={account.auto_respond_enabled}
+                    checked={!!account.auto_respond_enabled}
                     disabled
                     className="h-4 w-4 text-blue-600"
                   />

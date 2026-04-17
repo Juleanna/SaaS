@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useWarehouseStore } from '../../stores/warehouseStore';
-import { 
+import type { StockBatch, Warehouse } from '../../types/models';
+import {
   MagnifyingGlassIcon,
   CalendarDaysIcon,
   TruckIcon,
@@ -27,7 +28,7 @@ const StockBatches: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProduct, setSelectedProduct] = useState('');
   const [filterStatus, setFilterStatus] = useState('all'); // all, active, depleted, expired
-  const [selectedBatch, setSelectedBatch] = useState<Record<string, unknown> | null>(null);
+  const [selectedBatch, setSelectedBatch] = useState<StockBatch | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   useEffect(() => {
@@ -40,11 +41,11 @@ const StockBatches: React.FC = () => {
     }
   }, [currentWarehouse, fetchStockBatches]);
 
-  const handleWarehouseChange = (warehouse: Record<string, unknown> & { id: number }) => {
-    setCurrentWarehouse(warehouse);
+  const handleWarehouseChange = (warehouse: Warehouse | undefined) => {
+    setCurrentWarehouse(warehouse ?? null);
   };
 
-  const getBatchStatus = (batch: Record<string, unknown> & { remaining_quantity: number; expiry_date?: string }) => {
+  const getBatchStatus = (batch: StockBatch) => {
     if (batch.remaining_quantity <= 0) return 'depleted';
     if (batch.expiry_date && new Date(batch.expiry_date) < new Date()) return 'expired';
     if (batch.expiry_date && new Date(batch.expiry_date) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)) return 'expiring';
@@ -94,7 +95,7 @@ const StockBatches: React.FC = () => {
     const matchesSearch = batch.product?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          batch.batch_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          batch.supplier?.name?.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     if (!matchesSearch) return false;
 
     if (selectedProduct && batch.product?.id !== parseInt(selectedProduct)) return false;
@@ -103,7 +104,7 @@ const StockBatches: React.FC = () => {
     return getBatchStatus(batch) === filterStatus;
   });
 
-  const openDetailModal = (batch: Record<string, unknown> & { id: number }) => {
+  const openDetailModal = (batch: StockBatch) => {
     setSelectedBatch(batch);
     setIsDetailModalOpen(true);
   };
@@ -118,17 +119,17 @@ const StockBatches: React.FC = () => {
       const status = getBatchStatus(batch);
       acc[status] = (acc[status] || 0) + 1;
       acc.total++;
-      acc.totalValue += parseFloat(batch.remaining_quantity) * parseFloat(batch.unit_cost);
+      acc.totalValue += Number(batch.remaining_quantity) * Number(batch.unit_cost);
       return acc;
     }, { total: 0, active: 0, depleted: 0, expired: 0, expiring: 0, totalValue: 0 });
-    
+
     return summary;
   };
 
   const summary = getBatchSummary();
 
   // Отримуємо унікальні товари для фільтра
-  const uniqueProducts = [...new Map(stockBatches.map(batch => 
+  const uniqueProducts = [...new Map(stockBatches.map(batch =>
     [batch.product?.id, batch.product]
   ).filter(([id, product]) => id && product)).values()];
 
@@ -142,7 +143,7 @@ const StockBatches: React.FC = () => {
             Управління партіями товарів для FIFO/LIFO розрахунків
           </p>
         </div>
-        
+
         <div className="mt-4 sm:mt-0">
           <select
             value={currentWarehouse?.id || ''}
@@ -274,8 +275,8 @@ const StockBatches: React.FC = () => {
                   >
                     <option value="">Всі товари</option>
                     {uniqueProducts.map(product => (
-                      <option key={product.id} value={product.id}>
-                        {product.name}
+                      <option key={product?.id} value={product?.id}>
+                        {product?.name}
                       </option>
                     ))}
                   </select>
@@ -364,8 +365,10 @@ const StockBatches: React.FC = () => {
                     <tbody className="bg-white divide-y divide-gray-200">
                       {filteredBatches.map((batch) => {
                         const status = getBatchStatus(batch);
-                        const depletionPercentage = ((batch.initial_quantity - batch.remaining_quantity) / batch.initial_quantity) * 100;
-                        
+                        const initialQty = Number(batch.initial_quantity ?? batch.quantity);
+                        const remainingQty = Number(batch.remaining_quantity);
+                        const depletionPercentage = initialQty > 0 ? ((initialQty - remainingQty) / initialQty) * 100 : 0;
+
                         return (
                           <tr key={batch.id} className="hover:bg-gray-50">
                             <td className="px-6 py-4 whitespace-nowrap">
@@ -380,11 +383,11 @@ const StockBatches: React.FC = () => {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="text-sm text-gray-900">
-                                {batch.remaining_quantity} / {batch.initial_quantity}
+                                {remainingQty} / {initialQty}
                               </div>
                               <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                                <div 
-                                  className="bg-blue-600 h-2 rounded-full" 
+                                <div
+                                  className="bg-blue-600 h-2 rounded-full"
                                   style={{ width: `${100 - depletionPercentage}%` }}
                                 ></div>
                               </div>
@@ -394,7 +397,7 @@ const StockBatches: React.FC = () => {
                                 ₴{batch.unit_cost}
                               </div>
                               <div className="text-sm text-gray-500">
-                                Всього: ₴{(batch.remaining_quantity * batch.unit_cost).toLocaleString()}
+                                Всього: ₴{(remainingQty * Number(batch.unit_cost)).toLocaleString()}
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -403,13 +406,13 @@ const StockBatches: React.FC = () => {
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center text-sm text-gray-900">
                                 <CalendarDaysIcon className="h-4 w-4 mr-1 text-gray-400" />
-                                {new Date(batch.received_date).toLocaleDateString()}
+                                {batch.received_date ? new Date(String(batch.received_date)).toLocaleDateString() : '—'}
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                               {batch.expiry_date ? (
                                 <div className={`flex items-center ${
-                                  status === 'expired' ? 'text-red-600' : 
+                                  status === 'expired' ? 'text-red-600' :
                                   status === 'expiring' ? 'text-yellow-600' : 'text-gray-900'
                                 }`}>
                                   <CalendarDaysIcon className="h-4 w-4 mr-1" />
@@ -475,7 +478,7 @@ const StockBatches: React.FC = () => {
                   <div className="space-y-4">
                     <div>
                       <label className="form-label">Номер партії</label>
-                      <p className="mt-1 text-sm text-gray-900">{selectedBatch.batch_number}</p>
+                      <p className="mt-1 text-sm text-gray-900">{String(selectedBatch.batch_number ?? '')}</p>
                     </div>
 
                     <div>
@@ -486,7 +489,7 @@ const StockBatches: React.FC = () => {
                     <div>
                       <label className="form-label">Фасування</label>
                       <p className="mt-1 text-sm text-gray-900">
-                        {selectedBatch.packaging?.quantity} {selectedBatch.packaging?.unit?.short_name}
+                        {String((selectedBatch as Record<string, unknown>).packaging_display ?? '—')}
                       </p>
                     </div>
 
@@ -498,7 +501,7 @@ const StockBatches: React.FC = () => {
                     <div>
                       <label className="form-label">Постачання</label>
                       <p className="mt-1 text-sm text-gray-900">
-                        {selectedBatch.supply ? `#${selectedBatch.supply.number}` : '—'}
+                        {(selectedBatch as Record<string, unknown>).supply ? `#${((selectedBatch as Record<string, unknown>).supply as Record<string, unknown>)?.number ?? ''}` : '—'}
                       </p>
                     </div>
                   </div>
@@ -506,7 +509,7 @@ const StockBatches: React.FC = () => {
                   <div className="space-y-4">
                     <div>
                       <label className="form-label">Початкова кількість</label>
-                      <p className="mt-1 text-sm text-gray-900">{selectedBatch.initial_quantity}</p>
+                      <p className="mt-1 text-sm text-gray-900">{String(selectedBatch.initial_quantity ?? selectedBatch.quantity)}</p>
                     </div>
 
                     <div>
@@ -517,8 +520,13 @@ const StockBatches: React.FC = () => {
                     <div>
                       <label className="form-label">Використано</label>
                       <p className="mt-1 text-sm text-gray-900">
-                        {selectedBatch.initial_quantity - selectedBatch.remaining_quantity} 
-                        ({(((selectedBatch.initial_quantity - selectedBatch.remaining_quantity) / selectedBatch.initial_quantity) * 100).toFixed(1)}%)
+                        {(() => {
+                          const init = Number(selectedBatch.initial_quantity ?? selectedBatch.quantity);
+                          const rem = Number(selectedBatch.remaining_quantity);
+                          const used = init - rem;
+                          const pct = init > 0 ? ((used / init) * 100).toFixed(1) : '0.0';
+                          return `${used} (${pct}%)`;
+                        })()}
                       </p>
                     </div>
 
@@ -530,7 +538,7 @@ const StockBatches: React.FC = () => {
                     <div>
                       <label className="form-label">Загальна вартість залишку</label>
                       <p className="mt-1 text-sm text-gray-900">
-                        ₴{(selectedBatch.remaining_quantity * selectedBatch.unit_cost).toLocaleString()}
+                        ₴{(Number(selectedBatch.remaining_quantity) * Number(selectedBatch.unit_cost)).toLocaleString()}
                       </p>
                     </div>
                   </div>
@@ -540,7 +548,7 @@ const StockBatches: React.FC = () => {
                   <div>
                     <label className="form-label">Дата надходження</label>
                     <p className="mt-1 text-sm text-gray-900">
-                      {new Date(selectedBatch.received_date).toLocaleString()}
+                      {selectedBatch.received_date ? new Date(String(selectedBatch.received_date)).toLocaleString() : '—'}
                     </p>
                   </div>
 
@@ -555,7 +563,7 @@ const StockBatches: React.FC = () => {
                 {selectedBatch.notes && (
                   <div className="mt-6">
                     <label className="form-label">Примітки</label>
-                    <p className="mt-1 text-sm text-gray-900">{selectedBatch.notes}</p>
+                    <p className="mt-1 text-sm text-gray-900">{String(selectedBatch.notes)}</p>
                   </div>
                 )}
               </div>

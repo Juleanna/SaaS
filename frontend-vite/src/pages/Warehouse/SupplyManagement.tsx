@@ -14,6 +14,7 @@ import {
   CalendarDaysIcon
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
+import type { Supply, Warehouse, Supplier } from '../../types/models';
 
 const SupplyManagement: React.FC = () => {
   const {
@@ -31,7 +32,7 @@ const SupplyManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedWarehouse, setSelectedWarehouse] = useState('');
-  const [selectedSupply, setSelectedSupply] = useState<Record<string, unknown> | null>(null);
+  const [selectedSupply, setSelectedSupply] = useState<Supply | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [supplyForm, setSupplyForm] = useState({
@@ -52,14 +53,15 @@ const SupplyManagement: React.FC = () => {
 
   useEffect(() => {
     if (selectedWarehouse) {
-      fetchSupplies(selectedWarehouse);
+      fetchSupplies(parseInt(selectedWarehouse));
     }
   }, [selectedWarehouse, fetchSupplies]);
 
   const filteredSupplies = supplies.filter(supply => {
+    const supplierName = typeof supply.supplier === 'object' ? supply.supplier?.name : '';
     const matchesSearch = supply.number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         supply.supplier?.name?.toLowerCase().includes(searchTerm.toLowerCase());
-    
+                         supplierName?.toLowerCase().includes(searchTerm.toLowerCase());
+
     if (!matchesSearch) return false;
 
     if (filterStatus === 'all') return true;
@@ -139,7 +141,7 @@ const SupplyManagement: React.FC = () => {
     resetForm();
   };
 
-  const openDetailModal = (supply: Record<string, unknown> & { id: number }) => {
+  const openDetailModal = (supply: Supply) => {
     setSelectedSupply(supply);
     setIsDetailModalOpen(true);
   };
@@ -163,7 +165,7 @@ const SupplyManagement: React.FC = () => {
   };
 
   const handleStatusChange = async (supplyId: number | string, newStatus: string) => {
-    const result = await updateSupplyStatus(supplyId, newStatus);
+    const result = await updateSupplyStatus(Number(supplyId), newStatus as Supply['status']);
     
     if (result.success) {
       toast.success('Статус постачання оновлено');
@@ -405,20 +407,20 @@ const SupplyManagement: React.FC = () => {
                             Постачання #{supply.number}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {supply.supplier?.name}
+                            {typeof supply.supplier === 'object' ? supply.supplier?.name : ''}
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center text-sm text-gray-900">
                           <BuildingStorefrontIcon className="h-4 w-4 mr-1 text-gray-400" />
-                          {supply.warehouse?.name}
+                          {typeof supply.warehouse === 'object' ? (supply.warehouse as Warehouse)?.name : ''}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center text-sm text-gray-900">
                           <CalendarDaysIcon className="h-4 w-4 mr-1 text-gray-400" />
-                          {new Date(supply.order_date).toLocaleDateString()}
+                          {supply.order_date ? new Date(supply.order_date).toLocaleDateString() : '—'}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -430,7 +432,7 @@ const SupplyManagement: React.FC = () => {
                         ) : '—'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        ₴{supply.total_amount?.toLocaleString() || 0}
+                        ₴{Number(supply.total_amount ?? 0).toLocaleString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <select
@@ -615,9 +617,9 @@ const SupplyManagement: React.FC = () => {
                   <h3 className="text-lg leading-6 font-medium text-gray-900">
                     Деталі постачання #{selectedSupply.number}
                   </h3>
-                  <span className={`badge ${getStatusColor(selectedSupply.status)}`}>
-                    {getStatusIcon(selectedSupply.status)}
-                    <span className="ml-1">{getStatusText(selectedSupply.status)}</span>
+                  <span className={`badge ${getStatusColor(String(selectedSupply.status))}`}>
+                    {getStatusIcon(String(selectedSupply.status))}
+                    <span className="ml-1">{getStatusText(String(selectedSupply.status))}</span>
                   </span>
                 </div>
 
@@ -625,18 +627,18 @@ const SupplyManagement: React.FC = () => {
                   <div className="space-y-4">
                     <div>
                       <label className="form-label">Постачальник</label>
-                      <p className="mt-1 text-sm text-gray-900">{selectedSupply.supplier?.name}</p>
+                      <p className="mt-1 text-sm text-gray-900">{typeof selectedSupply.supplier === 'object' ? selectedSupply.supplier?.name : ''}</p>
                     </div>
 
                     <div>
                       <label className="form-label">Склад</label>
-                      <p className="mt-1 text-sm text-gray-900">{selectedSupply.warehouse?.name}</p>
+                      <p className="mt-1 text-sm text-gray-900">{typeof selectedSupply.warehouse === 'object' ? (selectedSupply.warehouse as Warehouse)?.name : ''}</p>
                     </div>
 
                     <div>
                       <label className="form-label">Дата замовлення</label>
                       <p className="mt-1 text-sm text-gray-900">
-                        {new Date(selectedSupply.order_date).toLocaleDateString()}
+                        {selectedSupply.order_date ? new Date(selectedSupply.order_date).toLocaleDateString() : '—'}
                       </p>
                     </div>
                   </div>
@@ -655,9 +657,9 @@ const SupplyManagement: React.FC = () => {
                     <div>
                       <label className="form-label">Дата отримання</label>
                       <p className="mt-1 text-sm text-gray-900">
-                        {selectedSupply.received_date ? 
-                          new Date(selectedSupply.received_date).toLocaleDateString() : 
-                          'Не отримано'
+                        {selectedSupply.received_date
+                          ? new Date(String(selectedSupply.received_date)).toLocaleDateString()
+                          : 'Не отримано'
                         }
                       </p>
                     </div>
@@ -665,7 +667,7 @@ const SupplyManagement: React.FC = () => {
                     <div>
                       <label className="form-label">Загальна сума</label>
                       <p className="mt-1 text-sm text-gray-900">
-                        ₴{selectedSupply.total_amount?.toLocaleString() || 0}
+                        ₴{Number(selectedSupply.total_amount ?? 0).toLocaleString()}
                       </p>
                     </div>
                   </div>

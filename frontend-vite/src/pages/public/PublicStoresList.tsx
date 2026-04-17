@@ -21,6 +21,28 @@ import {
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import logger from '../../services/logger';
 
+interface PublicStoreEntry {
+  id: number;
+  name: string;
+  slug: string;
+  description: string;
+  city?: string;
+  categories: string[];
+  rating?: number;
+  reviews_count?: number;
+  products_count?: number;
+  featured?: boolean;
+  is_new?: boolean;
+  logo?: string | null;
+  banner?: string | null;
+  address?: string;
+  phone?: string;
+  email?: string;
+  working_hours?: string;
+  is_active?: boolean;
+  [key: string]: unknown;
+}
+
 // Gradient palettes for store cards
 const cardGradients = [
   'from-blue-500 via-blue-600 to-indigo-700',
@@ -40,7 +62,7 @@ const PublicStoresList: React.FC = () => {
   const [sortBy, setSortBy] = useState('');
 
   // Отримуємо список публічних магазинів
-  const { data: stores = [], isLoading } = useQuery({
+  const { data: stores = [], isLoading } = useQuery<PublicStoreEntry[]>({
     queryKey: ['public-stores', searchTerm, selectedCategory, selectedCity],
     queryFn: async () => {
       try {
@@ -141,12 +163,12 @@ const PublicStoresList: React.FC = () => {
   });
 
   // Отримуємо категорії магазинів
-  const { data: storeCategories = [] } = useQuery({
+  const { data: storeCategories = [] } = useQuery<string[]>({
     queryKey: ['store-categories'],
     queryFn: async () => {
       try {
         const response = await api.get('/stores/categories/');
-        return getResults(response.data);
+        return getResults(response.data) as string[];
       } catch (error: unknown) {
         return ['Електроніка', 'Одяг', 'Дім', 'Сад', 'Гаджети', 'Аксесуари', 'Спорт'];
       }
@@ -154,12 +176,12 @@ const PublicStoresList: React.FC = () => {
   });
 
   // Отримуємо міста
-  const { data: cities = [] } = useQuery({
+  const { data: cities = [] } = useQuery<string[]>({
     queryKey: ['store-cities'],
     queryFn: async () => {
       try {
         const response = await api.get('/stores/cities/');
-        return getResults(response.data);
+        return getResults(response.data) as string[];
       } catch (error: unknown) {
         return ['Київ', 'Львів', 'Одеса', 'Харків', 'Дніпро'];
       }
@@ -185,7 +207,7 @@ const PublicStoresList: React.FC = () => {
   const filteredStores = useMemo(() => {
     let result = stores.filter(store => {
       const matchesSearch = store.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           store.description.toLowerCase().includes(searchTerm.toLowerCase());
+                           (store.description ?? '').toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = !selectedCategory ||
                              store.categories.some(cat => cat.toLowerCase().includes(selectedCategory.toLowerCase()));
       const matchesCity = !selectedCity || store.city === selectedCity;
@@ -579,7 +601,7 @@ const RenderStars = ({ rating }: { rating: number }) => {
 };
 
 // Store Card Component
-const StoreCard = ({ store, featured, index }: { store: Record<string, unknown> & { id: number; name: string; slug: string; description: string; banner?: string; logo?: string; is_new?: boolean; products_count?: number; rating?: number; reviews_count?: number; address?: string; phone?: string; working_hours?: string; categories: string[] }; featured: boolean; index: number }) => {
+const StoreCard = ({ store, featured, index }: { store: PublicStoreEntry; featured: boolean; index: number }) => {
   const gradientClass = cardGradients[index % cardGradients.length];
 
   return (
@@ -616,7 +638,7 @@ const StoreCard = ({ store, featured, index }: { store: Record<string, unknown> 
               Новий
             </span>
           )}
-          {store.products_count > 0 && (
+          {(store.products_count ?? 0) > 0 && (
             <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-white/90 text-gray-700 shadow-lg backdrop-blur-sm">
               <ShoppingBagIcon className="h-3.5 w-3.5 mr-1" />
               {store.products_count} товарів

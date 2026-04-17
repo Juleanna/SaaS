@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import {
   PlusIcon,
@@ -21,9 +21,23 @@ import api, { getResults } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
 import ProductModal from '../components/ProductModal';
 import ConfirmModal from '../components/ConfirmModal';
-import EmptyState from '../components/EmptyState';
 import { useDebounce } from '../hooks/useDebounce';
 import logger from '../services/logger';
+import type { Product, Category } from '../types/models';
+
+interface StoreEntry {
+  id: number;
+  name?: string;
+  slug?: string;
+  [key: string]: unknown;
+}
+
+interface ProductsResponse {
+  count?: number;
+  next?: string | null;
+  previous?: string | null;
+  results?: Product[];
+}
 
 const Products: React.FC = () => {
   const { storeId } = useParams<{ storeId?: string }>();
@@ -38,7 +52,7 @@ const Products: React.FC = () => {
   const [sortDirection, setSortDirection] = useState('desc');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Record<string, unknown> | null>(null);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedProducts, setSelectedProducts] = useState(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [confirmModal, setConfirmModal] = useState<{ open: boolean; title: string; message: string; onConfirm: (() => void) | null }>({ open: false, title: '', message: '', onConfirm: null });
@@ -46,11 +60,11 @@ const Products: React.FC = () => {
   const [pageSize, setPageSize] = useState(20);
 
   // Магазини
-  const { data: userStores = [], isLoading: storesLoading } = useQuery({
+  const { data: userStores = [], isLoading: storesLoading } = useQuery<StoreEntry[]>({
     queryKey: ['stores'],
     queryFn: async () => {
       const res = await api.get('/stores/');
-      return getResults(res.data);
+      return getResults(res.data) as StoreEntry[];
     },
   });
 
@@ -60,10 +74,10 @@ const Products: React.FC = () => {
   const productsKey = [
     'products', currentStoreId, searchTerm, selectedCategory, sortBy, statusFilter, page, pageSize,
   ];
-  const { data: productsData, isLoading: loading, error } = useQuery({
+  const { data: productsData, isLoading: loading, error } = useQuery<ProductsResponse>({
     queryKey: productsKey,
     enabled: !!currentStoreId && !storesLoading,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
     queryFn: async ({ signal }) => {
       const params = new URLSearchParams();
       if (searchTerm) params.append('search', searchTerm);
@@ -301,7 +315,7 @@ const Products: React.FC = () => {
           </svg>
         </div>
         <h3 className="text-lg font-medium text-gray-900 mb-2">Помилка завантаження</h3>
-        <p className="text-gray-600 mb-4">{error?.response?.data?.detail || error?.message || 'Помилка завантаження'}</p>
+        <p className="text-gray-600 mb-4">{(error as { response?: { data?: { detail?: string } }; message?: string })?.response?.data?.detail || (error as { message?: string })?.message || 'Помилка завантаження'}</p>
         <button
           onClick={() => {
             queryClient.invalidateQueries({ queryKey: ['products', currentStoreId] });
