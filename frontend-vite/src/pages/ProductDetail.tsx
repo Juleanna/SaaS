@@ -1,40 +1,95 @@
-// @ts-nocheck — TODO: поетапно прибирати, мігруючи на суворі типи
-
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
   ArrowLeftIcon,
-  PencilIcon, 
-  TrashIcon, 
+  PencilIcon,
+  TrashIcon,
   PhotoIcon,
   QrCodeIcon,
   PrinterIcon,
   EyeIcon,
   ShoppingCartIcon,
   CubeIcon,
-  TagIcon
+  TagIcon,
 } from '@heroicons/react/24/outline';
 import api, { getResults } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
 import ProductModal from '../components/ProductModal';
 import ConfirmModal from '../components/ConfirmModal';
 import logger from '../services/logger';
+import type { Product, Category } from '../types/models';
+
+interface ProductImageLike {
+  id: number;
+  image?: string;
+  url?: string;
+  alt_text?: string;
+  is_primary?: boolean;
+  order: number;
+}
+
+interface ProductVariantLike {
+  id: number;
+  name: string;
+  value?: string;
+  price?: number | string;
+  price_adjustment?: string | number;
+  stock_quantity?: number;
+  sku_suffix?: string;
+  is_active?: boolean;
+}
+
+interface ExtendedProduct {
+  id: number | string;
+  name: string;
+  description?: string;
+  price: number | string;
+  sale_price?: number | string | null;
+  cost?: number;
+  stock_quantity?: number;
+  status?: string;
+  category?: { id: number; name?: string } | number;
+  brand?: string;
+  model?: string;
+  weight?: number | string;
+  dimensions?: string;
+  meta_title?: string;
+  meta_description?: string;
+  images?: ProductImageLike[];
+  variants?: ProductVariantLike[];
+  barcode?: string;
+  qr_code?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface ConfirmModalState {
+  open: boolean;
+  title: string;
+  message: string;
+  onConfirm: (() => void) | null;
+}
 
 const ProductDetail: React.FC = () => {
   const { productId } = useParams<{ productId?: string }>();
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  
-  const [product, setProduct] = useState(null);
-  const [categories, setCategories] = useState([]);
+
+  const [product, setProduct] = useState<ExtendedProduct | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [showBarcodeModal, setShowBarcodeModal] = useState(false);
-  const [showQRModal, setShowQRModal] = useState(false);
-  const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null });
+  const [_showBarcodeModal, setShowBarcodeModal] = useState(false);
+  const [_showQRModal, setShowQRModal] = useState(false);
+  const [confirmModal, setConfirmModal] = useState<ConfirmModalState>({
+    open: false,
+    title: '',
+    message: '',
+    onConfirm: null,
+  });
 
   // Get store ID (from URL or user's first store)
   const currentStoreId = user?.stores?.[0]?.id || 1;
@@ -50,7 +105,7 @@ const ProductDetail: React.FC = () => {
       
       // Fallback mock data
       setProduct({
-        id: productId,
+        id: productId ?? 0,
         name: 'iPhone 15 Pro',
         description: 'Новий iPhone з потужним процесором A17 Pro, титановим корпусом та найкращою камерою в серії iPhone.',
         price: 45000,
@@ -82,21 +137,21 @@ const ProductDetail: React.FC = () => {
     }
   };
 
-  const fetchCategories = async () => {
+  const fetchCategories = async (): Promise<void> => {
     try {
       const response = await api.get(`/products/stores/${currentStoreId}/categories/`);
-      setCategories(getResults(response.data));
+      setCategories(getResults<Category>(response.data));
     } catch (error) {
       logger.error('Error fetching categories:', error);
       setCategories([
-        { id: 1, name: 'Смартфони' },
-        { id: 2, name: 'Ноутбуки' },
-        { id: 3, name: 'Планшети' },
+        { id: 1, name: 'Смартфони', slug: 'smartphones', is_active: true },
+        { id: 2, name: 'Ноутбуки', slug: 'laptops', is_active: true },
+        { id: 3, name: 'Планшети', slug: 'tablets', is_active: true },
       ]);
     }
   };
 
-  const handleDelete = () => {
+  const handleDelete = (): void => {
     setConfirmModal({
       open: true,
       title: 'Видалення товару',
@@ -113,7 +168,7 @@ const ProductDetail: React.FC = () => {
     });
   };
 
-  const handleToggleStatus = async () => {
+  const handleToggleStatus = async (): Promise<void> => {
     try {
       await api.post(`/products/stores/${currentStoreId}/products/${productId}/toggle-status/`);
       fetchProduct();
@@ -123,10 +178,10 @@ const ProductDetail: React.FC = () => {
     }
   };
 
-  const generateBarcode = async () => {
+  const generateBarcode = async (): Promise<void> => {
     try {
       const response = await api.post(`/products/${productId}/generate-barcode/`);
-      setProduct(prev => ({ ...prev, barcode: response.data.barcode }));
+      setProduct((prev) => (prev ? { ...prev, barcode: response.data.barcode } : prev));
       toast.success('Штрих-код згенеровано успішно');
     } catch (error) {
       logger.error('Error generating barcode:', error);
@@ -134,10 +189,10 @@ const ProductDetail: React.FC = () => {
     }
   };
 
-  const generateQRCode = async () => {
+  const generateQRCode = async (): Promise<void> => {
     try {
       const response = await api.post(`/products/${productId}/generate-qr/`);
-      setProduct(prev => ({ ...prev, qr_code: response.data.qr_code }));
+      setProduct((prev) => (prev ? { ...prev, qr_code: response.data.qr_code } : prev));
       toast.success('QR-код згенеровано успішно');
     } catch (error) {
       logger.error('Error generating QR code:', error);
@@ -172,13 +227,13 @@ const ProductDetail: React.FC = () => {
     );
   }
 
-  const getStatusBadge = (status, stock) => {
+  const getStatusBadge = (status: string | undefined, stock: number | undefined): string => {
     if (stock === 0) return 'badge-danger';
     if (status === 'active') return 'badge-success';
     return 'badge-secondary';
   };
 
-  const getStatusText = (status, stock) => {
+  const getStatusText = (status: string | undefined, stock: number | undefined): string => {
     if (stock === 0) return 'Немає в наявності';
     if (status === 'active') return 'Активний';
     return 'Неактивний';
@@ -360,7 +415,9 @@ const ProductDetail: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Категорія</label>
-                  <p className="mt-1 text-sm text-gray-900">{product?.category?.name || 'Не вказано'}</p>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {typeof product?.category === 'object' ? product.category.name || 'Не вказано' : 'Не вказано'}
+                  </p>
                 </div>
 
                 <div>
@@ -388,10 +445,9 @@ const ProductDetail: React.FC = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Прибуток</label>
                   <p className="mt-1 text-sm text-green-600 font-medium">
-                    {product?.price && product?.cost 
-                      ? `${(product.price - product.cost).toLocaleString()} ₴`
-                      : 'Розрахувати неможливо'
-                    }
+                    {product?.price && product?.cost
+                      ? `${(Number(product.price) - Number(product.cost)).toLocaleString()} ₴`
+                      : 'Розрахувати неможливо'}
                   </p>
                 </div>
 
@@ -529,7 +585,7 @@ const ProductDetail: React.FC = () => {
       <ProductModal
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
-        product={product}
+        product={product as unknown as Product}
         storeId={currentStoreId}
         categories={categories}
         onSave={() => {
@@ -541,7 +597,7 @@ const ProductDetail: React.FC = () => {
       <ConfirmModal
         isOpen={confirmModal.open}
         onClose={() => setConfirmModal({ ...confirmModal, open: false })}
-        onConfirm={confirmModal.onConfirm}
+        onConfirm={confirmModal.onConfirm ?? (() => {})}
         title={confirmModal.title}
         message={confirmModal.message}
       />

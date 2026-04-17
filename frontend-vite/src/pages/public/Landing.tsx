@@ -1,5 +1,3 @@
-// @ts-nocheck — TODO: поетапно прибирати, мігруючи на суворі типи
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -28,7 +26,7 @@ import { StarIcon as StarSolid } from '@heroicons/react/24/solid';
 
 const Landing: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [activeFaq, setActiveFaq] = useState(null);
+  const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);

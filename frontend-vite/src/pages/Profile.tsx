@@ -1,14 +1,24 @@
-// @ts-nocheck — TODO: поетапно прибирати, мігруючи на суворі типи
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
-import { useForm } from 'react-hook-form';
+import { useForm, type SubmitHandler } from 'react-hook-form';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { PencilIcon, CheckIcon, XMarkIcon, CreditCardIcon, PlusIcon, CameraIcon, UserIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import api from '../services/api';
 import logger from '../services/logger';
+import type { User } from '../types/models';
+
+interface ProfileFormValues {
+  first_name: string;
+  last_name: string;
+  email: string;
+  company_name: string;
+  telegram_username: string;
+  instagram_username: string;
+  email_notifications: boolean;
+  telegram_notifications: boolean;
+}
 
 const Profile: React.FC = () => {
   const { user, updateProfile, updateUser } = useAuthStore();
@@ -21,15 +31,15 @@ const Profile: React.FC = () => {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   // Отримуємо повну інформацію профілю з API
-  const { data: profileData, refetch: refetchProfile } = useQuery({
+  const { data: profileData, refetch: refetchProfile } = useQuery<User | null>({
     queryKey: ['user-profile'],
     queryFn: async () => {
       try {
         const response = await api.get('/auth/profile/');
-        return response.data;
+        return response.data as User;
       } catch (error) {
         logger.error('Profile fetch error:', error);
-        return user; // Fallback на дані з store
+        return user;
       }
     },
     retry: false,
@@ -43,7 +53,7 @@ const Profile: React.FC = () => {
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm({
+  } = useForm<ProfileFormValues>({
     defaultValues: {
       first_name: currentUser?.first_name || '',
       last_name: currentUser?.last_name || '',
@@ -72,7 +82,7 @@ const Profile: React.FC = () => {
     }
   }, [currentUser, reset]);
 
-  const handleEdit = () => {
+  const handleEdit = (): void => {
     setIsEditing(true);
     reset({
       first_name: currentUser?.first_name || '',
@@ -86,12 +96,12 @@ const Profile: React.FC = () => {
     });
   };
 
-  const handleCancel = () => {
+  const handleCancel = (): void => {
     setIsEditing(false);
     reset();
   };
 
-  const onSubmit = async (data) => {
+  const onSubmit: SubmitHandler<ProfileFormValues> = async (data) => {
     setIsLoading(true);
     
     try {
@@ -107,18 +117,18 @@ const Profile: React.FC = () => {
       } else {
         toast.error(result.error || 'Помилка оновлення профілю');
       }
-    } catch (error) {
+    } catch {
       toast.error('Помилка оновлення профілю');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleManageSubscription = () => {
+  const handleManageSubscription = (): void => {
     navigate('/subscriptions');
   };
 
-  const handleTopUp = async () => {
+  const handleTopUp = async (): Promise<void> => {
     if (!topUpAmount || parseFloat(topUpAmount) <= 0) {
       toast.error('Введіть коректну суму поповнення');
       return;
@@ -132,20 +142,18 @@ const Profile: React.FC = () => {
 
     setIsLoading(true);
     try {
-      const response = await api.post('/auth/top-up-balance/', {
-        amount: amount
-      });
-      
+      const response = await api.post('/auth/top-up-balance/', { amount });
+
       toast.success(response.data.message);
       setTopUpAmount('');
       setShowBilling(false);
-      refetchProfile(); // Оновлюємо дані після поповнення
-      
-      // Також оновлюємо дані в authStore
+      refetchProfile();
       updateUser({ balance: response.data.new_balance });
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Top up error:', error);
-      const errorMessage = error.response?.data?.error || 'Помилка поповнення рахунку';
+      const errorMessage =
+        (error as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+        'Помилка поповнення рахунку';
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -154,8 +162,8 @@ const Profile: React.FC = () => {
 
   const predefinedAmounts = [100, 500, 1000, 2000];
 
-  const handleAvatarUpload = async (event) => {
-    const file = event.target.files[0];
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+    const file = event.target.files?.[0];
     if (!file) return;
 
     // Перевіряємо тип файлу
@@ -192,9 +200,11 @@ const Profile: React.FC = () => {
       
       // Також оновлюємо дані в authStore
       updateUser({ avatar: response.data.avatar_url });
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Avatar upload error:', error);
-      const errorMessage = error.response?.data?.error || 'Помилка завантаження аватару';
+      const errorMessage =
+        (error as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+        'Помилка завантаження аватару';
       toast.error(errorMessage);
     } finally {
       setIsUploadingAvatar(false);

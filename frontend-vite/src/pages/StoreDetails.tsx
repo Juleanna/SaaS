@@ -1,5 +1,3 @@
-// @ts-nocheck — TODO: поетапно прибирати, мігруючи на суворі типи
-
 import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -9,38 +7,40 @@ import {
   ShoppingCartIcon,
   ChartBarIcon,
   PencilIcon,
-  GlobeAltIcon,
   PhoneIcon,
   EnvelopeIcon,
   MapPinIcon,
   ClipboardDocumentIcon,
   CheckIcon,
   LinkIcon,
-  Cog6ToothIcon,
   EyeIcon,
   SwatchIcon,
   DocumentTextIcon,
   ChatBubbleLeftRightIcon,
   CameraIcon,
   ArrowTopRightOnSquareIcon,
+  GlobeAltIcon,
+  Cog6ToothIcon,
 } from '@heroicons/react/24/outline';
 import api from '../services/api';
 import { sanitizeHtml } from '../services/sanitize';
+import type { Store } from '../types/models';
 
 const StoreDetails: React.FC = () => {
   const { storeId } = useParams<{ storeId?: string }>();
   const navigate = useNavigate();
   const [copiedSlug, setCopiedSlug] = useState(false);
 
-  const { data: store, isLoading, error } = useQuery({
+  const { data: store, isLoading, error } = useQuery<Store>({
     queryKey: ['store', storeId],
     queryFn: async () => {
       const response = await api.get(`/stores/${storeId}/`);
-      return response.data;
+      return response.data as Store;
     },
   });
 
-  const copySlug = () => {
+  const copySlug = (): void => {
+    if (!store?.slug) return;
     navigator.clipboard.writeText(`${window.location.origin}/store/${store.slug}`);
     setCopiedSlug(true);
     setTimeout(() => setCopiedSlug(false), 2000);
@@ -73,18 +73,28 @@ const StoreDetails: React.FC = () => {
     );
   }
 
+  type StatColor = 'blue' | 'green' | 'purple' | 'orange';
+
+  interface StatItem {
+    label: string;
+    value: string | number;
+    icon: React.ComponentType<{ className?: string }>;
+    color: StatColor;
+    link?: string;
+  }
+
   const isActive = store.is_active || store.status === 'active';
-  const stats = [
+  const stats: StatItem[] = [
     {
       label: 'Товарів',
-      value: store.products_count || store.products || 0,
+      value: store.products_count || 0,
       icon: CubeIcon,
       color: 'blue',
       link: `/stores/${store.id}/products`,
     },
     {
       label: 'Замовлень',
-      value: store.orders_count || store.orders || 0,
+      value: store.orders_count || 0,
       icon: ShoppingCartIcon,
       color: 'green',
       link: `/stores/${store.id}/orders`,
@@ -97,14 +107,14 @@ const StoreDetails: React.FC = () => {
     },
   ];
 
-  const gradients = {
+  const gradients: Record<StatColor, string> = {
     blue: 'from-blue-500 to-blue-600',
     green: 'from-emerald-500 to-emerald-600',
     purple: 'from-purple-500 to-violet-600',
     orange: 'from-orange-500 to-amber-600',
   };
 
-  const textColor = {
+  const textColor: Record<StatColor, string> = {
     blue: 'text-blue-600',
     green: 'text-emerald-600',
     purple: 'text-purple-600',
@@ -232,22 +242,26 @@ const StoreDetails: React.FC = () => {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {[
-          { label: 'Додати товар', desc: 'Новий товар в каталог', icon: CubeIcon, color: 'blue', link: `/products` },
-          { label: 'Замовлення', desc: 'Переглянути замовлення', icon: ShoppingCartIcon, color: 'green', link: `/orders` },
-          { label: 'Аналітика', desc: 'Звіти та графіки', icon: ChartBarIcon, color: 'purple', link: `/stores/${store.id}/analytics` },
-          { label: 'Налаштування', desc: 'Параметри магазину', icon: Cog6ToothIcon, color: 'orange', action: () => navigate('/stores', { state: { editStore: store } }) },
-        ].map((item, i) => {
-          const Wrapper = item.link ? Link : 'button';
-          const props = item.link ? { to: item.link } : { onClick: item.action };
-          return (
-            <Wrapper key={i} {...props} className="group bg-white rounded-2xl border border-gray-200/80 p-5 hover:shadow-md hover:-translate-y-0.5 transition-all text-left">
+        {([
+          { label: 'Додати товар', desc: 'Новий товар в каталог', icon: CubeIcon, color: 'blue' as StatColor, link: `/products` },
+          { label: 'Замовлення', desc: 'Переглянути замовлення', icon: ShoppingCartIcon, color: 'green' as StatColor, link: `/orders` },
+          { label: 'Аналітика', desc: 'Звіти та графіки', icon: ChartBarIcon, color: 'purple' as StatColor, link: `/stores/${store.id}/analytics` },
+          { label: 'Налаштування', desc: 'Параметри магазину', icon: Cog6ToothIcon, color: 'orange' as StatColor, action: () => navigate('/stores', { state: { editStore: store } }) },
+        ]).map((item, i) => {
+          const className = 'group bg-white rounded-2xl border border-gray-200/80 p-5 hover:shadow-md hover:-translate-y-0.5 transition-all text-left';
+          const inner = (
+            <>
               <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradients[item.color]} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
                 <item.icon className="h-5 w-5 text-white" />
               </div>
               <div className="text-sm font-semibold text-gray-900">{item.label}</div>
               <div className="text-xs text-gray-400 mt-0.5">{item.desc}</div>
-            </Wrapper>
+            </>
+          );
+          return 'link' in item && item.link ? (
+            <Link key={i} to={item.link} className={className}>{inner}</Link>
+          ) : (
+            <button key={i} onClick={item.action} className={className}>{inner}</button>
           );
         })}
       </div>

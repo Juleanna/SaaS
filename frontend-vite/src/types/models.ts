@@ -24,6 +24,8 @@ export interface User {
   balance?: number | string;
   monthly_spending?: number | string;
   total_spent?: number | string;
+  avg_spending?: number | string;
+  stripe_customer_id?: string;
   date_joined?: string;
   stores?: Pick<Store, 'id' | 'name' | 'slug'>[];
 }

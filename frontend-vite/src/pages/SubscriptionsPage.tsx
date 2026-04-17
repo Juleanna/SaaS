@@ -1,5 +1,3 @@
-// @ts-nocheck — TODO: поетапно прибирати, мігруючи на суворі типи
-
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -22,47 +20,53 @@ import {
 import { StarIcon } from '@heroicons/react/24/solid';
 import api, { getResults } from '../services/api';
 import toast from 'react-hot-toast';
+import type { SubscriptionPlan, UserSubscription } from '../types/models';
+
+interface UsageInfo {
+  usage?: { stores?: number; products?: number; monthly_orders?: number };
+  limits?: { max_stores?: number; max_products?: number; max_monthly_orders?: number };
+}
 
 const SubscriptionsPage: React.FC = () => {
   const queryClient = useQueryClient();
-  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const { data: plans = [], isLoading: plansLoading } = useQuery({
+  const { data: plans = [], isLoading: plansLoading } = useQuery<SubscriptionPlan[]>({
     queryKey: ['subscription-plans'],
     queryFn: async () => {
       const response = await api.get('/subscriptions/plans/');
-      return getResults(response.data);
+      return getResults<SubscriptionPlan>(response.data);
     },
   });
 
-  const { data: currentSubscription, isLoading: subLoading } = useQuery({
+  const { data: currentSubscription, isLoading: subLoading } = useQuery<UserSubscription | null>({
     queryKey: ['current-subscription'],
     queryFn: async () => {
       try {
         const response = await api.get('/subscriptions/current/');
-        return response.data;
+        return response.data as UserSubscription;
       } catch {
         return null;
       }
     },
   });
 
-  const { data: usage } = useQuery({
+  const { data: usage } = useQuery<UsageInfo | null>({
     queryKey: ['subscription-usage'],
     queryFn: async () => {
       try {
         const response = await api.get('/subscriptions/usage/');
-        return response.data;
+        return response.data as UsageInfo;
       } catch {
         return null;
       }
     },
   });
 
-  const handleUpgrade = async () => {
+  const handleUpgrade = async (): Promise<void> => {
     if (!selectedPlan) return;
     setIsProcessing(true);
     try {
@@ -71,7 +75,9 @@ const SubscriptionsPage: React.FC = () => {
       });
 
       if (response.data.amount > 0) {
-        toast.success(`План "${selectedPlan.name}" успішно активовано! Списано ${response.data.amount} ₴. Залишок: ${response.data.new_balance?.toFixed(2) ?? '—'} ₴`);
+        toast.success(
+          `План "${selectedPlan.name}" успішно активовано! Списано ${response.data.amount} ₴. Залишок: ${response.data.new_balance?.toFixed(2) ?? '—'} ₴`
+        );
       } else {
         toast.success(`План "${selectedPlan.name}" успішно активовано!`);
       }
@@ -82,8 +88,8 @@ const SubscriptionsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['current-subscription'] });
       queryClient.invalidateQueries({ queryKey: ['subscription-usage'] });
       queryClient.invalidateQueries({ queryKey: ['subscription-plans'] });
-    } catch (error) {
-      const data = error.response?.data;
+    } catch (error: unknown) {
+      const data = (error as { response?: { data?: { message?: string; error?: string } } })?.response?.data;
       if (data?.message) {
         toast.error(data.message);
       } else if (typeof data?.error === 'string' && data.error !== 'insufficient_balance') {
@@ -96,7 +102,7 @@ const SubscriptionsPage: React.FC = () => {
     }
   };
 
-  const handleCancel = async () => {
+  const handleCancel = async (): Promise<void> => {
     setIsProcessing(true);
     try {
       await api.post('/subscriptions/cancel/');
@@ -104,8 +110,9 @@ const SubscriptionsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['current-subscription'] });
       queryClient.invalidateQueries({ queryKey: ['subscription-usage'] });
       setShowCancelModal(false);
-    } catch (error) {
-      toast.error(error.response?.data?.error || 'Помилка при скасуванні');
+    } catch (error: unknown) {
+      const message = (error as { response?: { data?: { error?: string } } })?.response?.data?.error;
+      toast.error(message || 'Помилка при скасуванні');
     } finally {
       setIsProcessing(false);
     }
@@ -136,7 +143,21 @@ const SubscriptionsPage: React.FC = () => {
 
   const currentPlanId = currentSubscription?.plan_details?.id ?? currentSubscription?.plan;
 
-  const features = [
+  type PlanFeatureKey =
+    | 'has_analytics'
+    | 'has_email_support'
+    | 'has_priority_support'
+    | 'has_custom_domain'
+    | 'has_api_access'
+    | 'has_integrations';
+
+  interface FeatureRow {
+    key: PlanFeatureKey;
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+  }
+
+  const features: FeatureRow[] = [
     { key: 'has_analytics', label: 'Аналітика', icon: ChartBarIcon },
     { key: 'has_email_support', label: 'Email підтримка', icon: EnvelopeIcon },
     { key: 'has_priority_support', label: 'Пріоритетна підтримка', icon: BoltIcon },
@@ -145,13 +166,13 @@ const SubscriptionsPage: React.FC = () => {
     { key: 'has_integrations', label: 'Інтеграції', icon: PuzzlePieceIcon },
   ];
 
-  const getPlanBg = (plan) => {
+  const getPlanBg = (plan: SubscriptionPlan): string => {
     if (plan.slug === 'premium') return 'bg-purple-50';
     if (plan.slug === 'basic') return 'bg-blue-50';
     return 'bg-gray-50';
   };
 
-  const getPlanAccent = (plan) => {
+  const getPlanAccent = (plan: SubscriptionPlan): string => {
     if (plan.slug === 'premium') return 'text-purple-600';
     if (plan.slug === 'basic') return 'text-blue-600';
     return 'text-gray-600';
@@ -191,7 +212,7 @@ const SubscriptionsPage: React.FC = () => {
                   {currentSubscription.is_active ? 'Активна' : 'Неактивна'}
                 </span>
               </div>
-              {currentSubscription.is_active && currentSubscription.days_remaining > 0 && (
+              {currentSubscription.is_active && (currentSubscription.days_remaining ?? 0) > 0 && (
                 <div className="text-center">
                   <p className="text-sm text-gray-500">Залишилось</p>
                   <p className="font-semibold text-gray-900 flex items-center gap-1">
@@ -424,7 +445,14 @@ const SubscriptionsPage: React.FC = () => {
   );
 };
 
-const UsageBar = ({ icon: Icon, label, used, max }) => {
+interface UsageBarProps {
+  icon?: React.ComponentType<{ className?: string }>;
+  label: string;
+  used: number;
+  max: number;
+}
+
+const UsageBar: React.FC<UsageBarProps> = ({ icon: Icon, label, used, max }) => {
   const percentage = max > 0 ? Math.min((used / max) * 100, 100) : 0;
   const isHigh = percentage >= 80;
 
@@ -449,7 +477,14 @@ const UsageBar = ({ icon: Icon, label, used, max }) => {
   );
 };
 
-const LimitRow = ({ icon: Icon, label, value, accent }) => (
+interface LimitRowProps {
+  icon?: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: React.ReactNode;
+  accent?: string;
+}
+
+const LimitRow: React.FC<LimitRowProps> = ({ icon: Icon, label, value, accent }) => (
   <div className="flex items-center justify-between">
     <span className="text-sm text-gray-600 flex items-center gap-1.5">
       {Icon && <Icon className="h-4 w-4" />}

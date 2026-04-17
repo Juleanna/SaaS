@@ -1,5 +1,3 @@
-// @ts-nocheck — TODO: поетапно прибирати, мігруючи на суворі типи
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BarcodeScanner from '../../components/BarcodeScanner';
@@ -8,60 +6,74 @@ import {
   ArrowLeftIcon,
   CheckCircleIcon,
   ClockIcon,
-  ListBulletIcon
+  ListBulletIcon,
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
+
+type ScanType = 'barcode' | 'qr_code';
+
+interface ScanRecord {
+  id: number;
+  code: string;
+  timestamp: string;
+  type: ScanType;
+  product: string;
+}
 
 const ScannerDemo: React.FC = () => {
   const navigate = useNavigate();
   const [isScannerOpen, setIsScannerOpen] = useState(false);
-  const [scannedCodes, setScannedCodes] = useState([]);
+  const [scannedCodes, setScannedCodes] = useState<ScanRecord[]>([]);
 
-  const handleScan = (code) => {
-    // Додаємо код до списку відсканованих
-    const newScan = {
+  const handleScan = (code: string): void => {
+    const newScan: ScanRecord = {
       id: Date.now(),
       code,
       timestamp: new Date().toISOString(),
-      type: code.length > 12 ? 'qr_code' : 'barcode', // Простий спосіб визначення типу
-      product: `Товар ${code}` // В реальності тут буде пошук товару по коду
+      type: code.length > 12 ? 'qr_code' : 'barcode',
+      product: `Товар ${code}`,
     };
 
-    setScannedCodes(prev => [newScan, ...prev.slice(0, 19)]); // Зберігаємо останні 20 сканів
+    setScannedCodes((prev) => [newScan, ...prev.slice(0, 19)]);
     setIsScannerOpen(false);
-    
     toast.success(`Код відсканований: ${code}`);
   };
 
-  const clearHistory = () => {
+  const clearHistory = (): void => {
     setScannedCodes([]);
     toast.success('Історію сканування очищено');
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString('uk-UA', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
       minute: '2-digit',
-      second: '2-digit'
+      second: '2-digit',
     });
   };
 
-  const getTypeColor = (type) => {
+  const getTypeColor = (type: ScanType): string => {
     switch (type) {
-      case 'barcode': return 'badge-info';
-      case 'qr_code': return 'badge-success';
-      default: return 'badge-secondary';
+      case 'barcode':
+        return 'badge-info';
+      case 'qr_code':
+        return 'badge-success';
+      default:
+        return 'badge-secondary';
     }
   };
 
-  const getTypeText = (type) => {
+  const getTypeText = (type: ScanType): string => {
     switch (type) {
-      case 'barcode': return 'Штрих-код';
-      case 'qr_code': return 'QR код';
-      default: return 'Невідомо';
+      case 'barcode':
+        return 'Штрих-код';
+      case 'qr_code':
+        return 'QR код';
+      default:
+        return 'Невідомо';
     }
   };
 
