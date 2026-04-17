@@ -244,48 +244,78 @@ export interface Warehouse {
   code?: string;
   address?: string;
   description?: string;
+  manager?: { id: number; name?: string } | string;
   is_active: boolean;
   created_at?: string;
   updated_at?: string;
+  [key: string]: unknown;
 }
 
 export interface Stock {
   id: number;
   warehouse: number | Warehouse;
-  product: number | Product;
-  quantity: string | number;
-  cost_price?: string | number;
-  available_quantity?: string | number;
+  product: number | (Product & { code?: string });
+  quantity: number;
+  cost_price?: number | string;
+  available_quantity?: number | string;
+  min_stock?: number;
+  max_stock?: number | null;
   is_low_stock?: boolean;
   is_overstocked?: boolean;
+  [key: string]: unknown;
 }
 
 export interface Supplier {
   id: number;
   name: string;
+  code?: string;
   contact_person?: string;
   phone?: string;
   email?: string;
   address?: string;
+  tax_number?: string;
+  payment_terms?: number;
+  notes?: string;
   is_active: boolean;
+  [key: string]: unknown;
 }
 
 export interface Supply {
   id: number;
+  number?: string;
   warehouse: number | Warehouse;
   supplier?: number | Supplier;
-  status: 'draft' | 'pending' | 'received' | 'cancelled';
+  status: 'draft' | 'pending' | 'confirmed' | 'in_transit' | 'received' | 'cancelled';
   total_amount?: string | number;
+  order_date?: string;
+  expected_date?: string;
   notes?: string;
+  items?: unknown[];
   created_at?: string;
+  [key: string]: unknown;
 }
 
 export interface Inventory {
   id: number;
+  number?: string;
   warehouse: number | Warehouse;
   status: 'draft' | 'in_progress' | 'completed' | 'cancelled';
+  responsible_person?: { name?: string };
   notes?: string;
   created_at?: string;
+  [key: string]: unknown;
+}
+
+export interface StockBatch {
+  id: number;
+  product?: { id: number; name?: string };
+  batch_number?: string;
+  supplier?: { id: number; name?: string };
+  quantity: number;
+  remaining_quantity: number;
+  unit_cost: number | string;
+  expiry_date?: string | null;
+  [key: string]: unknown;
 }
 
 // ============================================================

@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import api from '../services/api';
 import logger from '../services/logger';
-import type { Warehouse, Stock, Supplier, Supply, Inventory } from '../types/models';
+import type { Warehouse, Stock, Supplier, Supply, Inventory, StockBatch } from '../types/models';
 
 export interface ApiResult<T = unknown> {
   success: boolean;
@@ -33,7 +33,7 @@ interface WarehouseState {
   suppliersLoading: boolean;
   supplies: Supply[];
   suppliesLoading: boolean;
-  stockBatches: RefEntity[];
+  stockBatches: StockBatch[];
   stockBatchesLoading: boolean;
   stockMovements: RefEntity[];
   stockMovementsLoading: boolean;
