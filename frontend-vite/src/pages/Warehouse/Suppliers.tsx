@@ -136,7 +136,7 @@ const Suppliers: React.FC = () => {
     
     if (!selectedSupplier) return;
 
-    const result = await updateSupplier(selectedSupplier.id, supplierForm);
+    const result = await updateSupplier(Number(selectedSupplier.id), supplierForm);
     
     if (result.success) {
       toast.success('Постачальника оновлено успішно');
@@ -149,7 +149,7 @@ const Suppliers: React.FC = () => {
   const handleDeleteSupplier = async () => {
     if (!selectedSupplier) return;
 
-    const result = await deleteSupplier(selectedSupplier.id);
+    const result = await deleteSupplier(Number(selectedSupplier.id));
     
     if (result.success) {
       toast.success('Постачальника видалено успішно');
@@ -736,7 +736,7 @@ const Suppliers: React.FC = () => {
                     </h3>
                     <div className="mt-2">
                       <p className="text-sm text-gray-500">
-                        Ви впевнені, що хочете видалити постачальника <strong>{selectedSupplier.name}</strong>? 
+                        Ви впевнені, що хочете видалити постачальника <strong>{String(selectedSupplier.name ?? '')}</strong>?
                         Цю дію неможливо відмінити.
                       </p>
                     </div>

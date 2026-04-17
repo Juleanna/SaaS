@@ -516,7 +516,7 @@ const Payments: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          {getMethodIcon(payment.payment_method?.type)}
+                          {getMethodIcon(payment.payment_method?.type ?? '')}
                           <span className="ml-2 text-sm text-gray-900">
                             {payment.payment_method?.name}
                           </span>

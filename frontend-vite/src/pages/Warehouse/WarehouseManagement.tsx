@@ -299,7 +299,7 @@ const WarehouseManagement: React.FC = () => {
                       {warehouse.manager && (
                         <div className="mt-2 flex items-center text-sm text-gray-600">
                           <UserIcon className="h-4 w-4 mr-2" />
-                          <span>Завідувач: {warehouse.manager.first_name} {warehouse.manager.last_name}</span>
+                          <span>Завідувач: {typeof warehouse.manager === 'object' ? warehouse.manager.name : String(warehouse.manager ?? '')}</span>
                         </div>
                       )}
 
@@ -311,7 +311,7 @@ const WarehouseManagement: React.FC = () => {
 
                       <div className="mt-4 flex items-center justify-between">
                         <div className="text-xs text-gray-500">
-                          Створено: {new Date(warehouse.created_at).toLocaleDateString()}
+                          Створено: {new Date(warehouse.created_at ?? '').toLocaleDateString()}
                         </div>
                         
                         <div className="flex items-center space-x-2">

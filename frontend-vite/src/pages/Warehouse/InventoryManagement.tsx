@@ -111,8 +111,9 @@ const InventoryManagement: React.FC = () => {
   };
 
   const filteredStocks = stocks.filter(stock => {
-    const matchesSearch = stock.product?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         stock.product?.code?.toLowerCase().includes(searchTerm.toLowerCase());
+    const prod = typeof stock.product === 'object' ? stock.product : null;
+    const matchesSearch = prod?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         prod?.code?.toLowerCase().includes(searchTerm.toLowerCase());
     
     if (!matchesSearch) return false;
 
@@ -120,7 +121,7 @@ const InventoryManagement: React.FC = () => {
     return getStockStatus(stock) === filterStatus;
   });
 
-  const openEditModal = (stock: Record<string, unknown> & { id: number; quantity: number; min_stock: number; max_stock?: number | null; cost_price?: number | null }) => {
+  const openEditModal = (stock: Stock) => {
     setSelectedStock(stock);
     setEditForm({
       quantity: stock.quantity.toString(),
@@ -178,7 +179,7 @@ const InventoryManagement: React.FC = () => {
       cost_price: editForm.cost_price ? parseFloat(editForm.cost_price) : null
     };
 
-    const result = await updateStock(selectedStock.id, updateData);
+    const result = await updateStock(Number(selectedStock.id), updateData);
     
     if (result.success) {
       toast.success('Залишок оновлено успішно');
@@ -450,15 +451,15 @@ const InventoryManagement: React.FC = () => {
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div>
                                 <div className="text-sm font-medium text-gray-900">
-                                  {stock.product?.name}
+                                  {typeof stock.product === 'object' ? stock.product?.name : ''}
                                 </div>
                                 <div className="text-sm text-gray-500">
-                                  Код: {stock.product?.code}
+                                  Код: {typeof stock.product === 'object' ? stock.product?.code : ''}
                                 </div>
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              {stock.packaging?.quantity} {stock.packaging?.unit?.short_name}
+                              {stock.packaging?.quantity} {stock.packaging?.unit}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                               {stock.quantity}
@@ -528,10 +529,10 @@ const InventoryManagement: React.FC = () => {
                   
                   <div className="mb-4">
                     <p className="text-sm text-gray-600">
-                      <strong>{selectedStock.product?.name}</strong>
+                      <strong>{String((selectedStock as Record<string, unknown>).product_name ?? (typeof (selectedStock as Record<string, unknown>).product === 'object' ? ((selectedStock as Record<string, unknown>).product as Record<string, unknown>)?.name : '') ?? '')}</strong>
                     </p>
                     <p className="text-xs text-gray-500">
-                      Фасування: {selectedStock.packaging?.quantity} {selectedStock.packaging?.unit?.short_name}
+                      Фасування: {String((selectedStock as Record<string, unknown>).packaging_quantity ?? ((selectedStock as Record<string, unknown>).packaging as Record<string, unknown>)?.quantity ?? '')} {String(((selectedStock as Record<string, unknown>).packaging as Record<string, unknown>)?.unit ?? '')}
                     </p>
                   </div>
 

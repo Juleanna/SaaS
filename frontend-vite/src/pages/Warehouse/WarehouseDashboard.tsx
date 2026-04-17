@@ -32,7 +32,7 @@ const WarehouseDashboard: React.FC = () => {
     getWarehouseStats
   } = useWarehouseStore();
 
-  const [warehouseStats, setWarehouseStats] = useState(null);
+  const [warehouseStats, setWarehouseStats] = useState<Record<string, unknown> | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
 
   useEffect(() => {
@@ -63,7 +63,7 @@ const WarehouseDashboard: React.FC = () => {
     try {
       const result = await getWarehouseStats(currentWarehouse.id);
       if (result.success) {
-        setWarehouseStats(result.data);
+        setWarehouseStats(result.data as Record<string, unknown>);
       } else {
         toast.error(result.error ?? 'Помилка');
       }
@@ -276,7 +276,7 @@ const WarehouseDashboard: React.FC = () => {
                           Надходження (місяць)
                         </p>
                         <p className="text-lg font-semibold text-green-600">
-                          {warehouseStats.monthly_inbound || 0}
+                          {String(warehouseStats.monthly_inbound ?? 0)}
                         </p>
                       </div>
                     </div>
@@ -290,7 +290,7 @@ const WarehouseDashboard: React.FC = () => {
                           Витрати (місяць)
                         </p>
                         <p className="text-lg font-semibold text-red-600">
-                          {warehouseStats.monthly_outbound || 0}
+                          {String(warehouseStats.monthly_outbound ?? 0)}
                         </p>
                       </div>
                     </div>
@@ -304,7 +304,7 @@ const WarehouseDashboard: React.FC = () => {
                           Загальна вартість
                         </p>
                         <p className="text-lg font-semibold text-blue-600">
-                          ₴{warehouseStats.total_value?.toLocaleString() || 0}
+                          ₴{Number(warehouseStats.total_value ?? 0).toLocaleString()}
                         </p>
                       </div>
                     </div>
@@ -375,7 +375,7 @@ const WarehouseDashboard: React.FC = () => {
                                 Постачання #{supply.number}
                               </p>
                               <p className="text-sm text-gray-500">
-                                {supply.supplier?.name} • {new Date(supply.order_date).toLocaleDateString()}
+                                {typeof supply.supplier === 'object' ? supply.supplier?.name : ''} • {new Date(supply.order_date ?? '').toLocaleDateString()}
                               </p>
                             </div>
                           </div>

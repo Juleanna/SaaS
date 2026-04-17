@@ -129,9 +129,9 @@ const StockBatches: React.FC = () => {
   const summary = getBatchSummary();
 
   // Отримуємо унікальні товари для фільтра
-  const uniqueProducts = [...new Map(stockBatches.map(batch =>
-    [batch.product?.id, batch.product]
-  ).filter(([id, product]) => id && product)).values()];
+  const uniqueProducts = stockBatches
+    .map(b => b.product)
+    .filter((p, i, arr): p is NonNullable<typeof p> => !!p && arr.findIndex(x => x?.id === p.id) === i);
 
   return (
     <div className="p-6 space-y-6">
@@ -560,12 +560,12 @@ const StockBatches: React.FC = () => {
                   </div>
                 </div>
 
-                {selectedBatch.notes && (
+                {selectedBatch.notes ? (
                   <div className="mt-6">
                     <label className="form-label">Примітки</label>
                     <p className="mt-1 text-sm text-gray-900">{String(selectedBatch.notes)}</p>
                   </div>
-                )}
+                ) : null}
               </div>
 
               <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">

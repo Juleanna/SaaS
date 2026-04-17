@@ -179,7 +179,7 @@ const SupplyManagement: React.FC = () => {
       acc[supply.status] = (acc[supply.status] || 0) + 1;
       acc.total++;
       return acc;
-    }, { total: 0, draft: 0, confirmed: 0, in_transit: 0, received: 0, cancelled: 0 });
+    }, { total: 0, draft: 0, pending: 0, confirmed: 0, in_transit: 0, received: 0, cancelled: 0 });
   };
 
   const stats = getSupplyStats();
