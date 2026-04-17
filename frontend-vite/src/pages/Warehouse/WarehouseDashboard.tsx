@@ -66,14 +66,14 @@ const WarehouseDashboard: React.FC = () => {
       } else {
         toast.error(result.error);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error('Помилка завантаження статистики');
     } finally {
       setStatsLoading(false);
     }
   };
 
-  const handleWarehouseChange = (warehouse) => {
+  const handleWarehouseChange = (warehouse: Record<string, unknown> & { id: number }) => {
     setCurrentWarehouse(warehouse);
   };
 

@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import type { Warehouse } from '../../types/models';
 import { useWarehouseStore } from '../../stores/warehouseStore';
 import { 
   MagnifyingGlassIcon,
@@ -25,7 +26,7 @@ const WarehouseManagement: React.FC = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all'); // all, active, inactive
-  const [selectedWarehouse, setSelectedWarehouse] = useState(null);
+  const [selectedWarehouse, setSelectedWarehouse] = useState<Warehouse | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -74,13 +75,13 @@ const WarehouseManagement: React.FC = () => {
     resetForm();
   };
 
-  const openEditModal = (warehouse) => {
+  const openEditModal = (warehouse: Warehouse) => {
     setSelectedWarehouse(warehouse);
     setWarehouseForm({
       name: warehouse.name || '',
       code: warehouse.code || '',
       address: warehouse.address || '',
-      manager: warehouse.manager?.id || '',
+      manager: String((warehouse as unknown as { manager?: { id: string | number } }).manager?.id || ''),
       is_active: warehouse.is_active,
       description: warehouse.description || ''
     });
@@ -93,7 +94,7 @@ const WarehouseManagement: React.FC = () => {
     resetForm();
   };
 
-  const openDeleteModal = (warehouse) => {
+  const openDeleteModal = (warehouse: Warehouse) => {
     setSelectedWarehouse(warehouse);
     setIsDeleteModalOpen(true);
   };
@@ -103,7 +104,7 @@ const WarehouseManagement: React.FC = () => {
     setSelectedWarehouse(null);
   };
 
-  const handleCreateWarehouse = async (e) => {
+  const handleCreateWarehouse = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     const result = await createWarehouse(warehouseForm);
@@ -116,7 +117,7 @@ const WarehouseManagement: React.FC = () => {
     }
   };
 
-  const handleUpdateWarehouse = async (e) => {
+  const handleUpdateWarehouse = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (!selectedWarehouse) return;

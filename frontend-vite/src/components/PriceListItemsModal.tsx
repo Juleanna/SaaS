@@ -57,7 +57,7 @@ const PriceListItemsModal: React.FC<PriceListItemsModalProps> = ({
       try {
         const response = await api.get(`/pricelists/stores/${storeId}/pricelists/${priceList.id}/items/`);
         return getResults(response.data);
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error('Error fetching price list items:', error);
         // Mock data для демонстрації
         return [
@@ -111,7 +111,7 @@ const PriceListItemsModal: React.FC<PriceListItemsModalProps> = ({
       try {
         const response = await api.get(`/products/stores/${storeId}/products/`);
         return getResults(response.data);
-      } catch (error) {
+      } catch (error: unknown) {
         return [];
       }
     },
@@ -126,7 +126,7 @@ const PriceListItemsModal: React.FC<PriceListItemsModalProps> = ({
       try {
         const response = await api.get(`/products/stores/${storeId}/categories/`);
         return getResults(response.data);
-      } catch (error) {
+      } catch (error: unknown) {
         return [];
       }
     },
@@ -135,7 +135,7 @@ const PriceListItemsModal: React.FC<PriceListItemsModalProps> = ({
 
   // Додавання товару до прайс-листа
   const addItemMutation = useMutation({
-    mutationFn: async (data) => {
+    mutationFn: async (data: Record<string, unknown>) => {
       const response = await api.post(`/pricelists/stores/${storeId}/pricelists/${priceList.id}/items/`, data);
       return response.data;
     },
@@ -152,7 +152,7 @@ const PriceListItemsModal: React.FC<PriceListItemsModalProps> = ({
 
   // Оновлення позиції прайс-листа
   const updateItemMutation = useMutation({
-    mutationFn: async ({ itemId, data }) => {
+    mutationFn: async ({ itemId, data }: { itemId: number | string; data: Record<string, unknown> }) => {
       const response = await api.patch(`/pricelists/stores/${storeId}/pricelists/${priceList.id}/items/${itemId}/`, data);
       return response.data;
     },
@@ -169,7 +169,7 @@ const PriceListItemsModal: React.FC<PriceListItemsModalProps> = ({
 
   // Видалення позиції
   const deleteItemMutation = useMutation({
-    mutationFn: async (itemId) => {
+    mutationFn: async (itemId: number | string) => {
       await api.delete(`/pricelists/stores/${storeId}/pricelists/${priceList.id}/items/${itemId}/`);
     },
     onSuccess: () => {
@@ -191,18 +191,18 @@ const PriceListItemsModal: React.FC<PriceListItemsModalProps> = ({
     return matchesSearch && matchesCategory;
   });
 
-  const handleAddItem = (productId, itemData) => {
+  const handleAddItem = (productId: number | string, itemData: Record<string, unknown>) => {
     addItemMutation.mutate({
       product: productId,
       ...itemData
     });
   };
 
-  const handleUpdateItem = (itemId, data) => {
+  const handleUpdateItem = (itemId: number | string, data: Record<string, unknown>) => {
     updateItemMutation.mutate({ itemId, data });
   };
 
-  const handleDeleteItem = (item) => {
+  const handleDeleteItem = (item: Record<string, unknown> & { id: number; product: { name: string } }) => {
     setConfirmModal({
       open: true,
       title: 'Видалення позиції',
@@ -213,7 +213,7 @@ const PriceListItemsModal: React.FC<PriceListItemsModalProps> = ({
     });
   };
 
-  const formatPrice = (price) => {
+  const formatPrice = (price: number | string) => {
     return new Intl.NumberFormat('uk-UA', {
       style: 'currency',
       currency: 'UAH',
@@ -221,7 +221,7 @@ const PriceListItemsModal: React.FC<PriceListItemsModalProps> = ({
     }).format(price);
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('uk-UA', {
       year: 'numeric',
       month: '2-digit',

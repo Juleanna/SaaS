@@ -38,10 +38,10 @@ const Products: React.FC = () => {
   const [sortDirection, setSortDirection] = useState('desc');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingProduct, setEditingProduct] = useState(null);
+  const [editingProduct, setEditingProduct] = useState<Record<string, unknown> | null>(null);
   const [selectedProducts, setSelectedProducts] = useState(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
-  const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null });
+  const [confirmModal, setConfirmModal] = useState<{ open: boolean; title: string; message: string; onConfirm: (() => void) | null }>({ open: false, title: '', message: '', onConfirm: null });
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
 
@@ -108,7 +108,7 @@ const Products: React.FC = () => {
 
   // Mutations
   const deleteMutation = useMutation({
-    mutationFn: (productId) =>
+    mutationFn: (productId: number | string) =>
       api.delete(`/products/stores/${currentStoreId}/products/${productId}/`),
     onSuccess: invalidateProducts,
     onError: (err) => {
@@ -118,7 +118,7 @@ const Products: React.FC = () => {
   });
 
   const toggleMutation = useMutation({
-    mutationFn: ({ id, is_active }) =>
+    mutationFn: ({ id, is_active }: { id: number | string; is_active: boolean }) =>
       api.patch(`/products/stores/${currentStoreId}/products/${id}/`, { is_active }),
     onSuccess: invalidateProducts,
     onError: (err) => {
@@ -128,9 +128,9 @@ const Products: React.FC = () => {
   });
 
   const bulkPatchMutation = useMutation({
-    mutationFn: async ({ ids, is_active }) => {
+    mutationFn: async ({ ids, is_active }: { ids: unknown[]; is_active: boolean }) => {
       await Promise.all(
-        ids.map((id) =>
+        ids.map((id: unknown) =>
           api.patch(`/products/stores/${currentStoreId}/products/${id}/`, { is_active })
         )
       );
@@ -146,9 +146,9 @@ const Products: React.FC = () => {
   });
 
   const bulkDeleteMutation = useMutation({
-    mutationFn: async (ids) => {
+    mutationFn: async (ids: unknown[]) => {
       await Promise.all(
-        ids.map((id) =>
+        ids.map((id: unknown) =>
           api.delete(`/products/stores/${currentStoreId}/products/${id}/`)
         )
       );
@@ -166,7 +166,7 @@ const Products: React.FC = () => {
   // Wrappers що підтримують старе API компонента
   const fetchProducts = () => invalidateProducts();
 
-  const handleDelete = (productId) => {
+  const handleDelete = (productId: number | string) => {
     setConfirmModal({
       open: true,
       title: 'Видалення товару',
@@ -175,11 +175,11 @@ const Products: React.FC = () => {
     });
   };
 
-  const handleToggleStatus = (product) => {
+  const handleToggleStatus = (product: Record<string, unknown> & { id: number; is_active: boolean }) => {
     toggleMutation.mutate({ id: product.id, is_active: !product.is_active });
   };
 
-  const handleBulkAction = (action) => {
+  const handleBulkAction = (action: string) => {
     if (selectedProducts.size === 0) return;
     const productIds = Array.from(selectedProducts);
 
@@ -197,7 +197,7 @@ const Products: React.FC = () => {
     }
   };
 
-  const handleSort = (field) => {
+  const handleSort = (field: string) => {
     const newDirection = sortBy === field && sortDirection === 'asc' ? 'desc' : 'asc';
     const newSortBy = newDirection === 'desc' ? `-${field}` : field;
     
@@ -205,7 +205,7 @@ const Products: React.FC = () => {
     setSortDirection(newDirection);
   };
 
-  const handleSelectProduct = (productId) => {
+  const handleSelectProduct = (productId: number | string) => {
     const newSelected = new Set(selectedProducts);
     if (newSelected.has(productId)) {
       newSelected.delete(productId);
@@ -223,23 +223,23 @@ const Products: React.FC = () => {
     }
   };
 
-  const generateBarcode = async (productId) => {
+  const generateBarcode = async (productId: number | string) => {
     try {
       await api.post(`/products/${productId}/generate-barcode/`);
       invalidateProducts();
       toast.success('Штрихкод успішно згенеровано');
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Error generating barcode:', error);
       toast.error('Помилка генерації штрихкоду');
     }
   };
 
-  const generateQRCode = async (productId) => {
+  const generateQRCode = async (productId: number | string) => {
     try {
       await api.post(`/products/${productId}/generate-qr/`);
       invalidateProducts();
       toast.success('QR код успішно згенеровано');
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Error generating QR code:', error);
       toast.error('Помилка генерації QR коду');
     }
@@ -316,7 +316,7 @@ const Products: React.FC = () => {
     );
   }
 
-  const getStatusBadge = (product) => {
+  const getStatusBadge = (product: Record<string, unknown> & { is_active: boolean; stock_quantity?: number }) => {
     const stockQuantity = product.stock_quantity || 0;
     
     if (!product.is_active) return 'bg-gray-100 text-gray-800';
@@ -325,7 +325,7 @@ const Products: React.FC = () => {
     return 'bg-green-100 text-green-800';
   };
 
-  const getStatusText = (product) => {
+  const getStatusText = (product: Record<string, unknown> & { is_active: boolean; stock_quantity?: number }) => {
     const stockQuantity = product.stock_quantity || 0;
     
     if (!product.is_active) return 'Неактивний';

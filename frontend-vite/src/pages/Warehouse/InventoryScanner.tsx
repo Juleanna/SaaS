@@ -23,7 +23,7 @@ const InventoryScanner: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isScannerOpen, setIsScannerOpen] = useState(false);
-  const [scannedItems, setScannedItems] = useState([]);
+  const [scannedItems, setScannedItems] = useState<Array<Record<string, unknown> & { id: string | number; code: string; name: string; quantity: number; scan_method: string; created: boolean | string; updated_at: string }>>([]);
   const [currentQuantity, setCurrentQuantity] = useState(1);
   const [scanMode, setScanMode] = useState('single'); // 'single' или 'batch'
 
@@ -34,7 +34,7 @@ const InventoryScanner: React.FC = () => {
       try {
         const response = await api.get(`/warehouse/inventory/${inventoryId}/`);
         return response.data;
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error('Error fetching inventory:', error);
         // Mock data
         return {
@@ -57,7 +57,7 @@ const InventoryScanner: React.FC = () => {
       try {
         const response = await api.get(`/warehouse/inventory/${inventoryId}/scan/summary/`);
         return response.data;
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error('Error fetching scan summary:', error);
         // Mock data
         return {
@@ -82,7 +82,7 @@ const InventoryScanner: React.FC = () => {
 
   // Сканування одного товару
   const scanSingleMutation = useMutation({
-    mutationFn: async ({ code, quantity }) => {
+    mutationFn: async ({ code, quantity }: { code: string; quantity: number }) => {
       const response = await api.post(`/warehouse/inventory/${inventoryId}/scan/`, {
         code,
         actual_quantity: quantity
@@ -115,15 +115,15 @@ const InventoryScanner: React.FC = () => {
       toast.success(data.message);
       setCurrentQuantity(1);
     },
-    onError: (error) => {
-      const message = error.response?.data?.error || 'Помилка сканування товару';
+    onError: (error: unknown) => {
+      const message = (error as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Помилка сканування товару';
       toast.error(message);
     },
   });
 
   // Масове сканування товарів
   const bulkScanMutation = useMutation({
-    mutationFn: async (items) => {
+    mutationFn: async (items: Array<{ code: string; actual_quantity: number }>) => {
       const response = await api.post(`/warehouse/inventory/${inventoryId}/scan/bulk/`, {
         items
       });
@@ -134,12 +134,12 @@ const InventoryScanner: React.FC = () => {
       refetchSummary();
       setScannedItems([]);
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       toast.error('Помилка масового сканування');
     },
   });
 
-  const handleScan = (code) => {
+  const handleScan = (code: string) => {
     if (scanMode === 'single') {
       scanSingleMutation.mutate({ code, quantity: currentQuantity });
     } else {
@@ -183,7 +183,7 @@ const InventoryScanner: React.FC = () => {
     bulkScanMutation.mutate(items);
   };
 
-  const updateQuantity = (itemId, change) => {
+  const updateQuantity = (itemId: string | number, change: number) => {
     setScannedItems(prev => prev.map(item => 
       item.id === itemId 
         ? { ...item, quantity: Math.max(0, item.quantity + change) }
@@ -191,11 +191,11 @@ const InventoryScanner: React.FC = () => {
     ).filter(item => item.quantity > 0));
   };
 
-  const removeItem = (itemId) => {
+  const removeItem = (itemId: string | number) => {
     setScannedItems(prev => prev.filter(item => item.id !== itemId));
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('uk-UA', {
       year: 'numeric',
       month: '2-digit',
@@ -205,7 +205,7 @@ const InventoryScanner: React.FC = () => {
     });
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'draft': return 'bg-gray-100 text-gray-800';
       case 'in_progress': return 'bg-blue-100 text-blue-800';

@@ -28,7 +28,7 @@ const Suppliers: React.FC = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all'); // all, active, inactive
-  const [selectedSupplier, setSelectedSupplier] = useState(null);
+  const [selectedSupplier, setSelectedSupplier] = useState<Record<string, unknown> | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -85,7 +85,7 @@ const Suppliers: React.FC = () => {
     resetForm();
   };
 
-  const openEditModal = (supplier) => {
+  const openEditModal = (supplier: Record<string, unknown> & { id: number; name?: string; code?: string; contact_person?: string; phone?: string; email?: string; address?: string; tax_number?: string; payment_terms?: number; is_active: boolean; notes?: string }) => {
     setSelectedSupplier(supplier);
     setSupplierForm({
       name: supplier.name || '',
@@ -108,7 +108,7 @@ const Suppliers: React.FC = () => {
     resetForm();
   };
 
-  const openDeleteModal = (supplier) => {
+  const openDeleteModal = (supplier: Record<string, unknown> & { id: number }) => {
     setSelectedSupplier(supplier);
     setIsDeleteModalOpen(true);
   };
@@ -118,7 +118,7 @@ const Suppliers: React.FC = () => {
     setSelectedSupplier(null);
   };
 
-  const handleCreateSupplier = async (e) => {
+  const handleCreateSupplier = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     const result = await createSupplier(supplierForm);
@@ -131,7 +131,7 @@ const Suppliers: React.FC = () => {
     }
   };
 
-  const handleUpdateSupplier = async (e) => {
+  const handleUpdateSupplier = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (!selectedSupplier) return;

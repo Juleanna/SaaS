@@ -51,7 +51,7 @@ const PublicStoresList: React.FC = () => {
 
         const response = await api.get(`/stores/public/?${params}`);
         return getResults(response.data);
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error('Error fetching stores:', error);
         // Mock data
         return [
@@ -147,7 +147,7 @@ const PublicStoresList: React.FC = () => {
       try {
         const response = await api.get('/stores/categories/');
         return getResults(response.data);
-      } catch (error) {
+      } catch (error: unknown) {
         return ['Електроніка', 'Одяг', 'Дім', 'Сад', 'Гаджети', 'Аксесуари', 'Спорт'];
       }
     },
@@ -160,7 +160,7 @@ const PublicStoresList: React.FC = () => {
       try {
         const response = await api.get('/stores/cities/');
         return getResults(response.data);
-      } catch (error) {
+      } catch (error: unknown) {
         return ['Київ', 'Львів', 'Одеса', 'Харків', 'Дніпро'];
       }
     },
@@ -553,7 +553,7 @@ const PublicStoresList: React.FC = () => {
 };
 
 // Render star rating
-const RenderStars = ({ rating }) => {
+const RenderStars = ({ rating }: { rating: number }) => {
   const fullStars = Math.floor(rating || 0);
   const hasHalfStar = (rating || 0) - fullStars >= 0.5;
   const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
@@ -579,7 +579,7 @@ const RenderStars = ({ rating }) => {
 };
 
 // Store Card Component
-const StoreCard = ({ store, featured, index }) => {
+const StoreCard = ({ store, featured, index }: { store: Record<string, unknown> & { id: number; name: string; slug: string; description: string; banner?: string; logo?: string; is_new?: boolean; products_count?: number; rating?: number; reviews_count?: number; address?: string; phone?: string; working_hours?: string; categories: string[] }; featured: boolean; index: number }) => {
   const gradientClass = cardGradients[index % cardGradients.length];
 
   return (

@@ -31,7 +31,7 @@ const InventoryManagement: React.FC = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all'); // all, low, zero, over
-  const [selectedStock, setSelectedStock] = useState(null);
+  const [selectedStock, setSelectedStock] = useState<Record<string, unknown> | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -59,18 +59,18 @@ const InventoryManagement: React.FC = () => {
     }
   }, [currentWarehouse, fetchStocks]);
 
-  const handleWarehouseChange = (warehouse) => {
+  const handleWarehouseChange = (warehouse: Record<string, unknown> & { id: number }) => {
     setCurrentWarehouse(warehouse);
   };
 
-  const getStockStatus = (stock) => {
+  const getStockStatus = (stock: Record<string, unknown> & { quantity: number; min_stock: number; max_stock?: number | null }) => {
     if (stock.quantity === 0) return 'zero';
     if (stock.quantity <= stock.min_stock) return 'low';
     if (stock.max_stock && stock.quantity > stock.max_stock) return 'over';
     return 'normal';
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'zero':
         return 'text-red-600 bg-red-100';
@@ -83,7 +83,7 @@ const InventoryManagement: React.FC = () => {
     }
   };
 
-  const getStatusText = (status) => {
+  const getStatusText = (status: string) => {
     switch (status) {
       case 'zero':
         return 'Відсутній';
@@ -96,7 +96,7 @@ const InventoryManagement: React.FC = () => {
     }
   };
 
-  const getStatusIcon = (status) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case 'zero':
         return <XCircleIcon className="h-4 w-4" />;
@@ -119,7 +119,7 @@ const InventoryManagement: React.FC = () => {
     return getStockStatus(stock) === filterStatus;
   });
 
-  const openEditModal = (stock) => {
+  const openEditModal = (stock: Record<string, unknown> & { id: number; quantity: number; min_stock: number; max_stock?: number | null; cost_price?: number | null }) => {
     setSelectedStock(stock);
     setEditForm({
       quantity: stock.quantity.toString(),
@@ -165,7 +165,7 @@ const InventoryManagement: React.FC = () => {
     });
   };
 
-  const handleUpdateStock = async (e) => {
+  const handleUpdateStock = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (!selectedStock) return;
@@ -187,7 +187,7 @@ const InventoryManagement: React.FC = () => {
     }
   };
 
-  const handleCreateStock = async (e) => {
+  const handleCreateStock = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (!currentWarehouse) {

@@ -31,7 +31,7 @@ const SupplyManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedWarehouse, setSelectedWarehouse] = useState('');
-  const [selectedSupply, setSelectedSupply] = useState(null);
+  const [selectedSupply, setSelectedSupply] = useState<Record<string, unknown> | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [supplyForm, setSupplyForm] = useState({
@@ -66,7 +66,7 @@ const SupplyManagement: React.FC = () => {
     return supply.status === filterStatus;
   });
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'draft':
         return 'text-gray-600 bg-gray-100';
@@ -83,7 +83,7 @@ const SupplyManagement: React.FC = () => {
     }
   };
 
-  const getStatusText = (status) => {
+  const getStatusText = (status: string) => {
     switch (status) {
       case 'draft':
         return 'Чернетка';
@@ -100,7 +100,7 @@ const SupplyManagement: React.FC = () => {
     }
   };
 
-  const getStatusIcon = (status) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case 'draft':
         return <PencilIcon className="h-4 w-4" />;
@@ -139,7 +139,7 @@ const SupplyManagement: React.FC = () => {
     resetForm();
   };
 
-  const openDetailModal = (supply) => {
+  const openDetailModal = (supply: Record<string, unknown> & { id: number }) => {
     setSelectedSupply(supply);
     setIsDetailModalOpen(true);
   };
@@ -149,7 +149,7 @@ const SupplyManagement: React.FC = () => {
     setSelectedSupply(null);
   };
 
-  const handleCreateSupply = async (e) => {
+  const handleCreateSupply = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     const result = await createSupply(supplyForm);
@@ -162,7 +162,7 @@ const SupplyManagement: React.FC = () => {
     }
   };
 
-  const handleStatusChange = async (supplyId, newStatus) => {
+  const handleStatusChange = async (supplyId: number | string, newStatus: string) => {
     const result = await updateSupplyStatus(supplyId, newStatus);
     
     if (result.success) {

@@ -13,15 +13,15 @@ interface InstagramPageProps {
  */
 const InstagramPage: React.FC<InstagramPageProps> = ({ storeId: _storeId }) => {
   const [account, setAccount] = useState<Record<string, unknown> | null>(null);
-  const [statistics, setStatistics] = useState<unknown[]>([]);
-  const [recentPosts, setRecentPosts] = useState<unknown[]>([]);
-  const [autoPosts, setAutoPosts] = useState<unknown[]>([]);
+  const [statistics, setStatistics] = useState<Array<Record<string, unknown>>>([]);
+  const [recentPosts, setRecentPosts] = useState<Array<Record<string, unknown>>>([]);
+  const [autoPosts, setAutoPosts] = useState<Array<Record<string, unknown>>>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAutoPostModal, setShowAutoPostModal] = useState(false);
-  const [dmKeywords, setDMKeywords] = useState([]);
+  const [dmKeywords, setDMKeywords] = useState<Array<Record<string, unknown>>>([]);
   const [showKeywordModal, setShowKeywordModal] = useState(false);
-  const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null });
+  const [confirmModal, setConfirmModal] = useState<{ open: boolean; title: string; message: string; onConfirm: (() => void) | null }>({ open: false, title: '', message: '', onConfirm: null });
 
   useEffect(() => {
     fetchData();
@@ -53,8 +53,8 @@ const InstagramPage: React.FC<InstagramPageProps> = ({ storeId: _storeId }) => {
       }
 
       setError(null);
-    } catch (err) {
-      if (err.response?.status === 404) {
+    } catch (err: unknown) {
+      if ((err as { response?: { status?: number } })?.response?.status === 404) {
         setAccount(null);
       } else {
         setError('Помилка при завантаженні даних');
@@ -367,7 +367,7 @@ const InstagramPage: React.FC<InstagramPageProps> = ({ storeId: _storeId }) => {
 /**
  * Карточка статистики
  */
-const StatCard = ({ title, value, icon }) => (
+const StatCard = ({ title, value, icon }: { title: string; value: React.ReactNode; icon: string }) => (
   <div className="card card-body">
     <div className="flex items-center justify-between">
       <div>

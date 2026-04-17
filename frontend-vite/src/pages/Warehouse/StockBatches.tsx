@@ -27,7 +27,7 @@ const StockBatches: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProduct, setSelectedProduct] = useState('');
   const [filterStatus, setFilterStatus] = useState('all'); // all, active, depleted, expired
-  const [selectedBatch, setSelectedBatch] = useState(null);
+  const [selectedBatch, setSelectedBatch] = useState<Record<string, unknown> | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   useEffect(() => {
@@ -40,18 +40,18 @@ const StockBatches: React.FC = () => {
     }
   }, [currentWarehouse, fetchStockBatches]);
 
-  const handleWarehouseChange = (warehouse) => {
+  const handleWarehouseChange = (warehouse: Record<string, unknown> & { id: number }) => {
     setCurrentWarehouse(warehouse);
   };
 
-  const getBatchStatus = (batch) => {
+  const getBatchStatus = (batch: Record<string, unknown> & { remaining_quantity: number; expiry_date?: string }) => {
     if (batch.remaining_quantity <= 0) return 'depleted';
     if (batch.expiry_date && new Date(batch.expiry_date) < new Date()) return 'expired';
     if (batch.expiry_date && new Date(batch.expiry_date) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)) return 'expiring';
     return 'active';
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'depleted':
         return 'text-gray-600 bg-gray-100';
@@ -64,7 +64,7 @@ const StockBatches: React.FC = () => {
     }
   };
 
-  const getStatusText = (status) => {
+  const getStatusText = (status: string) => {
     switch (status) {
       case 'depleted':
         return 'Вичерпана';
@@ -77,7 +77,7 @@ const StockBatches: React.FC = () => {
     }
   };
 
-  const getStatusIcon = (status) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case 'depleted':
         return <ChartBarIcon className="h-4 w-4" />;
@@ -103,7 +103,7 @@ const StockBatches: React.FC = () => {
     return getBatchStatus(batch) === filterStatus;
   });
 
-  const openDetailModal = (batch) => {
+  const openDetailModal = (batch: Record<string, unknown> & { id: number }) => {
     setSelectedBatch(batch);
     setIsDetailModalOpen(true);
   };
