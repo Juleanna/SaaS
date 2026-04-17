@@ -17,6 +17,35 @@ import {
 import ConfirmModal from './ConfirmModal';
 import logger from '../services/logger';
 
+interface PriceListItemType {
+  id: string;
+  product: { id: string; name: string; sku: string; image?: string | null };
+  current_cost: string;
+  markup_type: string;
+  markup_value: string;
+  calculated_price: string;
+  final_price: string;
+  profit_margin: string;
+  profit_amount: string;
+  is_manual_override: boolean;
+  last_price_update: string;
+  category?: { id: number };
+  [key: string]: unknown;
+}
+
+interface AvailableProduct {
+  id: string | number;
+  name: string;
+  sku?: string;
+  [key: string]: unknown;
+}
+
+interface CategoryItem {
+  id: number;
+  name: string;
+  [key: string]: unknown;
+}
+
 interface PriceListItemsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -50,7 +79,7 @@ const PriceListItemsModal: React.FC<PriceListItemsModalProps> = ({
   });
 
   // Отримуємо позиції прайс-листа
-  const { data: items = [], isLoading: itemsLoading } = useQuery({
+  const { data: items = [], isLoading: itemsLoading } = useQuery<PriceListItemType[]>({
     queryKey: ['pricelist-items', priceList?.id],
     queryFn: async () => {
       if (!priceList?.id || !storeId) return [];
@@ -202,7 +231,7 @@ const PriceListItemsModal: React.FC<PriceListItemsModalProps> = ({
     updateItemMutation.mutate({ itemId, data });
   };
 
-  const handleDeleteItem = (item: Record<string, unknown> & { id: number; product: { name: string } }) => {
+  const handleDeleteItem = (item: PriceListItemType) => {
     setConfirmModal({
       open: true,
       title: 'Видалення позиції',
