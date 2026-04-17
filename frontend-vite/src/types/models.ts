@@ -254,14 +254,15 @@ export interface Warehouse {
 export interface Stock {
   id: number;
   warehouse: number | Warehouse;
-  product: number | (Product & { code?: string });
+  product: number | (Product & { code?: string; name?: string });
   quantity: number;
-  cost_price?: number | string;
+  cost_price?: number | string | null;
   available_quantity?: number | string;
-  min_stock?: number;
+  min_stock: number;
   max_stock?: number | null;
   is_low_stock?: boolean;
   is_overstocked?: boolean;
+  packaging?: { quantity?: number; unit?: string; [key: string]: unknown };
   [key: string]: unknown;
 }
 

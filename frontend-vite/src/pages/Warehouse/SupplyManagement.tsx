@@ -160,7 +160,7 @@ const SupplyManagement: React.FC = () => {
       toast.success('Постачання створено успішно');
       closeCreateModal();
     } else {
-      toast.error(result.error);
+      toast.error(result.error ?? 'Помилка');
     }
   };
 
@@ -170,7 +170,7 @@ const SupplyManagement: React.FC = () => {
     if (result.success) {
       toast.success('Статус постачання оновлено');
     } else {
-      toast.error(result.error);
+      toast.error(result.error ?? 'Помилка');
     }
   };
 

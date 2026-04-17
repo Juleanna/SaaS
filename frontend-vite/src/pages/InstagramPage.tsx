@@ -373,7 +373,7 @@ const InstagramPage: React.FC<InstagramPageProps> = ({ storeId: _storeId }) => {
       <ConfirmModal
         isOpen={confirmModal.open}
         onClose={() => setConfirmModal({ ...confirmModal, open: false })}
-        onConfirm={confirmModal.onConfirm}
+        onConfirm={confirmModal.onConfirm ?? (() => {})}
         title={confirmModal.title}
         message={confirmModal.message}
         confirmText="Підтвердити"

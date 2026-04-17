@@ -113,7 +113,7 @@ const WarehouseManagement: React.FC = () => {
       toast.success('Склад створено успішно');
       closeCreateModal();
     } else {
-      toast.error(result.error);
+      toast.error(result.error ?? 'Помилка');
     }
   };
 
@@ -128,7 +128,7 @@ const WarehouseManagement: React.FC = () => {
       toast.success('Склад оновлено успішно');
       closeEditModal();
     } else {
-      toast.error(result.error);
+      toast.error(result.error ?? 'Помилка');
     }
   };
 
@@ -141,7 +141,7 @@ const WarehouseManagement: React.FC = () => {
       toast.success('Склад видалено успішно');
       closeDeleteModal();
     } else {
-      toast.error(result.error);
+      toast.error(result.error ?? 'Помилка');
     }
   };
 

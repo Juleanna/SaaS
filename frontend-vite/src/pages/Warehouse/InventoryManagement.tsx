@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useWarehouseStore } from '../../stores/warehouseStore';
-import { 
+import type { Warehouse, Stock } from '../../types/models';
+import {
   MagnifyingGlassIcon,
   AdjustmentsHorizontalIcon,
   ExclamationTriangleIcon,
@@ -59,8 +60,8 @@ const InventoryManagement: React.FC = () => {
     }
   }, [currentWarehouse, fetchStocks]);
 
-  const handleWarehouseChange = (warehouse: Record<string, unknown> & { id: number }) => {
-    setCurrentWarehouse(warehouse);
+  const handleWarehouseChange = (warehouse: Warehouse | undefined) => {
+    setCurrentWarehouse(warehouse ?? null);
   };
 
   const getStockStatus = (stock: Record<string, unknown> & { quantity: number; min_stock: number; max_stock?: number | null }) => {
@@ -183,7 +184,7 @@ const InventoryManagement: React.FC = () => {
       toast.success('Залишок оновлено успішно');
       closeEditModal();
     } else {
-      toast.error(result.error);
+      toast.error(result.error ?? 'Помилка');
     }
   };
 

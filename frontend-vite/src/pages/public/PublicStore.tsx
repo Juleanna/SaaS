@@ -406,7 +406,7 @@ const PublicStore: React.FC = () => {
   // Helpers
   // ----------------------------------------------------------
 
-  const formatPrice = (price) => {
+  const formatPrice = (price: number): string => {
     return new Intl.NumberFormat('uk-UA', {
       style: 'currency',
       currency: 'UAH',
@@ -414,7 +414,7 @@ const PublicStore: React.FC = () => {
     }).format(price);
   };
 
-  const toggleFavorite = (productId) => {
+  const toggleFavorite = (productId: number): void => {
     setFavorites(prev =>
       prev.includes(productId)
         ? prev.filter(id => id !== productId)
@@ -422,7 +422,7 @@ const PublicStore: React.FC = () => {
     );
   };
 
-  const addToCart = (product) => {
+  const addToCart = (product: PublicProduct): void => {
     setCartItems(prev => {
       const existing = prev.find(item => item.id === product.id);
       if (existing) {
@@ -437,12 +437,11 @@ const PublicStore: React.FC = () => {
     });
     toast.success(`${product.name} додано до кошика`);
 
-    // Cart bounce animation
     setCartBounce(true);
     setTimeout(() => setCartBounce(false), 300);
   };
 
-  const shareStore = () => {
+  const shareStore = (): void => {
     if (navigator.share) {
       navigator.share({
         title: store?.name,
@@ -455,20 +454,17 @@ const PublicStore: React.FC = () => {
     }
   };
 
-  const handleCheckout = (cart) => {
+  const handleCheckout = (_cart: unknown): void => {
     setShowCheckout(true);
   };
 
-  const handleOrderCreated = (order) => {
+  const handleOrderCreated = (order: { order_number?: string }): void => {
     setCartItems([]);
     setShowCheckout(false);
     toast.success(`Замовлення #${order.order_number || ''} успішно створено!`);
   };
 
-  // ----------------------------------------------------------
-  // Render helpers for stars
-  // ----------------------------------------------------------
-  const renderStars = (rating) => {
+  const renderStars = (rating: number): React.ReactNode => {
     return [...Array(5)].map((_, i) =>
       i < Math.floor(rating) ? (
         <StarIconSolid key={i} className="h-4 w-4 text-yellow-400" />

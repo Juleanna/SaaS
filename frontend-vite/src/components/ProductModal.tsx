@@ -41,7 +41,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
     order_increment: '1',
   });
   
-  const [images, setImages] = useState<Array<{ id?: number; image: string; alt_text?: string; is_primary?: boolean }>>([]);
+  const [images, setImages] = useState<Array<{ id?: number; image: string; url?: string; alt_text?: string; is_primary?: boolean }>>([]);
   const [variants, setVariants] = useState<Array<Record<string, unknown>>>([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -67,7 +67,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
         order_increment: String(product.order_increment ?? '1'),
       });
       setImages(product.images || []);
-      setVariants((product.variants as Array<Record<string, unknown>>) || []);
+      setVariants((product.variants as unknown as Array<Record<string, unknown>>) || []);
     } else {
       setFormData({
         name: '',
@@ -751,7 +751,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
 
                   <div className="space-y-4">
                     {variants.map((variant, index) => (
-                      <div key={variant.id} className="border border-gray-200 rounded-lg p-4">
+                      <div key={String(variant.id)} className="border border-gray-200 rounded-lg p-4">
                         <div className="flex items-center justify-between mb-3">
                           <h4 className="text-sm font-medium text-gray-700">
                             Варіант {index + 1}
@@ -764,7 +764,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
                             <TrashIcon className="h-4 w-4" />
                           </button>
                         </div>
-                        
+
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                           <div>
                             <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -772,20 +772,20 @@ const ProductModal: React.FC<ProductModalProps> = ({
                             </label>
                             <input
                               type="text"
-                              value={variant.name}
+                              value={String(variant.name ?? '')}
                               onChange={(e) => updateVariant(variant.id, 'name', e.target.value)}
                               className="input text-sm"
                               placeholder="Наприклад: Червоний, L"
                             />
                           </div>
-                          
+
                           <div>
                             <label className="block text-xs font-medium text-gray-700 mb-1">
                               Ціна
                             </label>
                             <input
                               type="number"
-                              value={variant.price}
+                              value={String(variant.price ?? '')}
                               onChange={(e) => updateVariant(variant.id, 'price', e.target.value)}
                               step="0.01"
                               min="0"
@@ -793,14 +793,14 @@ const ProductModal: React.FC<ProductModalProps> = ({
                               placeholder="0.00"
                             />
                           </div>
-                          
+
                           <div>
                             <label className="block text-xs font-medium text-gray-700 mb-1">
                               Кількість
                             </label>
                             <input
                               type="number"
-                              value={variant.stock_quantity}
+                              value={String(variant.stock_quantity ?? '')}
                               onChange={(e) => updateVariant(variant.id, 'stock_quantity', e.target.value)}
                               min="0"
                               className="input text-sm"

@@ -382,11 +382,11 @@ const InventoryScanner: React.FC = () => {
             {scanMode === 'batch' && (
               <button
                 onClick={handleBulkSubmit}
-                disabled={bulkScanMutation.isLoading}
+                disabled={bulkScanMutation.isPending}
                 className="btn btn-primary flex items-center disabled:opacity-50"
               >
                 <CheckCircleIcon className="h-5 w-5 mr-2" />
-                {bulkScanMutation.isLoading ? 'Обробка...' : 'Підтвердити всі'}
+                {bulkScanMutation.isPending ? 'Обробка...' : 'Підтвердити всі'}
               </button>
             )}
           </div>

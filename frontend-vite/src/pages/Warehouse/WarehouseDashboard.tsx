@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useWarehouseStore } from '../../stores/warehouseStore';
-import { 
-  BuildingStorefrontIcon, 
+import type { Warehouse } from '../../types/models';
+import {
+  BuildingStorefrontIcon,
   CubeIcon, 
   TruckIcon, 
   ClipboardDocumentListIcon,
@@ -64,7 +65,7 @@ const WarehouseDashboard: React.FC = () => {
       if (result.success) {
         setWarehouseStats(result.data);
       } else {
-        toast.error(result.error);
+        toast.error(result.error ?? 'Помилка');
       }
     } catch (error: unknown) {
       toast.error('Помилка завантаження статистики');
@@ -73,8 +74,8 @@ const WarehouseDashboard: React.FC = () => {
     }
   };
 
-  const handleWarehouseChange = (warehouse: Record<string, unknown> & { id: number }) => {
-    setCurrentWarehouse(warehouse);
+  const handleWarehouseChange = (warehouse: Warehouse | undefined) => {
+    setCurrentWarehouse(warehouse ?? null);
   };
 
   const getStockAlerts = () => {

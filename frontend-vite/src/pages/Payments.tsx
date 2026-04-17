@@ -215,7 +215,7 @@ const Payments: React.FC = () => {
     return statusMap[status] || status;
   };
 
-  const getStatusIcon = (status) => {
+  const getStatusIcon = (status: string): React.ReactElement => {
     switch (status) {
       case 'completed':
         return <CheckCircleIcon className="h-5 w-5 text-green-500" />;
@@ -230,7 +230,7 @@ const Payments: React.FC = () => {
     }
   };
 
-  const getMethodIcon = (type) => {
+  const getMethodIcon = (type: string): React.ReactElement => {
     switch (type) {
       case 'cash':
         return <BanknotesIcon className="h-5 w-5 text-green-600" />;

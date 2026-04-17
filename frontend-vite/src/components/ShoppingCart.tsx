@@ -149,7 +149,7 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({
       onConfirm: async () => {
         try {
           // Delete all items
-          const deletePromises = cart.items.map(item =>
+          const deletePromises = (cart?.items ?? []).map(item =>
             api.delete(`/orders/public/${storeSlug}/cart/items/${item.id}/`)
           );
           await Promise.all(deletePromises);
@@ -163,7 +163,7 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({
   };
 
   const handleCheckout = () => {
-    if (cart && cart.items.length > 0) {
+    if (cart && (cart.items?.length ?? 0) > 0) {
       onCheckout && onCheckout(cart);
       onClose();
     }
@@ -200,20 +200,20 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({
               <div className="flex-1 flex items-center justify-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
               </div>
-            ) : cart && cart.items.length > 0 ? (
+            ) : cart && (cart.items?.length ?? 0) > 0 ? (
               <>
                 {/* Cart Items */}
                 <div className="flex-1 overflow-y-auto px-4 sm:px-6">
                   <div className="mt-8">
                     <div className="flow-root">
                       <ul className="-my-6 divide-y divide-gray-200">
-                        {cart.items.map((item) => (
+                        {(cart.items ?? []).map((item) => (
                           <li key={item.id} className="flex py-6">
                             <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl border border-gray-200">
-                              {item.product.images && item.product.images.length > 0 ? (
+                              {item.product?.images && item.product.images.length > 0 ? (
                                 <img
-                                  src={item.product.images[0].image || item.product.images[0].url}
-                                  alt={item.product.name}
+                                  src={item.product?.images[0].image || item.product.images[0].url}
+                                  alt={item.product?.name}
                                   className="h-full w-full object-cover object-center"
                                 />
                               ) : (
@@ -226,7 +226,7 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({
                             <div className="ml-4 flex flex-1 flex-col">
                               <div>
                                 <div className="flex justify-between text-base font-medium text-gray-900">
-                                  <h3>{item.product.name}</h3>
+                                  <h3>{item.product?.name}</h3>
                                   <p className="ml-4">{item.total_price?.toLocaleString()} ₴</p>
                                 </div>
                                 {item.variant && (

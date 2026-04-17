@@ -108,12 +108,12 @@ const Products: React.FC = () => {
   };
 
   // Категорії
-  const { data: categories = [] } = useQuery({
+  const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ['categories', currentStoreId],
     enabled: !!currentStoreId,
     queryFn: async () => {
       const res = await api.get(`/products/stores/${currentStoreId}/categories/`);
-      return getResults(res.data);
+      return getResults<Category>(res.data);
     },
   });
 

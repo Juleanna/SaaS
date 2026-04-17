@@ -127,7 +127,7 @@ const Suppliers: React.FC = () => {
       toast.success('Постачальника створено успішно');
       closeCreateModal();
     } else {
-      toast.error(result.error);
+      toast.error(result.error ?? 'Помилка');
     }
   };
 
@@ -142,7 +142,7 @@ const Suppliers: React.FC = () => {
       toast.success('Постачальника оновлено успішно');
       closeEditModal();
     } else {
-      toast.error(result.error);
+      toast.error(result.error ?? 'Помилка');
     }
   };
 
@@ -155,7 +155,7 @@ const Suppliers: React.FC = () => {
       toast.success('Постачальника видалено успішно');
       closeDeleteModal();
     } else {
-      toast.error(result.error);
+      toast.error(result.error ?? 'Помилка');
     }
   };
 
