@@ -53,21 +53,21 @@ const ProductModal: React.FC<ProductModalProps> = ({
         name: product.name || '',
         description: product.description || '',
         short_description: product.short_description || '',
-        price: product.price || '',
-        sale_price: product.sale_price || '',
+        price: String(product.price ?? ''),
+        sale_price: String(product.sale_price ?? ''),
         currency: product.currency || 'UAH',
-        category: product.category?.id || '',
+        category: String(typeof product.category === 'object' ? product.category?.id ?? '' : product.category ?? ''),
         is_active: product.is_active ?? true,
         is_featured: product.is_featured ?? false,
-        weight: product.weight || '',
+        weight: String(product.weight ?? ''),
         dimensions: product.dimensions || '',
         sku: product.sku || '',
-        minimum_order_quantity: product.minimum_order_quantity || '1',
-        maximum_order_quantity: product.maximum_order_quantity || '',
-        order_increment: product.order_increment || '1',
+        minimum_order_quantity: String(product.minimum_order_quantity ?? '1'),
+        maximum_order_quantity: String(product.maximum_order_quantity ?? ''),
+        order_increment: String(product.order_increment ?? '1'),
       });
       setImages(product.images || []);
-      setVariants(product.variants || []);
+      setVariants((product.variants as Array<Record<string, unknown>>) || []);
     } else {
       setFormData({
         name: '',
@@ -104,7 +104,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
-        [name]: null
+        [name]: '',
       }));
     }
   };
@@ -219,7 +219,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
       // Save variants if any
       if (variants.length > 0 && response.data.id) {
         for (const variant of variants) {
-          if (variant.id.startsWith('temp-')) {
+          if (String(variant.id).startsWith('temp-')) {
             await api.post(
               `/products/stores/${storeId}/products/${response.data.id}/variants/`,
               {

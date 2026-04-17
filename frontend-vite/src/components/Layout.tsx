@@ -182,7 +182,7 @@ const Layout: React.FC = () => {
             </Link>
             <div className="absolute left-full top-0 ml-2 hidden group-hover/sub:block z-50">
               <div className="bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[160px]">
-                {item.submenu.map((subItem) => {
+                {item.submenu?.map((subItem: NavSubItem) => {
                   const isSubActive = location.pathname === subItem.href;
                   return (
                     <Link
@@ -228,7 +228,7 @@ const Layout: React.FC = () => {
             }`}
           >
             <div className="ml-4 mt-1 space-y-0.5 border-l-2 border-gray-200 pl-3">
-              {item.submenu.map((subItem) => {
+              {item.submenu?.map((subItem: NavSubItem) => {
                 const isSubActive = location.pathname === subItem.href;
                 return (
                   <Link

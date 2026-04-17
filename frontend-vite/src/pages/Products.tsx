@@ -900,7 +900,7 @@ const Products: React.FC = () => {
       <ConfirmModal
         isOpen={confirmModal.open}
         onClose={() => setConfirmModal({ ...confirmModal, open: false })}
-        onConfirm={confirmModal.onConfirm}
+        onConfirm={confirmModal.onConfirm ?? (() => {})}
         title={confirmModal.title}
         message={confirmModal.message}
       />

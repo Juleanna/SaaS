@@ -16,6 +16,7 @@ import logger from '../services/logger';
 interface CartItemLike {
   id: number;
   product?: { name?: string; price?: number; images?: { image: string }[] };
+  variant?: { name?: string; value?: string } | null;
   quantity: number;
   unit_price?: number;
   total_price?: number;
@@ -424,10 +425,10 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   <div className="mt-6 bg-gray-50 p-4 rounded-lg">
                     <h5 className="font-medium text-gray-900 mb-3">Підсумок замовлення</h5>
                     <div className="space-y-2">
-                      {cart.items.map((item) => (
+                      {cart.items?.map((item) => (
                         <div key={item.id} className="flex justify-between text-sm">
                           <span className="text-gray-600">
-                            {item.product.name} {item.variant && `(${item.variant.name})`} x {item.quantity}
+                            {item.product?.name} {item.variant && `(${item.variant.name})`} x {item.quantity}
                           </span>
                           <span className="text-gray-900">{item.total_price?.toLocaleString()} ₴</span>
                         </div>

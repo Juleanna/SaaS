@@ -158,7 +158,7 @@ const PriceListModal: React.FC<PriceListModalProps> = ({
         valid_until: formData.valid_until || null,
       };
       
-      await onSave(submitData);
+      await onSave?.(submitData);
     } catch (error) {
       logger.error('Error saving price list:', error);
     } finally {

@@ -148,7 +148,7 @@ const PriceListItemsModal: React.FC<PriceListItemsModalProps> = ({
   });
 
   // Отримуємо категорії для фільтрації
-  const { data: categories = [] } = useQuery({
+  const { data: categories = [] } = useQuery<Array<{ id: number; name: string }>>({
     queryKey: ['categories', storeId],
     queryFn: async () => {
       if (!storeId) return [];
@@ -165,11 +165,11 @@ const PriceListItemsModal: React.FC<PriceListItemsModalProps> = ({
   // Додавання товару до прайс-листа
   const addItemMutation = useMutation({
     mutationFn: async (data: Record<string, unknown>) => {
-      const response = await api.post(`/pricelists/stores/${storeId}/pricelists/${priceList.id}/items/`, data);
+      const response = await api.post(`/pricelists/stores/${storeId}/pricelists/${priceList!.id}/items/`, data);
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['pricelist-items', priceList?.id]);
+      queryClient.invalidateQueries({ queryKey: ['pricelist-items', priceList?.id] });
       setIsAddItemModalOpen(false);
       toast.success('Товар додано до прайс-листа');
     },
@@ -182,11 +182,11 @@ const PriceListItemsModal: React.FC<PriceListItemsModalProps> = ({
   // Оновлення позиції прайс-листа
   const updateItemMutation = useMutation({
     mutationFn: async ({ itemId, data }: { itemId: number | string; data: Record<string, unknown> }) => {
-      const response = await api.patch(`/pricelists/stores/${storeId}/pricelists/${priceList.id}/items/${itemId}/`, data);
+      const response = await api.patch(`/pricelists/stores/${storeId}/pricelists/${priceList!.id}/items/${itemId}/`, data);
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['pricelist-items', priceList?.id]);
+      queryClient.invalidateQueries({ queryKey: ['pricelist-items', priceList?.id] });
       setEditingItem(null);
       toast.success('Позицію оновлено');
     },
@@ -199,10 +199,10 @@ const PriceListItemsModal: React.FC<PriceListItemsModalProps> = ({
   // Видалення позиції
   const deleteItemMutation = useMutation({
     mutationFn: async (itemId: number | string) => {
-      await api.delete(`/pricelists/stores/${storeId}/pricelists/${priceList.id}/items/${itemId}/`);
+      await api.delete(`/pricelists/stores/${storeId}/pricelists/${priceList!.id}/items/${itemId}/`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['pricelist-items', priceList?.id]);
+      queryClient.invalidateQueries({ queryKey: ['pricelist-items', priceList?.id] });
       toast.success('Позицію видалено');
     },
     onError: (error) => {
@@ -247,7 +247,7 @@ const PriceListItemsModal: React.FC<PriceListItemsModalProps> = ({
       style: 'currency',
       currency: 'UAH',
       minimumFractionDigits: 2,
-    }).format(price);
+    }).format(Number(price));
   };
 
   const formatDate = (dateString: string) => {
@@ -508,7 +508,7 @@ const PriceListItemsModal: React.FC<PriceListItemsModalProps> = ({
       <ConfirmModal
         isOpen={confirmModal.open}
         onClose={() => setConfirmModal({ ...confirmModal, open: false })}
-        onConfirm={confirmModal.onConfirm}
+        onConfirm={confirmModal.onConfirm ?? (() => {})}
         title={confirmModal.title}
         message={confirmModal.message}
       />

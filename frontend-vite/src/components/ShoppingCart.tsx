@@ -15,10 +15,12 @@ import logger from '../services/logger';
 
 interface CartItem {
   id: number;
-  product?: { name?: string; price?: number; images?: { image: string }[] };
-  variant?: { name?: string; value?: string };
+  product?: { id?: number; name?: string; price?: number; images?: { image: string; url?: string }[] };
+  variant?: { id?: number; name?: string; value?: string } | null;
   quantity: number;
   unit_price?: number;
+  price?: number;
+  total_price?: number;
 }
 
 interface CartData {
@@ -325,7 +327,7 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({
       <ConfirmModal
         isOpen={confirmModal.open}
         onClose={() => setConfirmModal({ ...confirmModal, open: false })}
-        onConfirm={confirmModal.onConfirm}
+        onConfirm={confirmModal.onConfirm ?? (() => {})}
         title={confirmModal.title}
         message={confirmModal.message}
         confirmText="Очистити"
