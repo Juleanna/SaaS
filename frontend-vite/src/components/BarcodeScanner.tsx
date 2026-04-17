@@ -1,4 +1,3 @@
-// @ts-nocheck — TODO: поетапно прибирати, мігруючи на суворі типи
 
 import React, { useState, useRef, useEffect } from 'react';
 import { XMarkIcon, CameraIcon, StopIcon } from '@heroicons/react/24/outline';

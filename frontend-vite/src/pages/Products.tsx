@@ -1,4 +1,3 @@
-// @ts-nocheck — TODO: поетапно прибирати, мігруючи на суворі типи
 
 import React, { useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
